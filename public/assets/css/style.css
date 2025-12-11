@@ -1,0 +1,144 @@
+* {
+  box-sizing: border-box;
+  padding: 0px;
+  margin: 0px;
+  /* overflow-x: hidden; */
+  font-family: "poppins", sans-serif;
+  font-optical-sizing: auto;
+  
+  font-style: normal;
+}
+
+.icon-btn {
+  font-size: 1.2rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+}
+
+/* .container {
+  max-width: 1200px !important;
+} */
+
+.ls {
+  letter-spacing: 1px;
+}
+
+.fs {
+  font-size: 15px !important;
+}
+
+.top-bar {
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
+  padding: 6px 0;
+}
+
+.nav-link.active {
+  color: red !important;
+}
+
+.search-bar {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  padding: 5px 10px;
+  width: 250px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  margin-left: 12px;
+}
+
+.product-card {
+  position: relative;
+  background: #fafafa;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.product-card img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.heart-icon {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.price-old {
+  text-decoration: line-through;
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.price-new {
+  color: red;
+  font-weight: bold;
+}
+
+.discount-badge {
+  background: red;
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.container2 {
+  position: relative;
+  font-family: Arial;
+}
+
+.text-block {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: ;
+  color: black;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.product-image-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.default-img,
+.hover-img {
+  transition: opacity 0.4s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.default-img {
+  opacity: 1;
+  position: relative;
+}
+
+.hover-img {
+  opacity: 0;
+}
+
+.product-image-wrapper:hover .hover-img {
+  opacity: 1;
+}
+
+.product-image-wrapper:hover .default-img {
+  opacity: 0;
+}
