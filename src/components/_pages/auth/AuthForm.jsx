@@ -37,8 +37,8 @@ export default function AuthForm() {
     type === "signup"
       ? formSchemas.signUp
       : type === "signin"
-      ? formSchemas.signIn
-      : formSchemas.forgotPassword;
+        ? formSchemas.signIn
+        : formSchemas.forgotPassword;
 
   const {
     control,
@@ -50,8 +50,8 @@ export default function AuthForm() {
       type === "signup"
         ? { name: "", email: "", phone: "" }
         : type === "signin"
-        ? { email: "" }
-        : { email: "" },
+          ? { email: "" }
+          : { email: "" },
   });
 
   const onSubmit = async (payload) => {
@@ -60,10 +60,10 @@ export default function AuthForm() {
         type === "signup"
           ? "/users/register-user"
           : type === "signin"
-          ? "/users/send-magic-link"
-          : "/auth/forgot-password",
+            ? "/users/send-magic-link"
+            : "/auth/forgot-password",
       method: "POST",
-      payload,
+      payload: { ...payload, redirectUrl: window.location.origin },
     });
 
     if (error) return showToast("error", error);
@@ -87,8 +87,8 @@ export default function AuthForm() {
           {type === "signup"
             ? "Fill in the form to create a new account."
             : type === "signin"
-            ? "Enter your email to log in."
-            : "You can reset your password here."}
+              ? "Enter your email to log in."
+              : "You can reset your password here."}
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -190,13 +190,13 @@ export default function AuthForm() {
                 ? type === "signup"
                   ? "Signing up..."
                   : type === "signin"
-                  ? "Logging in..."
-                  : "Sending link..."
+                    ? "Logging in..."
+                    : "Sending link..."
                 : type === "signup"
-                ? "Sign Up"
-                : type === "signin"
-                ? "Log In"
-                : "Reset Password"}
+                  ? "Sign Up"
+                  : type === "signin"
+                    ? "Log In"
+                    : "Reset Password"}
             </button>
 
             {type === "signup" && (

@@ -58,8 +58,13 @@ function MagicLogin() {
     }
   };
 
+  const hasCalled = React.useRef(false);
+
   useEffect(() => {
-    handleMagicLogin();
+    if (!hasCalled.current) {
+      hasCalled.current = true;
+      handleMagicLogin();
+    }
   }, []);
 
   return (
