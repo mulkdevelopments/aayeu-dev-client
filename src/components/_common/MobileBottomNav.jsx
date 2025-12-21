@@ -77,7 +77,7 @@ export default function MobileBottomNav() {
   return (
     <>
       {/* Bottom Navigation - Always Fixed */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black via-gray-900 to-gray-800 backdrop-blur-xl border-t border-amber-400/30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white backdrop-blur-xl border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         {/* Decorative Gold Bar */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
 
@@ -97,7 +97,7 @@ export default function MobileBottomNav() {
                 {/* Active Background Glow */}
                 {active && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-amber-500/20 to-yellow-500/10 rounded-full blur-xl"></div>
+                    <div className="w-16 h-16 bg-gradient-to-br from-amber-500/10 to-yellow-500/5 rounded-full blur-xl"></div>
                   </div>
                 )}
 
@@ -107,8 +107,8 @@ export default function MobileBottomNav() {
                   <div
                     className={`relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 ${
                       active
-                        ? "bg-gradient-to-br from-amber-500 via-amber-400 to-yellow-500 shadow-[0_0_20px_rgba(245,158,11,0.5)]"
-                        : "bg-white/5 backdrop-blur-sm border border-white/10 group-hover:border-amber-500/50"
+                        ? "bg-gradient-to-br from-amber-500 via-amber-400 to-yellow-500 shadow-[0_4px_16px_rgba(245,158,11,0.3)]"
+                        : "bg-gray-50 border border-gray-200 group-hover:border-amber-400/50 group-hover:bg-amber-50/50"
                     }`}
                   >
                     {/* Icon */}
@@ -117,14 +117,14 @@ export default function MobileBottomNav() {
                       strokeWidth={active ? 2.5 : 2}
                       className={`transition-all duration-300 ${
                         active
-                          ? "text-black scale-110"
-                          : "text-white/80 group-hover:text-amber-400 group-hover:scale-105"
+                          ? "text-white scale-110"
+                          : "text-gray-700 group-hover:text-amber-600 group-hover:scale-105"
                       }`}
                     />
 
                     {/* Badge */}
                     {item.badge && (
-                      <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] flex items-center justify-center bg-gradient-to-br from-amber-400 to-yellow-500 text-black text-[10px] font-extrabold rounded-full border-2 border-black shadow-lg">
+                      <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] flex items-center justify-center bg-gradient-to-br from-amber-400 to-yellow-500 text-white text-[10px] font-extrabold rounded-full border-2 border-white shadow-lg">
                         {item.badge > 99 ? "99+" : item.badge}
                       </div>
                     )}
