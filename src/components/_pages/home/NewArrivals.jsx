@@ -8,17 +8,44 @@ export default function NewArrivals() {
   const { newArrivals, fetchNewArrivals } = useHomeConfig();
 
   useEffect(() => {
-    fetchNewArrivals(); // cached / API called only once
+   const data = fetchNewArrivals();
   }, []);
 
   if (!newArrivals?.length) return null;
 
   return (
-    <section className="py-10">
-      <div className="container mx-auto px-4">
-        <h2 className="mb-6 text-3xl font-light">New Arrivals</h2>
+    <section className="py-8 md:py-16 bg-gradient-to-b from-white via-amber-50/20 to-emerald-50/30 relative overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-emerald-100/30 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-amber-100/30 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
+        {/* Section Header */}
+        <div className="mb-8 md:mb-12 text-center">
+          <div className="inline-block">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-amber-700 via-emerald-700 to-teal-700 bg-clip-text text-transparent">
+              New Arrivals
+            </h2>
+            <div className="mt-2 md:mt-3 h-1 w-20 md:w-24 mx-auto bg-gradient-to-r from-transparent via-emerald-600 to-transparent rounded-full animate-pulse"></div>
+          </div>
+          <p className="mt-3 md:mt-4 text-gray-600 text-sm md:text-lg max-w-2xl mx-auto font-medium">
+            Discover our latest collection of premium products
+          </p>
+        </div>
+
+        {/* Products Grid - Horizontal Scroll on Mobile, Grid on Desktop */}
+        <div className="md:hidden overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <div className="flex gap-3 pb-4">
+            {newArrivals.slice(0, 4).map((item) => (
+              <div key={item.id} className="flex-shrink-0 w-[240px]">
+                <ProductCard product={item?.product || item} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Grid - Hidden on Mobile */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {newArrivals.slice(0, 4).map((item) => (
             <ProductCard key={item.id} product={item?.product || item} />
           ))}

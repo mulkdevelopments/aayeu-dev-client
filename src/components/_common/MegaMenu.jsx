@@ -13,7 +13,7 @@ import useAxios from "@/hooks/useAxios";
 import SearchResults from "./SearchResults";
 import NavMenuCategoryImage from "./NavMenuCategoryImage";
 
-export default function MegaMenu({ activeCategoryData }) {
+export default function MegaMenu({ activeCategoryData, allCategories = [], onCategoryChange }) {
   const router = useRouter();
 
   const [activeCategoryId, setActiveCategoryId] = useState(null);
@@ -144,22 +144,49 @@ export default function MegaMenu({ activeCategoryData }) {
   }, []);
 
   return (
-    <nav className="w-full bg-white relative z-[9999]">
-      {/* ↑ FIX #1: Higher z-index so wishlist heart no longer overlaps */}
+    <nav className="w-full bg-white sticky top-[80px] z-40 shadow-sm">
+      {/* Sticky navigation that stays below the main header */}
 
       <div className="hidden lg:block relative" onMouseLeave={scheduleHide}>
-        {/* Top Level Links */}
-        <div className="flex px-10 py-2 items-center">
-          <div className="flex-[4] flex gap-6 items-center">
+        {/* Combined Navigation - Main Categories + Subcategories */}
+        <div className="border-b">
+          <div className="max-w-7xl mx-auto px-6 h-12 flex gap-6 items-center text-sm overflow-x-auto scrollbar-hide">
+            {/* Main Categories Strip */}
+            {allCategories.length === 0 ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-20 flex-shrink-0" />
+              ))
+            ) : (
+              allCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => onCategoryChange?.(cat)}
+                  className={`transition flex-shrink-0 whitespace-nowrap ${
+                    activeCategoryData?.id === cat.id
+                      ? "font-semibold"
+                      : "opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  {safeCap(cat.name)}
+                </button>
+              ))
+            )}
+
+            {/* Divider */}
+            {allCategories.length > 0 && topLevelCats.length > 0 && (
+              <div className="h-6 w-px bg-gray-300 flex-shrink-0" />
+            )}
+
+            {/* Top Level Subcategories */}
             {topLevelCats.length === 0 ? (
               <div className="flex gap-3">
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-4 w-20 flex-shrink-0" />
+                <Skeleton className="h-4 w-20 flex-shrink-0" />
+                <Skeleton className="h-4 w-20 flex-shrink-0" />
               </div>
             ) : (
               topLevelCats.map((cat) => (
-                <div key={cat.id}>
+                <div key={cat.id} className="flex-shrink-0">
                   <div
                     onMouseEnter={() => openCategory(cat.id)}
                     className="inline-block cursor-pointer"
@@ -167,7 +194,7 @@ export default function MegaMenu({ activeCategoryData }) {
                     <Link
                       href={buildCategoryHref(cat, activeCategoryData)}
                       onClick={handleLinkClick}
-                      className={`text-base font-light transition-colors ${
+                      className={`text-sm font-light transition-colors whitespace-nowrap ${
                         activeCategoryId === cat.id
                           ? "text-red-600"
                           : "hover:text-red-600"
@@ -180,64 +207,37 @@ export default function MegaMenu({ activeCategoryData }) {
               ))
             )}
           </div>
-
-          {/* Search bar */}
-          <div className="flex-[1] relative" ref={searchRef}>
-            <input
-              type="text"
-              placeholder="What are you looking for?"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const q = query.trim();
-                  if (q) {
-                    setSearchVisible(false);
-                    setPanelOpen(false);
-                    setContentVisible(false);
-                    setActiveCategoryId(null);
-                    router.push(`/search?q=${encodeURIComponent(q)}`);
-                  }
-                }
-              }}
-              className="border-b w-full border-gray-400 outline-none px-2 py-1 text-sm placeholder:text-center placeholder:font-semibold"
-              onFocus={() => setSearchVisible(!!query)}
-            />
-
-            {searchVisible && (
-              <SearchResults
-                results={results}
-                loading={loading}
-                query={query}
-                onClose={handleLinkClick}
-              />
-            )}
-          </div>
         </div>
+
 
         {/* Dropdown Panel */}
         <div
-          className={`absolute left-0 top-full w-full bg-white shadow-md z-[9999] transition-all duration-200 ${
+          className={`absolute left-0 top-full w-full bg-white shadow-xl border-t border-gray-200 transition-all duration-300 ${
             panelOpen
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-2 pointer-events-none"
+              ? "opacity-100 translate-y-0 visible"
+              : "opacity-0 -translate-y-2 invisible pointer-events-none"
           }`}
+          style={{ zIndex: 9998 }}
           onMouseEnter={cancelHide}
           onMouseLeave={scheduleHide}
         >
           {/* FIX #2 — If category has no children, do not show empty panel */}
           {activeCategory?.children?.length ? (
             <div
-              className="max-w-[1400px] mx-auto p-8 transition-opacity duration-200 h-[65vh] overflow-auto"
-              style={{ opacity: contentVisible ? 1 : 0 }}
+              className="max-w-[1400px] mx-auto px-8 py-10 transition-opacity duration-300"
+              style={{
+                opacity: contentVisible ? 1 : 0,
+                maxHeight: '70vh',
+                overflowY: 'auto'
+              }}
             >
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-full">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 {/* Left 3 columns */}
-                <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8">
                   {splitIntoColumns(safeChildren(activeCategory), 3).map(
                     (col, i) => (
-                      <div key={i}>
-                        <ul className="space-y-3 text-sm">
+                      <div key={i} className="space-y-6">
+                        <ul className="space-y-4">
                           {col.map((child) => (
                             <li key={child.id}>
                               <Link
@@ -247,13 +247,13 @@ export default function MegaMenu({ activeCategoryData }) {
                                   [activeCategory]
                                 )}
                                 onClick={handleLinkClick}
-                                className="font-medium hover:text-red-600"
+                                className="block text-sm font-semibold text-gray-900 hover:text-red-600 transition-colors duration-200 mb-2"
                               >
                                 {safeCap(child.name)}
                               </Link>
 
                               {child.children?.length > 0 && (
-                                <ul className="mt-2 ml-4 space-y-1 text-gray-600">
+                                <ul className="mt-2 space-y-2 pl-0">
                                   {child.children.map((gc) => (
                                     <li key={gc.id}>
                                       <Link
@@ -263,7 +263,7 @@ export default function MegaMenu({ activeCategoryData }) {
                                           [activeCategory, child]
                                         )}
                                         onClick={handleLinkClick}
-                                        className="hover:text-red-600"
+                                        className="block text-sm text-gray-600 hover:text-red-600 hover:translate-x-1 transition-all duration-200 py-1"
                                       >
                                         {safeCap(gc.name)}
                                       </Link>
@@ -281,7 +281,9 @@ export default function MegaMenu({ activeCategoryData }) {
 
                 {/* Right image placeholder */}
                 <div className="md:col-span-1">
-                  <NavMenuCategoryImage activeCategory={activeCategory} />
+                  <div className="sticky top-4">
+                    <NavMenuCategoryImage activeCategory={activeCategory} />
+                  </div>
                 </div>
               </div>
             </div>

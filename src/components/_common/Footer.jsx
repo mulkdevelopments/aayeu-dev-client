@@ -7,60 +7,50 @@ import {
   FaFacebookF,
   FaPinterestP,
   FaTwitter,
-  FaSnapchatGhost,
-  FaYoutube,
 } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#e6e6e6] border-t">
-      <div className="max-w-[1250px] mx-auto px-4 py-8 md:py-10">
-        {/* ---- Top Section ---- */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {/* Column 1 */}
-          <div className="col-span-2 md:col-span-1">
-            <div className="mb-4">
+    <footer className="bg-white border-t border-gray-200">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Main Content */}
+        <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-16">
+          {/* Brand Section */}
+          <div className="lg:col-span-4">
+            <Link href="/" className="inline-block mb-6">
               <Image
                 src="/assets/images/aayeu_logo.png"
-                alt="Logo"
-                width={180}
-                height={70}
-                className="h-[70px] w-auto object-contain"
+                alt="AAYEU"
+                width={140}
+                height={50}
+                className="h-12 w-auto"
               />
-            </div>
-            <h5 className="text-xl font-light mb-2">AAYEU</h5>
-            <p className="text-base text-gray-700 mb-3 leading-relaxed">
-              At AAYEU, we don’t just sell clothes — we inspire style. Our
-              handpicked collections stand out for quality and originality.
+            </Link>
+            <p className="text-gray-600 text-sm leading-relaxed mb-6 max-w-xs">
+              Curated collections that inspire style. Quality craftsmanship meets timeless design.
             </p>
-            <p className="text-base">
+            <div className="space-y-2 text-sm">
               <Link
                 href="mailto:help@aayeu.com"
-                className="text-gray-800 hover:underline"
+                className="block text-gray-900 hover:text-gray-600 transition-colors"
               >
                 help@aayeu.com
               </Link>
-            </p>
-            <p className="text-sm text-gray-600">Mon - Fri: 10:00 - 6:00 PM</p>
+              <p className="text-gray-500">Mon - Fri: 10:00 AM - 6:00 PM</p>
+            </div>
           </div>
 
-          {/* Column 2 - Top Categories */}
-          <div>
-            <h5 className="text-xl mb-4 font-medium">Top Categories</h5>
-            <ul className="space-y-1.5 text-base">
-              {[
-                "Vacation",
-                "Brands",
-                "Clothing",
-                "Shoes",
-                "Bags",
-                "Accessories",
-                "Jewellery",
-              ].map((item, idx) => (
-                <li key={idx}>
+          {/* Shop Section */}
+          <div className="lg:col-span-2">
+            <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
+              Shop
+            </h3>
+            <ul className="space-y-3">
+              {["Clothing", "Shoes", "Bags", "Accessories", "Jewellery", "Brands"].map((item) => (
+                <li key={item}>
                   <Link
                     href="/shop"
-                    className="text-gray-800 hover:underline transition"
+                    className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                   >
                     {item}
                   </Link>
@@ -69,22 +59,22 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3 - Quick Links */}
-          <div>
-            <h5 className="text-xl mb-4 font-medium">Quick Links</h5>
-            <ul className="space-y-1.5 text-base">
+          {/* Company Section */}
+          <div className="lg:col-span-2">
+            <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
+              Company
+            </h3>
+            <ul className="space-y-3">
               {[
-                { name: "Home", href: "/" },
                 { name: "About Us", href: "/about-us" },
-                { name: "Shop", href: "/shop" },
-                { name: "Contact Us", href: "/contact-us" },
-                { name: "Log in", href: "/auth?type=signin" },
-                { name: "Sign Up", href: "/auth?type=signup" },
-              ].map((link, idx) => (
-                <li key={idx}>
+                { name: "Contact", href: "/contact-us" },
+                { name: "Shipping", href: "/shipping-policy" },
+                { name: "Returns", href: "/refund-policy" },
+              ].map((link) => (
+                <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-800 hover:underline transition"
+                    className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -93,72 +83,93 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 4 - Legal & Social */}
-          <div>
-            <h5 className="text-xl mb-4 font-medium">Legal</h5>
-            <ul className="space-y-1.5 text-base">
+          {/* Account Section */}
+          <div className="lg:col-span-2">
+            <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
+              Account
+            </h3>
+            <ul className="space-y-3">
               {[
-                { name: "Terms & Conditions", href: "/terms-and-conditions" },
-                { name: "Privacy Policy", href: "/privacy-policy" },
-                { name: "Shipping Policy", href: "/shipping-policy" },
-                { name: "Payment Policy", href: "/payment-policy" },
-                { name: "Refund Policy", href: "/refund-policy" },
-              ].map((link, idx) => (
-                <li key={idx}>
+                { name: "Sign In", href: "/auth?type=signin" },
+                { name: "Register", href: "/auth?type=signup" },
+              ].map((link) => (
+                <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-800 hover:underline transition"
+                    className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                   >
                     {link.name}
                   </Link>
                 </li>
               ))}
             </ul>
+          </div>
 
-            <div className="mt-5">
-              <p className="text-sm text-gray-700 mb-2">Follow us</p>
-              <div className="flex items-center space-x-3 text-gray-800 text-xl">
-                <Link href="#">
-                  <FaInstagram className="hover:text-pink-600 transition" />
-                </Link>
-                <Link href="#">
-                  <FaFacebookF className="hover:text-blue-600 transition" />
-                </Link>
-                <Link href="#">
-                  <FaPinterestP className="hover:text-red-600 transition" />
-                </Link>
-                <Link href="#">
-                  <FaTwitter className="hover:text-sky-500 transition" />
-                </Link>
-                <Link href="#">
-                  <FaSnapchatGhost className="hover:text-yellow-500 transition" />
-                </Link>
-                <Link href="#">
-                  <FaYoutube className="hover:text-red-500 transition" />
-                </Link>
-              </div>
+          {/* Newsletter Section */}
+          <div className="lg:col-span-2">
+            <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
+              Follow Us
+            </h3>
+            <div className="flex gap-4">
+              <Link
+                href="#"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label="Instagram"
+              >
+                <FaInstagram className="w-5 h-5" />
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label="Facebook"
+              >
+                <FaFacebookF className="w-5 h-5" />
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label="Pinterest"
+              >
+                <FaPinterestP className="w-5 h-5" />
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label="Twitter"
+              >
+                <FaTwitter className="w-5 h-5" />
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* ---- Bottom Section ---- */}
-        <hr className="my-6 border-gray-400" />
-
-        <div className="flex flex-col md:flex-row justify-between items-center text-sm md:text-base gap-3 pb-4 text-gray-700">
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/privacy-policy" className="hover:underline">
-              Privacy Policy
-            </Link>
-            <Link href="/terms-and-conditions" className="hover:underline">
-              Terms & Conditions
-            </Link>
-            <Link href="/accessibility" className="hover:underline">
-              Accessibility
-            </Link>
+        {/* Bottom Bar */}
+        <div className="border-t border-gray-200 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-500">
+              © 2025 AAYEU. All rights reserved.
+            </p>
+            <div className="flex gap-6 text-sm">
+              <Link
+                href="/privacy-policy"
+                className="text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/terms-and-conditions"
+                className="text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/accessibility"
+                className="text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                Accessibility
+              </Link>
+            </div>
           </div>
-          <p className="text-center text-gray-600">
-            © 2025 AAYEU Limited. All rights reserved.
-          </p>
         </div>
       </div>
     </footer>

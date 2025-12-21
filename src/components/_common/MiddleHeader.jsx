@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, User, Heart, ShoppingBag, Menu } from "lucide-react";
+import { Globe, User, Heart, ShoppingBag, Menu, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import MegaMenu from "./MegaMenu";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
-import { isString, startCase, toLower } from "lodash";
 import {
   Sheet,
   SheetContent,
@@ -22,324 +20,207 @@ import {
 } from "@/components/ui/accordion";
 import useCart from "@/hooks/useCart";
 import useMenu from "@/hooks/useMenu";
+import MegaMenu from "./MegaMenu";
+import { startCase, toLower } from "lodash";
 
 export default function MiddleHeader() {
   const router = useRouter();
   const { isAuthenticated } = useSelector((state) => state.auth);
-
-  const { menu, fetchMenu } = useMenu(); // 🔥 RTK cached menu
-  const [activeCategory, setActiveCategory] = useState(null);
-
   const { items } = useCart();
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { menu, fetchMenu } = useMenu();
 
-  /* --------------------------------------
-    Load Categories once from RTK (cached)
-  ---------------------------------------*/
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
   useEffect(() => {
-    const load = async () => {
-      const res = await fetchMenu();
-      if (res.data?.length > 0) {
-        setActiveCategory(res.data[0]);
-      }
-    };
-    load();
+    fetchMenu().then((res) => {
+      if (res?.data?.length) setActiveCategory(res.data[0]);
+    });
   }, []);
 
-  /** Unified navigation handler */
   const handleNavigation = (path, { requireAuth = true } = {}) => {
     setIsSheetOpen(false);
-
     if (requireAuth && !isAuthenticated) {
       router.push("/auth?type=signin");
       return;
     }
-
     router.push(path);
   };
 
-  /* Utility for formatting category names */
-  const safeCap = (value) => {
-    if (!value) return "";
-    const normalized = String(value)
-      .replace(/[-_/]+/g, " ")
-      .trim();
-    return startCase(toLower(normalized));
-  };
+  const safeCap = (val) =>
+    startCase(toLower(String(val || "").replace(/[-_/]+/g, " ")));
 
-  /* Build nested URLs */
-  const toHref = (item, parents = []) => {
-    const pathParts = parents
-      .map((p) =>
-        encodeURIComponent(toLower(p.name?.replace(/\s+/g, "-") || ""))
-      )
-      .filter(Boolean);
-    if (item.name) {
-      pathParts.push(
-        encodeURIComponent(toLower(item.name.replace(/\s+/g, "-")))
-      );
-    }
-    return `/shop/${pathParts.join("/")}/${item.id}`;
-  };
-  /* On category click */
-  const handleCategoryClick = (cat) => {
-    setActiveCategory(cat);
-
-    const slug = encodeURIComponent(
-      toLower(cat.name?.replace(/\s+/g, "-") || "")
-    );
-    const href = `/shop/${slug}/${cat.id}`;
-
+  const submitSearch = () => {
+    if (!search.trim()) return;
+    router.push(`/search?query=${encodeURIComponent(search.trim())}`);
     setIsSheetOpen(false);
-    router.push(href);
-  };
-  /* Render subcategories (accordion) */
-  const renderSubCategories = (subs = [], parents = []) =>
-    subs.map((sub) => (
-      <AccordionItem key={sub.id} value={sub.id}>
-        <AccordionTrigger className="text-sm font-medium">
-          {safeCap(sub.name)}
-        </AccordionTrigger>
-        <AccordionContent>
-          {sub.children?.length > 0 ? (
-            <ul className="pl-4 space-y-1">
-              {sub.children.map((child) => (
-                <li key={child.id}>
-                  <button
-                    onClick={() =>
-                      handleNavigation(toHref(child, [...parents, sub]), {
-                        requireAuth: false,
-                      })
-                    }
-                    className="text-sm text-gray-600 hover:text-red-500 transition-colors"
-                  >
-                    {safeCap(child.name)}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <button
-              onClick={() =>
-                handleNavigation(toHref(sub, parents), { requireAuth: false })
-              }
-              className="text-sm text-gray-600 hover:text-red-500 transition-colors"
-            >
-              {safeCap(sub.name)}
-            </button>
-          )}
-        </AccordionContent>
-      </AccordionItem>
-    ));
-
-  /* Parent-specific ordering rules */
-  const CHILD_ORDER_MAP = {
-    Man: ["Accessories", "Bags", "Clothing", "Footwear", "Shoes"],
-    Women: ["Clothing", "Accessories", "Shoes", "Bags", "Footwear"],
-    Unisex: ["Shoes", "Clothing", "Bags", "Accessories", "Footwear"],
   };
 
-  const getOrderedChildren = (category) => {
-    if (!category?.children?.length) return [];
-    const order = CHILD_ORDER_MAP[category.name] || [];
-    return [...category.children].sort(
-      (a, b) => order.indexOf(a.name) - order.indexOf(b.name)
-    );
-  };
-  /* -------------------------- RENDER --------------------------- */
+  /* ---------------- DESKTOP / TABLET ---------------- */
   return (
     <>
-      {/* 🖥 Desktop Header */}
-      <header className="relative py-10 hidden lg:block">
-        <div className="relative flex items-center justify-between">
-          {/* Desktop categories */}
-          <div className="absolute left-10 top-1/2 -translate-y-1/2 flex gap-5 text-base font-light font-sans">
-            <div className="flex gap-6 items-center">
-              {menu.length === 0 ? (
-                <div className="text-sm text-gray-500 flex gap-3">
-                  <Skeleton className="h-5 w-20" />
-                  <Skeleton className="h-5 w-20" />
-                  <Skeleton className="h-5 w-20" />
-                </div>
-              ) : (
-                menu.map((cat) => (
-                  <div key={cat.id} className="relative">
-                    <button
-                      onClick={() => handleCategoryClick(cat)}
-                      className={`text-base font-light transition-colors ${
-                        activeCategory?.id === cat.id
-                          ? "font-medium"
-                          : "hover:text-gray-500"
-                      }`}
-                    >
-                      {safeCap(cat.name)}
-                    </button>
-                  </div>
-                ))
-              )}
+      <header className="sticky top-0 z-50 bg-white shadow-sm hidden md:block">
+        <div className="max-w-7xl mx-auto px-6 py-0 grid grid-cols-[auto_1fr_auto] items-center gap-8">
+
+          {/* Logo - Larger */}
+          <Link href="/" className="flex items-center flex-shrink-0">
+            <img
+              src="/assets/images/aayeu_logo.png"
+              alt="Aayeu Logo"
+              className="h-20 w-auto hover:opacity-80 transition-opacity duration-300"
+            />
+          </Link>
+
+          {/* Center Search - Enhanced */}
+          <div className="flex justify-center">
+            <div className="relative w-full max-w-2xl">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+                placeholder="Search for products & brands..."
+                className="w-full h-12 pl-14 pr-6 rounded-full border-2 border-gray-200
+                  focus:border-black focus:ring-0 outline-none text-sm
+                  transition-all duration-300 placeholder:text-gray-400"
+              />
             </div>
           </div>
 
-          {/* Logo */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Link href="/">
-              <img
-                src="/assets/images/aayeu_logo.png"
-                alt="Logo"
-                width={50}
-                height={115}
-                className="object-contain"
-              />
-            </Link>
-          </div>
-
-          {/* Right Icons */}
-          <div className="absolute right-10 top-1/2 -translate-y-1/2 flex items-center gap-6">
-            <Globe className="cursor-pointer hover:text-gray-400" />
-            <User
+          {/* Right Icons - Premium Styling */}
+          <div className="flex items-center gap-6 flex-shrink-0">
+            <button
               onClick={() =>
                 handleNavigation("/profile-overview", { requireAuth: true })
               }
-              className="cursor-pointer hover:text-gray-400"
-            />
-            <Heart
+              className="group flex flex-col items-center gap-1 transition-transform duration-200 hover:scale-110"
+            >
+              <User className="w-6 h-6 text-gray-700 group-hover:text-black transition-colors" />
+              <span className="text-[10px] text-gray-600 group-hover:text-black font-medium">Account</span>
+            </button>
+
+            <button
               onClick={() =>
                 handleNavigation("/wishlists", { requireAuth: true })
               }
-              className="cursor-pointer hover:text-gray-400"
-            />
-            <div className="relative">
-              <ShoppingBag
-                onClick={() =>
-                  handleNavigation("/cart", { requireAuth: false })
-                }
-                className="cursor-pointer hover:text-gray-400"
-              />
+              className="group flex flex-col items-center gap-1 transition-transform duration-200 hover:scale-110"
+            >
+              <Heart className="w-6 h-6 text-gray-700 group-hover:text-red-500 transition-colors" />
+              <span className="text-[10px] text-gray-600 group-hover:text-red-500 font-medium">Wishlist</span>
+            </button>
+
+            <button
+              onClick={() =>
+                handleNavigation("/cart", { requireAuth: false })
+              }
+              className="group relative flex flex-col items-center gap-1 transition-transform duration-200 hover:scale-110"
+            >
+              <ShoppingBag className="w-6 h-6 text-gray-700 group-hover:text-black transition-colors" />
+              <span className="text-[10px] text-gray-600 group-hover:text-black font-medium">Cart</span>
               {items.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-semibold">
+                <span className="absolute -top-1 -right-2 bg-gradient-to-br from-[#FFD77A] via-[#D4AF37] to-[#8B6B1F]
+                  text-[#2A1E05] text-[10px] min-w-[20px] h-[20px] rounded-full flex items-center justify-center
+                  font-bold shadow-md border border-[#F5E6A8] animate-pulse">
                   {items.length}
                 </span>
               )}
-            </div>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* 📱 Mobile Header */}
-      <header className="py-4 px-4 flex justify-between items-center lg:hidden">
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Menu className="w-6 h-6 cursor-pointer" />
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[85%] p-0 flex flex-col">
-            <SheetHeader className="border-b">
-              {/* Quick Actions */}
-              <div className="px-2 py-2 flex justify-around items-center mt-5">
-                <Globe className="w-6 h-6 text-gray-700" />
+      {/* ---------------- MOBILE ---------------- */}
+      <header className="md:hidden sticky top-0 z-50 bg-white shadow-md">
+        <div className="h-16 px-4 flex items-center justify-between">
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <Menu className="w-6 h-6 text-gray-700" />
+              </button>
+            </SheetTrigger>
 
-                <User
-                  onClick={() =>
-                    handleNavigation("/profile-overview", { requireAuth: true })
-                  }
-                  className="w-6 h-6 text-gray-700"
-                />
-                <Heart
-                  onClick={() =>
-                    handleNavigation("/wishlists", { requireAuth: true })
-                  }
-                  className="w-6 h-6 text-gray-700"
-                />
+            <SheetContent side="left" className="p-0 w-[85%]">
+              <SheetHeader className="p-4 border-b bg-gradient-to-r from-gray-50 to-white">
                 <div className="relative">
-                  <ShoppingBag
-                    onClick={() =>
-                      handleNavigation("/cart", { requireAuth: false })
-                    }
-                    className="w-6 h-6"
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    placeholder="Search products..."
+                    className="w-full h-11 pl-11 pr-4 rounded-full border-2 border-gray-200
+                      focus:border-black focus:ring-0 outline-none text-sm"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitSearch()}
                   />
-                  {items.length > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-semibold">
-                      {items.length}
-                    </span>
-                  )}
                 </div>
+              </SheetHeader>
+
+              <div className="p-4 space-y-2">
+                {menu.map((cat) => (
+                  <Accordion key={cat.id} type="single" collapsible>
+                    <AccordionItem value={cat.id} className="border-none">
+                      <AccordionTrigger className="py-3 hover:no-underline hover:bg-gray-50 px-3 rounded-lg">
+                        <span className="font-semibold text-gray-900">{safeCap(cat.name)}</span>
+                      </AccordionTrigger>
+                      <AccordionContent className="pl-6 pr-3 space-y-1 pt-2">
+                        {cat.children?.map((sub) => (
+                          <button
+                            key={sub.id}
+                            onClick={() =>
+                              handleNavigation(
+                                `/shop/${toLower(sub.name)}/${sub.id}`,
+                                { requireAuth: false }
+                              )
+                            }
+                            className="block w-full text-left text-sm text-gray-600 hover:text-black
+                              py-2 px-3 rounded-md hover:bg-gray-50 transition-colors"
+                          >
+                            {safeCap(sub.name)}
+                          </button>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                ))}
               </div>
+            </SheetContent>
+          </Sheet>
 
-              {/* Search bar */}
-              <input
-                type="text"
-                placeholder="Search for products..."
-                className="w-full border-b border-gray-300 px-4 py-2 text-sm focus:outline-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const value = e.target.value.trim();
-                    if (value.length > 0) {
-                      setIsSheetOpen(false);
-                      router.push(`/search?query=${encodeURIComponent(value)}`);
-                    }
-                  }
-                }}
-              />
-            </SheetHeader>
+          {/* Mobile Logo - Larger */}
+          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+            <img
+              src="/assets/images/aayeu_logo.png"
+              className="h-12 w-auto"
+              alt="Aayeu"
+            />
+          </Link>
 
-            {/* Main category tabs */}
-            <div className="flex overflow-x-auto gap-3 px-4 py-2 border-b">
-              {menu.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`whitespace-nowrap px-4 py-2 text-sm ${
-                    activeCategory?.id === cat.id
-                      ? "border-b-2 border-gray-900 text-gray-900"
-                      : "text-gray-700 border-b-2 border-transparent"
-                  }`}
-                >
-                  {safeCap(cat.name)}
-                </button>
-              ))}
-            </div>
-
-            {/* Subcategory Accordion */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {activeCategory?.children?.length ? (
-                <Accordion type="single" collapsible>
-                  {renderSubCategories(getOrderedChildren(activeCategory), [
-                    activeCategory,
-                  ])}
-                </Accordion>
-              ) : (
-                <p className="text-gray-500 text-sm">No subcategories found.</p>
-              )}
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        {/* Logo */}
-        <Link href="/">
-          <img
-            src="/assets/images/aayeu_logo.png"
-            alt="Logo"
-            width={50}
-            height={25}
-            className="object-contain"
-          />
-        </Link>
-
-        <ShoppingBag
-          onClick={() => handleNavigation("/cart", { requireAuth: false })}
-          className="w-6 h-6 cursor-pointer"
-        />
+          {/* Mobile Cart - Enhanced */}
+          <button
+            onClick={() => handleNavigation("/cart", { requireAuth: false })}
+            className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ShoppingBag className="w-6 h-6 text-gray-700" />
+            {items.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-gradient-to-br from-[#FFD77A] via-[#D4AF37] to-[#8B6B1F]
+                text-[#2A1E05] text-[10px] min-w-[18px] h-[18px] rounded-full flex items-center justify-center
+                font-bold shadow-md border border-[#F5E6A8]">
+                {items.length}
+              </span>
+            )}
+          </button>
+        </div>
       </header>
 
-      {/* Desktop Mega Menu */}
+      {/* Mega Menu */}
       <MegaMenu
         activeCategoryData={
           activeCategory
-            ? {
-                ...activeCategory,
-                children: getOrderedChildren(activeCategory),
-              }
+            ? { ...activeCategory, children: activeCategory.children }
             : null
         }
+        allCategories={menu}
+        onCategoryChange={setActiveCategory}
       />
     </>
   );
