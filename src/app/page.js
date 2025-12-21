@@ -12,12 +12,12 @@ export default function Home() {
     <>
       <HeroVideoSection />
       <NewArrivals title="New Arrivals" />
-      <SaleSection />
-      <FullBanner />
+      {/* <SaleSection /> */}
       <BestSellers />
+      {/* <FullBanner /> */}
       <ShopTheLook />
-    
-      <AboutContactSection />
+
+      {/* <AboutContactSection /> */}
     </>
   );
 }

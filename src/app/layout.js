@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import TopStrip from "@/components/_common/TopStrip";
 import MiddleHeader from "@/components/_common/MiddleHeader";
 import Footer from "@/components/_common/Footer";
+import MobileBottomNav from "@/components/_common/MobileBottomNav";
 import AppProviders from "@/providers/AppProviders";
 import Script from "next/script";
 import Analytics from "@/components/_common/Analytics";
@@ -47,8 +48,16 @@ export default function RootLayout({ children }) {
           <Analytics />
           <TopStrip />
           <MiddleHeader />
-          {children}
+
+          {/* Main Content with Mobile Bottom Padding */}
+          <main className="pb-0 md:pb-0">
+            {children}
+          </main>
+
           <Footer />
+
+          {/* Mobile Bottom Navigation */}
+          <MobileBottomNav />
         </AppProviders>
       </body>
     </html>

@@ -167,4 +167,11 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+
+  /* Mobile bottom navigation safe area */
+  @media (max-width: 767px) {
+    body {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
 }

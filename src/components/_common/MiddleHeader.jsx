@@ -132,10 +132,10 @@ export default function MiddleHeader() {
 
       {/* ---------------- MOBILE ---------------- */}
       <header className="md:hidden sticky top-0 z-50 bg-white shadow-md">
-        <div className="h-16 px-4 flex items-center justify-between">
+        <div className="h-16 px-4 flex items-center justify-between gap-3">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
                 <Menu className="w-6 h-6 text-gray-700" />
               </button>
             </SheetTrigger>
@@ -186,29 +186,28 @@ export default function MiddleHeader() {
             </SheetContent>
           </Sheet>
 
-          {/* Mobile Logo - Larger */}
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+          {/* Mobile Search Bar */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+              placeholder="Search..."
+              className="w-full h-10 pl-10 pr-3 rounded-full border-2 border-gray-200
+                focus:border-amber-500 focus:ring-0 outline-none text-sm
+                transition-all duration-300 placeholder:text-gray-400"
+            />
+          </div>
+
+          {/* Mobile Logo - Compact */}
+          <Link href="/" className="flex-shrink-0">
             <img
               src="/assets/images/aayeu_logo.png"
-              className="h-12 w-auto"
+              className="h-10 w-auto"
               alt="Aayeu"
             />
           </Link>
-
-          {/* Mobile Cart - Enhanced */}
-          <button
-            onClick={() => handleNavigation("/cart", { requireAuth: false })}
-            className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ShoppingBag className="w-6 h-6 text-gray-700" />
-            {items.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gradient-to-br from-[#FFD77A] via-[#D4AF37] to-[#8B6B1F]
-                text-[#2A1E05] text-[10px] min-w-[18px] h-[18px] rounded-full flex items-center justify-center
-                font-bold shadow-md border border-[#F5E6A8]">
-                {items.length}
-              </span>
-            )}
-          </button>
         </div>
       </header>
 

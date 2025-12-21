@@ -8,6 +8,7 @@ import {
   FaPinterestP,
   FaTwitter,
 } from "react-icons/fa";
+import NewsletterForm from "../_pages/home/NewsletterForm";
 
 export default function Footer() {
   return (
@@ -108,38 +109,46 @@ export default function Footer() {
           {/* Newsletter Section */}
           <div className="lg:col-span-2">
             <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
-              Follow Us
+              Newsletter
             </h3>
-            <div className="flex gap-4">
-              <Link
-                href="#"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                aria-label="Instagram"
-              >
-                <FaInstagram className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                aria-label="Facebook"
-              >
-                <FaFacebookF className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                aria-label="Pinterest"
-              >
-                <FaPinterestP className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                aria-label="Twitter"
-              >
-                <FaTwitter className="w-5 h-5" />
-              </Link>
-            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Sign up and get 10% off your first order
+            </p>
+            <NewsletterForm />
+          </div>
+        </div>
+
+        {/* Social Media Section */}
+        <div className="border-t border-gray-200 py-8">
+          <div className="flex justify-center gap-6">
+            <Link
+              href="#"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="Instagram"
+            >
+              <FaInstagram className="w-6 h-6" />
+            </Link>
+            <Link
+              href="#"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="Facebook"
+            >
+              <FaFacebookF className="w-6 h-6" />
+            </Link>
+            <Link
+              href="#"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="Pinterest"
+            >
+              <FaPinterestP className="w-6 h-6" />
+            </Link>
+            <Link
+              href="#"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="Twitter"
+            >
+              <FaTwitter className="w-6 h-6" />
+            </Link>
           </div>
         </div>
 

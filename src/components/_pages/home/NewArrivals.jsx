@@ -23,14 +23,11 @@ export default function NewArrivals() {
         {/* Section Header */}
         <div className="mb-8 md:mb-12 text-center">
           <div className="inline-block">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-amber-700 via-emerald-700 to-teal-700 bg-clip-text text-transparent">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-black">
               New Arrivals
             </h2>
-            <div className="mt-2 md:mt-3 h-1 w-20 md:w-24 mx-auto bg-gradient-to-r from-transparent via-emerald-600 to-transparent rounded-full animate-pulse"></div>
+            {/* <div className="mt-2 md:mt-3 h-1 w-20 md:w-24 mx-auto bg-black rounded-full animate-pulse"></div> */}
           </div>
-          <p className="mt-3 md:mt-4 text-gray-600 text-sm md:text-lg max-w-2xl mx-auto font-medium">
-            Discover our latest collection of premium products
-          </p>
         </div>
 
         {/* Products Grid - Horizontal Scroll on Mobile, Grid on Desktop */}

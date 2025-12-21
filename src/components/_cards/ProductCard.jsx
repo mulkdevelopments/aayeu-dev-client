@@ -87,7 +87,7 @@ export default function ProductCard({
         onMouseLeave={() => setHovered(false)}
       >
         {/* Card Container - Responsive Border & Shadow */}
-        <div className="flex-1 flex flex-col bg-white rounded-xl md:rounded-2xl border-2 border-amber-400/60 overflow-hidden transition-all duration-500 hover:border-amber-500 hover:shadow-[0_10px_40px_rgba(217,119,6,0.25)] hover:-translate-y-1 md:hover:-translate-y-2">
+        <div className="flex-1 flex flex-col bg-white rounded-xl md:rounded-2xl border-2 border-amber-400/60 overflow-hidden transition-all duration-500 active:scale-95 md:active:scale-100 hover:border-amber-500 hover:shadow-[0_10px_40px_rgba(217,119,6,0.25)] hover:-translate-y-1 md:hover:-translate-y-2">
 
           {/* Image Section - Responsive Sizing */}
           <div className="relative w-full overflow-hidden bg-gradient-to-br from-amber-50/30 via-white to-emerald-50/20 aspect-[4/5]">

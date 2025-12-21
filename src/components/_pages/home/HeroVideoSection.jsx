@@ -84,7 +84,7 @@ export default function HeroVideoSection() {
 
   /* ------------------ RENDER ------------------ */
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-black">
+    <section className="relative w-full h-[60vh] md:h-[80vh] lg:h-screen overflow-hidden bg-black">
       {/* Background */}
       <div className="absolute inset-0">
         {isVideo ? (
@@ -120,17 +120,17 @@ export default function HeroVideoSection() {
       )}
 
       {/* Content */}
-      <div className="relative z-20 flex flex-col justify-end h-full pb-12 px-4">
+      <div className="relative z-20 flex flex-col justify-center md:justify-end h-full pb-6 md:pb-12 px-4">
         <div className="max-w-[1600px] mx-auto w-full">
 
           {/* Title */}
           {topBanner?.title && (
-            <div className="text-center mb-10">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl text-white font-light">
+            <div className="text-center mb-6 md:mb-10">
+              <h1 className="text-2xl md:text-6xl lg:text-7xl text-white font-light">
                 {topBanner.title}
               </h1>
               {topBanner.subtitle && (
-                <p className="text-white/80 mt-2">
+                <p className="text-white/80 mt-1 md:mt-2 text-sm md:text-base">
                   {topBanner.subtitle}
                 </p>
               )}
@@ -138,7 +138,7 @@ export default function HeroVideoSection() {
           )}
 
           {/* 🔥 SMOOTH CAROUSEL */}
-          <div className="relative h-[360px] md:h-[420px] flex items-center justify-center overflow-hidden">
+          <div className="relative h-[280px] md:h-[360px] lg:h-[420px] flex items-center justify-center overflow-hidden">
             {overlayItems.map((item, index) => {
               const pos = getPosition(index)
               if (Math.abs(pos) > 2) return null
@@ -213,10 +213,10 @@ export default function HeroVideoSection() {
 
           {/* CTA */}
           {topBanner?.button_text && (
-            <div className="text-center mt-10">
+            <div className="text-center mt-6 md:mt-10">
               <Link
                 href={topBanner.link_url}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black rounded-full hover:bg-black hover:text-white transition"
+                className="inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-4 bg-white text-black rounded-full hover:bg-black hover:text-white transition text-sm md:text-base"
               >
                 {topBanner.button_text}
                 <i className="bi bi-arrow-right" />
