@@ -138,7 +138,7 @@ export default function HeroVideoSection() {
           )}
 
           {/* 🔥 SMOOTH CAROUSEL */}
-          <div className="relative h-[280px] md:h-[360px] lg:h-[420px] flex items-center justify-center overflow-hidden">
+          <div className="relative h-[320px] md:h-[400px] lg:h-[460px] flex items-center justify-center overflow-visible">
             {overlayItems.map((item, index) => {
               const pos = getPosition(index)
               if (Math.abs(pos) > 2) return null
@@ -172,24 +172,25 @@ export default function HeroVideoSection() {
                   }}
                 >
                   {/* Card */}
-                  <div className="w-[160px] md:w-[240px] rounded-3xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
+                  <div className="relative w-[160px] md:w-[240px] rounded-3xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
+                    {/* Discount Badge */}
+                    {discount > 0 && (
+                      <span className="absolute top-3 right-3 z-10
+                        rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide
+                        bg-gradient-to-br from-[#FFD77A] via-[#D4AF37] to-[#8B6B1F]
+                        text-[#2A1E05]
+                        shadow-[0_0_12px_rgba(212,175,55,0.6)]
+                        border border-[#F5E6A8]
+                        animate-flash">
+                        −{discount}% OFF
+                      </span>
+                    )}
+
                     <div className="aspect-square p-5 flex items-center justify-center">
                       <img
                         src={product_image || "/assets/images/fallback.jpg"}
                         className="w-full h-full object-contain drop-shadow-xl"
                       />
-                  {discount > 0 && (
-  <span className="absolute top-3 right-3 
-    rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide
-    bg-gradient-to-br from-[#FFD77A] via-[#D4AF37] to-[#8B6B1F]
-    text-[#2A1E05]
-    shadow-[0_0_12px_rgba(212,175,55,0.6)]
-    border border-[#F5E6A8]
-    animate-flash">
-    −{discount}% OFF
-  </span>
-)}
-
                     </div>
 
                     <div className="p-4 text-center bg-black/50">
