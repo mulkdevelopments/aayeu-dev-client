@@ -1,5 +1,6 @@
 "use client";
 
+import NewArrivals from "@/components/_pages/home/NewArrivals";
 import BenefitsSection from "@/components/_pages/product-details/BenefitsSection";
 import ProductInfoSection from "@/components/_pages/product-details/ProductInfoSection";
 import ProductReviewsSection from "@/components/_pages/product-details/ProductReviewsSection";
@@ -16,7 +17,7 @@ function ProductDetailsPage() {
       <SimilarProductsSection />
 
       <ProductReviewsSection />
-
+ <NewArrivals title="New Arrivals" />
       {/* Tiny utilities to match original CSS where Tailwind lacks a utility */}
       <style>{`
         .no-scrollbar{ scrollbar-width:none; -ms-overflow-style:none; }

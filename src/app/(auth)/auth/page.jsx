@@ -15,15 +15,14 @@ export default function AuthenticationPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-gray-900 font-poppins">
-      <div className="max-w-6xl mx-auto px-4 py-16">
+    <main className="min-h-screen bg-gradient-to-b from-white via-amber-50/10 to-white text-gray-900 font-poppins">
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
         {type === "magic-login" ? (
           <>
             <MagicLogin />
           </>
         ) : (
-          <div className="grid items-center gap-8 md:grid-cols-12">
-            <VideoSection />
+          <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
             <AuthForm type={type} />
           </div>
         )}

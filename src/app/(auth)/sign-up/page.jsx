@@ -32,7 +32,7 @@ export default function SignupPage() {
       <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="grid gap-8 md:grid-cols-12 items-center">
           {/* Video Column */}
-          <div className="col-span-12 md:col-span-7">
+          {/* <div className="col-span-12 md:col-span-7">
             <div className="relative w-full h-80 md:h-[520px] overflow-hidden">
               <video
                 className="w-full object-contain"
@@ -47,7 +47,7 @@ export default function SignupPage() {
                 Your browser does not support the video tag.
               </video>
             </div>
-          </div>
+          </div> */}
 
           {/* Signup Form Column */}
           <div className="col-span-12 md:col-span-5">
