@@ -100,7 +100,7 @@ export default function AuthForm() {
             ? "/users/send-magic-link"
             : "/auth/forgot-password",
       method: "POST",
-      payload: { ...payload, redirectUrl: window.location.origin },
+      payload: { ...payload, redirectUrl: process.env.NEXT_PUBLIC_APP_URL },
     });
 
     if (error) return showToast("error", error);
