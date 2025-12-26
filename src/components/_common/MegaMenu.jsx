@@ -143,6 +143,37 @@ export default function MegaMenu({ activeCategoryData, allCategories = [], onCat
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Recursive function to render category tree with unlimited depth
+  const renderCategoryTree = (category, breadcrumbs, level) => {
+    const hasChildren = category.children && category.children.length > 0;
+    const isTopLevel = level === 0;
+
+    return (
+      <li key={category.id}>
+        <Link
+          href={buildCategoryHref(category, activeCategoryData, breadcrumbs)}
+          onClick={handleLinkClick}
+          className={`block text-sm transition-colors duration-200 mb-2 ${
+            isTopLevel
+              ? "font-semibold text-gray-900 hover:text-red-600"
+              : "text-gray-600 hover:text-red-600 hover:translate-x-1 transition-all py-1"
+          }`}
+          style={{ paddingLeft: `${level * 12}px` }}
+        >
+          {safeCap(category.name)}
+        </Link>
+
+        {hasChildren && (
+          <ul className={`mt-2 space-y-2 ${isTopLevel ? "pl-0" : "pl-2"}`}>
+            {category.children.map((child) =>
+              renderCategoryTree(child, [...breadcrumbs, category], level + 1)
+            )}
+          </ul>
+        )}
+      </li>
+    );
+  };
+
   return (
     <nav className="w-full bg-white sticky top-[80px] z-40 shadow-sm">
       {/* Sticky navigation that stays below the main header */}
@@ -238,41 +269,9 @@ export default function MegaMenu({ activeCategoryData, allCategories = [], onCat
                     (col, i) => (
                       <div key={i} className="space-y-6">
                         <ul className="space-y-4">
-                          {col.map((child) => (
-                            <li key={child.id}>
-                              <Link
-                                href={buildCategoryHref(
-                                  child,
-                                  activeCategoryData,
-                                  [activeCategory]
-                                )}
-                                onClick={handleLinkClick}
-                                className="block text-sm font-semibold text-gray-900 hover:text-red-600 transition-colors duration-200 mb-2"
-                              >
-                                {safeCap(child.name)}
-                              </Link>
-
-                              {child.children?.length > 0 && (
-                                <ul className="mt-2 space-y-2 pl-0">
-                                  {child.children.map((gc) => (
-                                    <li key={gc.id}>
-                                      <Link
-                                        href={buildCategoryHref(
-                                          gc,
-                                          activeCategoryData,
-                                          [activeCategory, child]
-                                        )}
-                                        onClick={handleLinkClick}
-                                        className="block text-sm text-gray-600 hover:text-red-600 hover:translate-x-1 transition-all duration-200 py-1"
-                                      >
-                                        {safeCap(gc.name)}
-                                      </Link>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </li>
-                          ))}
+                          {col.map((child) =>
+                            renderCategoryTree(child, [activeCategory], 0)
+                          )}
                         </ul>
                       </div>
                     )

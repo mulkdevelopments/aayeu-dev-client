@@ -57,6 +57,52 @@ export default function MiddleHeader() {
     setIsSheetOpen(false);
   };
 
+  // Recursive function to render mobile category tree with unlimited depth
+  const renderMobileCategoryTree = (category, level = 0) => {
+    const hasChildren = category.children && category.children.length > 0;
+
+    if (!hasChildren) {
+      // Leaf node - render as clickable button
+      return (
+        <button
+          key={category.id}
+          onClick={() =>
+            handleNavigation(
+              `/shop/${toLower(category.name)}/${category.id}`,
+              { requireAuth: false }
+            )
+          }
+          className="block w-full text-left text-sm text-gray-600 hover:text-black
+            py-2 px-3 rounded-md hover:bg-gray-50 transition-colors"
+          style={{ paddingLeft: `${(level + 1) * 12}px` }}
+        >
+          {safeCap(category.name)}
+        </button>
+      );
+    }
+
+    // Parent node - render with nested accordion
+    return (
+      <Accordion key={category.id} type="single" collapsible>
+        <AccordionItem value={category.id} className="border-none">
+          <AccordionTrigger
+            className="py-2 hover:no-underline hover:bg-gray-50 px-3 rounded-lg text-sm"
+            style={{ paddingLeft: `${level * 12}px` }}
+          >
+            <span className={level === 0 ? "font-semibold text-gray-900" : "font-medium text-gray-700"}>
+              {safeCap(category.name)}
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="space-y-1 pt-1">
+            {category.children.map((child) =>
+              renderMobileCategoryTree(child, level + 1)
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    );
+  };
+
   /* ---------------- DESKTOP / TABLET ---------------- */
   return (
     <>
@@ -156,32 +202,7 @@ export default function MiddleHeader() {
               </SheetHeader>
 
               <div className="p-4 space-y-2">
-                {menu.map((cat) => (
-                  <Accordion key={cat.id} type="single" collapsible>
-                    <AccordionItem value={cat.id} className="border-none">
-                      <AccordionTrigger className="py-3 hover:no-underline hover:bg-gray-50 px-3 rounded-lg">
-                        <span className="font-semibold text-gray-900">{safeCap(cat.name)}</span>
-                      </AccordionTrigger>
-                      <AccordionContent className="pl-6 pr-3 space-y-1 pt-2">
-                        {cat.children?.map((sub) => (
-                          <button
-                            key={sub.id}
-                            onClick={() =>
-                              handleNavigation(
-                                `/shop/${toLower(sub.name)}/${sub.id}`,
-                                { requireAuth: false }
-                              )
-                            }
-                            className="block w-full text-left text-sm text-gray-600 hover:text-black
-                              py-2 px-3 rounded-md hover:bg-gray-50 transition-colors"
-                          >
-                            {safeCap(sub.name)}
-                          </button>
-                        ))}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                ))}
+                {menu.map((cat) => renderMobileCategoryTree(cat))}
               </div>
             </SheetContent>
           </Sheet>
