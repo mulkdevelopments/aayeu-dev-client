@@ -6,10 +6,12 @@ import { ShoppingBag } from "lucide-react";
 import { slugifyProductName } from "@/utils/seoHelpers";
 import STATIC from "@/utils/constants";
 import useHomeConfig from "@/hooks/useHomeConfig";
+import useCurrency from "@/hooks/useCurrency";
 
 export default function BestSellers() {
   const router = useRouter();
   const { bestSellers, fetchBestSellers } = useHomeConfig();
+  const { format } = useCurrency();
 
   useEffect(() => {
     fetchBestSellers();
@@ -80,7 +82,7 @@ export default function BestSellers() {
               "Product";
 
             const price = variant?.price ?? product?.price ?? null;
-            const oldPrice = variant?.sale_price ?? product?.sale_price ?? null;
+            const mrp = variant?.mrp ?? product?.mrp ?? null;
 
             const productId =
               product?.id ?? product?.pid ?? product?.productid ?? idx;
@@ -159,11 +161,11 @@ export default function BestSellers() {
                   {/* price */}
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-light">
-                      AED {price !== null ? formatPrice(price) : "—"}
+                      {price !== null ? format(price) : "—"}
                     </span>
-                    {oldPrice && (
+                    {mrp && mrp !== price && (
                       <span className="line-through text-neutral-400">
-                        AED {formatPrice(oldPrice)}
+                        {format(mrp)}
                       </span>
                     )}
                   </div>

@@ -9,12 +9,20 @@ import useAxios from "@/hooks/useAxios";
 import { showToast } from "@/providers/ToastProvider";
 import CartAddressSection from "./CartAddressSection";
 import CartCouponSection from "./CartCouponSection";
+import useCurrency from "@/hooks/useCurrency";
 
 import { selectCartTotals } from "@/store/selectors/cartSelectors";
+import { selectSelectedCurrency, selectExchangeRates, selectCurrencyInfo } from "@/store/slices/currencySlice";
 
 export default function CartSummarySection() {
   const router = useRouter();
   const { isAuthenticated } = useSelector((state) => state.auth);
+  const { format } = useCurrency();
+
+  // Get currency data for payment
+  const selectedCurrency = useSelector(selectSelectedCurrency);
+  const exchangeRates = useSelector(selectExchangeRates);
+  const currencyInfo = useSelector(selectCurrencyInfo);
 
   const cartTotals = useSelector(selectCartTotals);
 
@@ -84,6 +92,14 @@ export default function CartSummarySection() {
       return;
     }
 
+    // PKR currency warning (Stripe doesn't support PKR)
+    if (selectedCurrency === "PKR") {
+      showToast(
+        "info",
+        "Pakistani Rupee (PKR) is not supported for payments. Checkout will process in EUR."
+      );
+    }
+
     try {
       setLoading(true);
       const { data, error } = await createSession({
@@ -95,6 +111,10 @@ export default function CartSummarySection() {
           shipping_address_id: shippingAddress,
           couponCode: appliedCoupon?.coupon?.code || null,
           couponId: appliedCoupon?.coupon?.id || null,
+          // Currency information for payment processing
+          selectedCurrency: selectedCurrency,
+          exchangeRate: exchangeRates[selectedCurrency] || 1,
+          currencySymbol: currencyInfo?.symbol || "€",
         },
       });
 
@@ -121,24 +141,28 @@ export default function CartSummarySection() {
 
       <div className="flex justify-between font-light">
         <span>Subtotal:</span>
-        <span>AED {updatedTotals.subtotal?.toFixed(2)}</span>
+        <span>{format(updatedTotals.subtotal || 0)}</span>
       </div>
 
       {appliedCoupon && (
         <div className="flex justify-between text-green-700 font-light">
           <span>Coupon ({appliedCoupon.coupon.code}):</span>
-          <span>-AED {appliedCoupon.discount.toFixed(2)}</span>
+          <span>-{format(appliedCoupon.discount)}</span>
         </div>
       )}
 
-      <div className="flex justify-between font-light">
-        <span>Delivery:</span>
-        <span>
-          {appliedCoupon?.free_shipping
-            ? "Free"
-            : `AED ${updatedTotals.shipping_cost?.toFixed(2) || "0.00"}`}
-        </span>
-      </div>
+    <div className="flex justify-between items-center font-light">
+  <span>Delivery:</span>
+
+  {appliedCoupon?.free_shipping || updatedTotals.shipping_cost === 0 ? (
+    <span className="relative inline-flex items-center px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-md border border-dashed border-green-400">
+     🎉 You got Free Delivery!
+    </span>
+  ) : (
+    <span>{format(updatedTotals.shipping_cost)}</span>
+  )}
+</div>
+
 
       <hr className="my-3" />
 
@@ -155,7 +179,7 @@ export default function CartSummarySection() {
       <div className="flex justify-between font-medium text-lg">
         <span>Total:</span>
         <span className="text-[#d9b554] font-semibold">
-          AED {updatedTotals.total_payable?.toFixed(2)}
+          {format(updatedTotals.total_payable || 0)}
         </span>
       </div>
 

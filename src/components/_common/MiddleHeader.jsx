@@ -21,6 +21,7 @@ import {
 import useCart from "@/hooks/useCart";
 import useMenu from "@/hooks/useMenu";
 import MegaMenu from "./MegaMenu";
+import CurrencySelector from "./CurrencySelector";
 import { startCase, toLower } from "lodash";
 
 export default function MiddleHeader() {
@@ -136,6 +137,8 @@ export default function MiddleHeader() {
 
           {/* Right Icons - Premium Styling */}
           <div className="flex items-center gap-6 flex-shrink-0">
+            <CurrencySelector />
+
             <button
               onClick={() =>
                 handleNavigation("/profile-overview", { requireAuth: true })

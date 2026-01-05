@@ -5,6 +5,7 @@ import CTAButton from "@/components/_common/CTAButton";
 import { Heart, Truck, Shield, RefreshCcw } from "lucide-react";
 import useWishlist from "@/hooks/useWishlist";
 import { showToast } from "@/providers/ToastProvider";
+import useCurrency from "@/hooks/useCurrency";
 
 const ProductInfoDetailsSection = forwardRef(
   (
@@ -25,6 +26,7 @@ const ProductInfoDetailsSection = forwardRef(
   ) => {
     const [isOutOfStock, setIsOutOfStock] = useState(false);
     const { toggleWishlist, isWishlisted } = useWishlist();
+    const { format } = useCurrency();
 
     // ✅ Extract unique sizes
     const sizes = useMemo(() => {
@@ -80,8 +82,8 @@ const ProductInfoDetailsSection = forwardRef(
       if (!product) return { price: null, mrp: null, discountPct: null };
       const variant =
         product.variants?.find((v) => v.stock > 0) || product.variants?.[0];
-      const price = variant?.sale_price ?? variant?.price ?? product.min_price;
-      const mrp = variant?.mrp ?? variant?.price ?? product.max_price;
+      const price = variant?.price ?? product.min_price;
+      const mrp = variant?.mrp ?? product.max_price;
       const discountPct =
         price && mrp && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
       return { price, mrp, discountPct };
@@ -125,15 +127,14 @@ const ProductInfoDetailsSection = forwardRef(
             {/* Price Section */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-baseline gap-2">
-                <span className="text-xs text-gray-500 font-medium">AED</span>
                 <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                  {displayPrice.price ?? "—"}
+                  {displayPrice.price ? format(displayPrice.price) : "—"}
                 </span>
               </div>
               {displayPrice.mrp && displayPrice.mrp > displayPrice.price && (
                 <>
                   <span className="text-lg text-gray-400 line-through font-medium">
-                    AED {displayPrice.mrp}
+                    {format(displayPrice.mrp)}
                   </span>
                   {displayPrice.discountPct && (
                     <span className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white text-sm font-bold px-3 py-1 rounded-full">

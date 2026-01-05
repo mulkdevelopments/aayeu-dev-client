@@ -5,11 +5,13 @@ import { selectTopBanner } from "@/store/selectors/homeConfigSelectors"
 import { useEffect, useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import Link from "next/link"
+import useCurrency from "@/hooks/useCurrency"
 
 export default function HeroVideoSection() {
   const { fetchHomeConfig, productOverlayHome, fetchProductOverlayHome } =
     useHomeConfig()
   const topBanner = useSelector(selectTopBanner)
+  const { format } = useCurrency()
 
   const videoRef = useRef(null)
   const [isPaused, setIsPaused] = useState(false)
@@ -147,14 +149,14 @@ export default function HeroVideoSection() {
                 id,
                 title,
                 mrp,
-                sale_price,
+                price,
                 product_image,
                 product_redirect_url,
               } = item
 
               const discount =
-                mrp && sale_price && mrp !== sale_price
-                  ? Math.round(((mrp - sale_price) / mrp) * 100)
+                mrp && price && mrp !== price
+                  ? Math.round(((mrp - price) / mrp) * 100)
                   : 0
 
               return (
@@ -198,11 +200,11 @@ export default function HeroVideoSection() {
                         {title}
                       </h3>
                       <p className="text-white font-bold mt-1">
-                        AED {sale_price ?? mrp}
+                        {format(price || mrp)}
                       </p>
                       {discount > 0 && (
                         <p className="text-white/50 text-xs line-through">
-                          AED {mrp}
+                          {format(mrp)}
                         </p>
                       )}
                     </div>

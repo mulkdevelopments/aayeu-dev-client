@@ -9,6 +9,7 @@ import STATIC from "@/utils/constants";
 import useWishlist from "@/hooks/useWishlist";
 import { useSelector } from "react-redux";
 import { showToast } from "@/providers/ToastProvider";
+import useCurrency from "@/hooks/useCurrency";
 
 export default function ProductCard({
   product,
@@ -16,6 +17,7 @@ export default function ProductCard({
   useNextImage = true,
 }) {
   const { isAuthenticated } = useSelector((state) => state.auth);
+  const { format } = useCurrency();
 
   const [hovered, setHovered] = useState(false);
   const [showPrice, setShowPrice] = useState(false);
@@ -56,9 +58,8 @@ export default function ProductCard({
   const hoverImage = imagesFromVariant[1] ?? primaryImage;
 
   const mrp = firstVariant?.mrp ?? null;
-  const salePrice =
-    firstVariant?.sale_price ?? firstVariant?.price ?? minPrice ?? null;
-  const displayPrice = salePrice ?? minPrice ?? null;
+  const price = firstVariant?.price ?? minPrice ?? null;
+  const displayPrice = price ?? minPrice ?? null;
 
   let discountPercent = 0;
   if (mrp && displayPrice && mrp > displayPrice) {
@@ -209,7 +210,7 @@ export default function ProductCard({
                     }`}
                   >
                     <span className="text-xs md:text-sm line-through text-gray-400 font-medium relative">
-                      AED {mrp}
+                      {format(mrp)}
                       <span className="absolute inset-0 border-t-2 border-red-500 transform rotate-[-8deg] animate-[drawLine_0.6s_ease-out]"></span>
                     </span>
                     <span className="text-[10px] md:text-xs text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded">
@@ -225,19 +226,15 @@ export default function ProductCard({
                         : "translate-y-full opacity-0"
                     }`}
                   >
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xs text-gray-500 font-medium">AED</span>
-                      <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                        {displayPrice}
-                      </span>
-                    </div>
+                    <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                      {format(displayPrice)}
+                    </span>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-baseline gap-1 h-8 md:h-10">
-                  <span className="text-xs text-gray-500 font-medium">AED</span>
                   <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-amber-700 via-amber-600 to-yellow-700 bg-clip-text text-transparent">
-                    {displayPrice || "N/A"}
+                    {displayPrice ? format(displayPrice) : "N/A"}
                   </span>
                 </div>
               )}

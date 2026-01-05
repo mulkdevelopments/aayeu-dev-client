@@ -10,7 +10,7 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     const { data, error } = await getOrders({
-      url: "/users/get-paid-orders",
+      url: "/users/get-paid-orders?order_status=all",
       method: "GET",
       authRequired: true,
     });

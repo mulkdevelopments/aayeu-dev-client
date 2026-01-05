@@ -15,7 +15,7 @@ export default function Home() {
       {/* <SaleSection /> */}
       <BestSellers />
       {/* <FullBanner /> */}
-      <ShopTheLook />
+      {/* <ShopTheLook /> */}
 
       {/* <AboutContactSection /> */}
     </>

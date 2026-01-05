@@ -5,6 +5,7 @@ import CTAButton from "../_common/CTAButton";
 import Link from "next/link";
 import { slugifyProductName } from "@/utils/seoHelpers";
 import useWishlist from "@/hooks/useWishlist";
+import useCurrency from "@/hooks/useCurrency";
 
 function WishlistCard({ item, onRemove, onAddToBag }) {
   if (!item) return null;
@@ -13,6 +14,7 @@ function WishlistCard({ item, onRemove, onAddToBag }) {
     item;
 
   const { toggleWishlist } = useWishlist();
+  const { format } = useCurrency();
 
   return (
     <div className="bg-white overflow-hidden flex flex-col transition">
@@ -41,7 +43,7 @@ function WishlistCard({ item, onRemove, onAddToBag }) {
 
         {/* Price */}
         <div className="text-gray-900 text-sm font-medium">
-          AED {Number(snap_min_price) || "N/A"}
+          {snap_min_price ? format(snap_min_price) : "N/A"}
         </div>
       </div>
 

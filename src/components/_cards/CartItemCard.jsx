@@ -8,12 +8,14 @@ import { slugifyProductName } from "@/utils/seoHelpers";
 import useWishlist from "@/hooks/useWishlist";
 import { useSelector } from "react-redux";
 import SignupDialog from "../_dialogs/SignupDialog";
+import useCurrency from "@/hooks/useCurrency";
 
 export default function CartItemCard({ product, onQtyChange, onRemove }) {
   if (!product) return null;
 
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { isWishlisted, toggleWishlist } = useWishlist();
+  const { format } = useCurrency();
 
   if (process.env.NODE_ENV === "development")
     console.log("Rendering CartItemCard for product:", product);
@@ -107,14 +109,14 @@ export default function CartItemCard({ product, onQtyChange, onRemove }) {
           {/* Right: Price */}
           <div className="text-left sm:text-right space-y-0.5">
             <p className="font-light text-gray-700">
-              Price: AED {price.toFixed(2)}
+              Price: {format(price)}
             </p>
             {discount_percent > 0 && (
               <p className="text-red-500 text-sm">
                 Discount: -{discount_percent}%
               </p>
             )}
-            <p className="font-medium">Total: AED {total.toFixed(2)}</p>
+            <p className="font-medium">Total: {format(total)}</p>
           </div>
         </div>
 

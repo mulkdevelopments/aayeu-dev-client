@@ -6,6 +6,7 @@ import TextField from "@/components/_fields/TextField";
 import { showToast } from "@/providers/ToastProvider";
 import useAxios from "@/hooks/useAxios";
 import { useSelector } from "react-redux";
+import useCurrency from "@/hooks/useCurrency";
 
 export default function CartCouponSection({
   cartTotals,
@@ -16,6 +17,7 @@ export default function CartCouponSection({
 }) {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { request: applyCouponAPI } = useAxios();
+  const { format } = useCurrency();
 
   const [couponCode, setCouponCode] = useState(
     appliedCoupon?.coupon?.code ||
@@ -201,8 +203,8 @@ export default function CartCouponSection({
 
           <ul className="mt-2 text-gray-700 text-xs space-y-1">
             <li>
-              <strong>Discount:</strong> AED {appliedCoupon.discount.toFixed(2)}{" "}
-              applied on AED {appliedCoupon.applied_on_amount.toFixed(2)}
+              <strong>Discount:</strong> {format(appliedCoupon.discount)}{" "}
+              applied on {format(appliedCoupon.applied_on_amount)}
             </li>
             {appliedCoupon.free_shipping && (
               <li className="text-green-600">🚚 Free shipping enabled</li>

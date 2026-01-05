@@ -10,6 +10,7 @@ import cartReducer from "./slices/cartSlice";
 import homeConfigReducer from "./slices/homeConfigSlice";
 import policiesReducer from "./slices/policiesSlice";
 import menuReducer from "./slices/menuSlice";
+import currencyReducer from "./slices/currencySlice";
 
 /* -----------------------------------------------------------
    Persist configs
@@ -17,6 +18,7 @@ import menuReducer from "./slices/menuSlice";
 const authPersistConfig = { key: "auth", storage };
 const wishlistPersistConfig = { key: "wishlist", storage };
 const cartPersistConfig = { key: "cart", storage };
+const currencyPersistConfig = { key: "currency", storage };
 
 /* -----------------------------------------------------------
    App reducer
@@ -25,6 +27,7 @@ const appReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   wishlist: persistReducer(wishlistPersistConfig, wishlistReducer),
   cart: persistReducer(cartPersistConfig, cartReducer),
+  currency: persistReducer(currencyPersistConfig, currencyReducer),
   homeConfig: homeConfigReducer, // ❗ NOT persisted
   policies: policiesReducer, // ❗ NOT persisted
   menu: menuReducer, // ❗ NOT persisted
@@ -38,6 +41,7 @@ const rootReducer = (state, action) => {
     storage.removeItem("persist:auth");
     storage.removeItem("persist:wishlist");
     storage.removeItem("persist:cart");
+    // Keep currency on logout
     return appReducer(undefined, action);
   }
 
@@ -47,6 +51,7 @@ const rootReducer = (state, action) => {
       "auth",
       "wishlist",
       "cart",
+      "currency",
       "homeConfig",
       "policies",
       "menu",
