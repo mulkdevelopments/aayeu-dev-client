@@ -88,7 +88,7 @@ export default function ProductCard({
         onMouseLeave={() => setHovered(false)}
       >
         {/* Card Container - Responsive Border & Shadow */}
-        <div className="flex-1 flex flex-col bg-white rounded-xl md:rounded-2xl border-2 border-amber-400/60 overflow-hidden transition-all duration-500 active:scale-95 md:active:scale-100 hover:border-amber-500 hover:shadow-[0_10px_40px_rgba(217,119,6,0.25)] hover:-translate-y-1 md:hover:-translate-y-2">
+        <div className="flex-1 flex flex-col bg-white rounded-xl md:rounded-2xl border-2  overflow-hidden transition-all duration-500 active:scale-95 md:active:scale-100 hover:border-gray-300 hover:shadow-[0_10px_40px_rgba(217,119,6,0.25)] hover:-translate-y-1 md:hover:-translate-y-2">
 
           {/* Image Section - Responsive Sizing */}
           <div className="relative w-full overflow-hidden bg-gradient-to-br from-amber-50/30 via-white to-emerald-50/20 aspect-[4/5]">
@@ -131,7 +131,7 @@ export default function ProductCard({
             {/* Discount Badge - Gold Color */}
             {discountPercent > 0 && (
               <div className="absolute top-2 left-2 md:top-3 md:left-3 z-30">
-                <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full shadow-lg border border-amber-400/50">
+                <div className="bg-black text-white text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full shadow-lg border border-amber-400/50">
                   -{discountPercent}% OFF
                 </div>
               </div>

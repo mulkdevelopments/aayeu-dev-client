@@ -33,7 +33,10 @@ export default function CurrencySelector() {
             className="cursor-pointer flex items-center justify-between"
           >
             <span>
-              {currency.symbol} {currency.code}
+              {currency.code==="EUR" ? "Europe" : ""}
+              {currency.code==="AED" ? "UAE" : ""}
+              {currency.code==="INR" ? "INDIA" : ""}
+              {currency.code==="PKR" ? "PAKISTAN" : ""}
             </span>
             {selectedCurrency === currency.code && (
               <span className="text-green-600">✓</span>

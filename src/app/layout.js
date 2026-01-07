@@ -8,6 +8,7 @@ import MobileBottomNav from "@/components/_common/MobileBottomNav";
 import AppProviders from "@/providers/AppProviders";
 import Script from "next/script";
 import Analytics from "@/components/_common/Analytics";
+import CountrySelectionModal from "@/components/_common/CountrySelectionModal";
 import { GA_TRACKING_ID } from "@/utils/constants";
 
 // ✅ Import Poppins with all weights you want
@@ -46,6 +47,7 @@ export default function RootLayout({ children }) {
 
         <AppProviders>
           <Analytics />
+          <CountrySelectionModal />
           <TopStrip />
           <MiddleHeader />
 

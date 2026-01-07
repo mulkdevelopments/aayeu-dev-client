@@ -23,7 +23,7 @@ export default function NewArrivals() {
         {/* Section Header */}
         <div className="mb-8 md:mb-12 text-center">
           <div className="inline-block">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-black">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl  tracking-tight text-black">
               New Arrivals
             </h2>
             {/* <div className="mt-2 md:mt-3 h-1 w-20 md:w-24 mx-auto bg-black rounded-full animate-pulse"></div> */}
