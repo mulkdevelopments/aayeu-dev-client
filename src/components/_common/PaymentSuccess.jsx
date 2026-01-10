@@ -40,7 +40,9 @@ export default function PaymentSuccess() {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh] text-gray-600">
         <Spinner className="h-8 w-8" />
-        <p className="text-2xl mt-3">Verifying your payment, please wait...</p>
+      <p className="text-2xl mt-3">
+  We’re verifying your payment. Please don’t close this window.
+</p>
       </div>
     );
   }

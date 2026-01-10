@@ -107,7 +107,7 @@ export default function MiddleHeader() {
   /* ---------------- DESKTOP / TABLET ---------------- */
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white shadow-sm hidden md:block">
+      <header className="sticky top-0 z-55 bg-white shadow-sm hidden md:block">
         <div className="max-w-7xl mx-auto px-6 py-0 grid grid-cols-[auto_1fr_auto] items-center gap-8">
 
           {/* Logo - Larger */}
