@@ -86,14 +86,26 @@ export default function MiddleHeader() {
     return (
       <Accordion key={category.id} type="single" collapsible>
         <AccordionItem value={category.id} className="border-none">
-          <AccordionTrigger
-            className="py-2 hover:no-underline hover:bg-gray-50 px-3 rounded-lg text-sm"
-            style={{ paddingLeft: `${level * 12}px` }}
-          >
-            <span className={level === 0 ? "font-semibold text-gray-900" : "font-medium text-gray-700"}>
-              {safeCap(category.name)}
-            </span>
-          </AccordionTrigger>
+          <div className="flex items-center">
+            <button
+              onClick={() =>
+                handleNavigation(
+                  `/shop/${toLower(category.name)}/${category.id}`,
+                  { requireAuth: false }
+                )
+              }
+              className="flex-1 text-left py-2 px-3 rounded-lg text-sm hover:bg-gray-100 transition-colors"
+              style={{ paddingLeft: `${level * 12}px` }}
+            >
+              <span className={level === 0 ? "font-semibold text-gray-900" : "font-medium text-gray-700"}>
+                {safeCap(category.name)}
+              </span>
+            </button>
+            <AccordionTrigger
+              className="py-2 hover:no-underline hover:bg-gray-50 px-3 rounded-lg text-sm w-8 flex-shrink-0"
+            >
+            </AccordionTrigger>
+          </div>
           <AccordionContent className="space-y-1 pt-1">
             {category.children.map((child) =>
               renderMobileCategoryTree(child, level + 1)
@@ -204,7 +216,7 @@ export default function MiddleHeader() {
                 </div>
               </SheetHeader>
 
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-120px)]">
                 {menu.map((cat) => renderMobileCategoryTree(cat))}
               </div>
             </SheetContent>
