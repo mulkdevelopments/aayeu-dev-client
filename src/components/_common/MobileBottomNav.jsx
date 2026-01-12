@@ -77,12 +77,12 @@ export default function MobileBottomNav() {
   return (
     <>
       {/* Bottom Navigation - Always Fixed */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white backdrop-blur-xl border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        {/* Decorative Gold Bar */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
+        {/* Decorative Black Bar */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-black"></div>
 
         {/* Navigation Items */}
-        <div className="flex items-center justify-around h-20 px-3 max-w-md mx-auto relative">
+        <div className="flex items-center justify-around h-16 px-3 max-w-md mx-auto relative">
           {navItems.map((item, index) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -94,57 +94,50 @@ export default function MobileBottomNav() {
                 onClick={handleNavigation(item)}
                 className="relative flex flex-col items-center justify-center flex-1 h-full group"
               >
-                {/* Active Background Glow */}
-                {active && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-amber-500/10 to-yellow-500/5 rounded-full blur-xl"></div>
-                  </div>
-                )}
-
                 {/* Icon Container */}
                 <div className="relative z-10 flex flex-col items-center">
                   {/* Icon Background */}
                   <div
-                    className={`relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 ${
+                    className={`relative flex items-center justify-center w-11 h-11 rounded-md transition-all duration-200 ${
                       active
-                        ? "bg-gradient-to-br from-amber-500 via-amber-400 to-yellow-500 shadow-[0_4px_16px_rgba(245,158,11,0.3)]"
-                        : "bg-gray-50 border border-gray-200 group-hover:border-amber-400/50 group-hover:bg-amber-50/50"
+                        ? "bg-black"
+                        : "bg-transparent group-hover:bg-gray-100"
                     }`}
                   >
                     {/* Icon */}
                     <Icon
                       size={22}
                       strokeWidth={active ? 2.5 : 2}
-                      className={`transition-all duration-300 ${
+                      className={`transition-all duration-200 ${
                         active
-                          ? "text-white scale-110"
-                          : "text-gray-700 group-hover:text-amber-600 group-hover:scale-105"
+                          ? "text-white"
+                          : "text-gray-600 group-hover:text-black"
                       }`}
                     />
 
                     {/* Badge */}
                     {item.badge && (
-                      <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] flex items-center justify-center bg-gradient-to-br from-amber-400 to-yellow-500 text-white text-[10px] font-extrabold rounded-full border-2 border-white shadow-lg">
+                      <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-black text-white text-[10px] font-bold rounded-full border-2 border-white">
                         {item.badge > 99 ? "99+" : item.badge}
                       </div>
                     )}
                   </div>
 
                   {/* Label */}
-                  {/* <span
-                    className={`text-[9px] font-bold mt-1.5 tracking-wide transition-all duration-300 uppercase ${
+                  <span
+                    className={`text-[10px] font-medium mt-1 transition-all duration-200 ${
                       active
-                        ? "text-amber-400"
-                        : "text-white/60 group-hover:text-white"
+                        ? "text-black"
+                        : "text-gray-500"
                     }`}
                   >
                     {item.name}
-                  </span> */}
+                  </span>
                 </div>
 
-                {/* Active Indicator Dot */}
+                {/* Active Indicator Line */}
                 {active && (
-                  <div className="absolute -bottom-1 w-1 h-1 bg-amber-400 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.8)]"></div>
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-black"></div>
                 )}
               </Link>
             );
@@ -152,7 +145,7 @@ export default function MobileBottomNav() {
         </div>
 
         {/* Safe Area for Devices with Home Indicator */}
-        <div className="h-[env(safe-area-inset-bottom)] bg-black"></div>
+        <div className="h-[env(safe-area-inset-bottom)] bg-white"></div>
       </nav>
     </>
   );
