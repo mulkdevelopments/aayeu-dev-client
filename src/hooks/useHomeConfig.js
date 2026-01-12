@@ -8,6 +8,7 @@ import {
   setNewArrivals,
   setProductOverlayHome,
   setSaleSection,
+  setBrandSpotlights,
 } from "@/store/slices/homeConfigSlice";
 
 const CACHE_TIME = 1000 * 60 * 10; // 10 minutes
@@ -178,6 +179,32 @@ export default function useHomeConfig() {
     [timestamps.saleSection, request, config.saleSection, dispatch]
   );
 
+  /* -----------------------------------
+       BRAND SPOTLIGHTS
+  -------------------------------------- */
+  const fetchBrandSpotlights = useCallback(
+    async ({ force = false } = {}) => {
+      const last = timestamps.brandSpotlights;
+
+      if (!force && last && Date.now() - last < CACHE_TIME)
+        return { cached: true, data: config.brandSpotlights };
+
+      const { data, error } = await request({
+        url: "/users/get-active-brand-spotlights",
+        method: "GET",
+      });
+
+      if (error) return { error };
+
+      const payload = data?.data?.items ?? data?.items ?? data?.data ?? [];
+      const arr = Array.isArray(payload) ? payload : [];
+
+      dispatch(setBrandSpotlights(arr));
+      return { data: arr };
+    },
+    [timestamps.brandSpotlights, request, config.brandSpotlights, dispatch]
+  );
+
   return {
     config,
 
@@ -186,6 +213,7 @@ export default function useHomeConfig() {
     fetchNewArrivals,
     fetchProductOverlayHome,
     fetchSaleSection,
+    fetchBrandSpotlights,
 
     // Shortcuts
     topBanner: config.topBanner,
@@ -197,5 +225,6 @@ export default function useHomeConfig() {
     newArrivals: config.newArrivals,
     productOverlayHome: config.productOverlayHome,
     saleSection: config.saleSection,
+    brandSpotlights: config.brandSpotlights,
   };
 }

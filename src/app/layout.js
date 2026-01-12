@@ -1,15 +1,10 @@
 // app/layout.tsx
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";
-import TopStrip from "@/components/_common/TopStrip";
-import MiddleHeader from "@/components/_common/MiddleHeader";
-import Footer from "@/components/_common/Footer";
-import MobileBottomNav from "@/components/_common/MobileBottomNav";
 import AppProviders from "@/providers/AppProviders";
 import Script from "next/script";
-import Analytics from "@/components/_common/Analytics";
-import CountrySelectionModal from "@/components/_common/CountrySelectionModal";
 import { GA_TRACKING_ID } from "@/utils/constants";
+import ConditionalLayout from "@/components/ConditionalLayout";
 
 // ✅ Import Poppins with all weights you want
 const poppins = Poppins({
@@ -46,20 +41,9 @@ export default function RootLayout({ children }) {
         </Script>
 
         <AppProviders>
-          <Analytics />
-          <CountrySelectionModal />
-          <TopStrip />
-          <MiddleHeader />
-
-          {/* Main Content with Mobile Bottom Padding */}
-          <main className="pb-0 md:pb-0">
+          <ConditionalLayout>
             {children}
-          </main>
-
-          <Footer />
-
-          {/* Mobile Bottom Navigation */}
-          <MobileBottomNav />
+          </ConditionalLayout>
         </AppProviders>
       </body>
     </html>

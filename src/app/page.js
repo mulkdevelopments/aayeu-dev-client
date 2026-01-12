@@ -1,6 +1,7 @@
 // app/page.tsx
 import AboutContactSection from "@/components/_pages/home/AboutContactSection";
 import BestSellers from "@/components/_pages/home/BestSellers";
+import BrandsSection from "@/components/_pages/home/BrandsSection";
 import FullBanner from "@/components/_pages/home/FullBanner";
 import HeroVideoSection from "@/components/_pages/home/HeroVideoSection";
 import NewArrivals from "@/components/_pages/home/NewArrivals";
@@ -11,6 +12,7 @@ export default function Home() {
   return (
     <>
       <HeroVideoSection />
+      <BrandsSection />
       <NewArrivals title="New Arrivals" />
       {/* <SaleSection /> */}
       <BestSellers />

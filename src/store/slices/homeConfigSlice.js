@@ -10,6 +10,7 @@ const initialState = {
   // product lists
   bestSellers: [],
   newArrivals: [],
+  brandSpotlights: [],
 
   // optional home sections
   productOverlay: null,
@@ -25,7 +26,8 @@ const initialState = {
     bestSellers: null,
     newArrivals: null,
     productOverlayHome: null,
-    saleSection: null, // ✅ Added
+    saleSection: null,
+    brandSpotlights: null,
   },
 };
 
@@ -75,6 +77,12 @@ const homeConfigSlice = createSlice({
       state.timestamps.saleSection = Date.now();
     },
 
+    // Brand Spotlights Setter
+    setBrandSpotlights(state, action) {
+      state.brandSpotlights = Array.isArray(action.payload) ? action.payload : [];
+      state.timestamps.brandSpotlights = Date.now();
+    },
+
     updateHomeSection(state, action) {
       const { section, data } = action.payload;
       if (section in state) {
@@ -94,6 +102,7 @@ export const {
   setNewArrivals,
   setProductOverlayHome,
   setSaleSection,
+  setBrandSpotlights,
   updateHomeSection,
   clearHomeConfig,
 } = homeConfigSlice.actions;
