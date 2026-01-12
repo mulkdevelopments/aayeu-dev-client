@@ -158,6 +158,7 @@ export default function ProductInfoSection() {
         customFooter={
           <div className="flex flex-col sm:flex-row justify-center gap-3 mt-6">
             <CTAButton
+              variant="outline"
               onClick={() => {
                 router.back();
                 setShowSuccessDialog(false);
@@ -167,7 +168,7 @@ export default function ProductInfoSection() {
               Continue Shopping
             </CTAButton>
             <CTAButton
-              color="gold"
+              color="black"
               onClick={() => {
                 setShowSuccessDialog(false);
                 router.push("/cart");

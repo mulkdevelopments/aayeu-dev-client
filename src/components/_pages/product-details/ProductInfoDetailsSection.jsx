@@ -114,31 +114,31 @@ const ProductInfoDetailsSection = forwardRef(
           <div className="space-y-6">
             {/* Brand */}
             {product.brand_name && (
-              <div className="text-amber-600 text-sm font-semibold uppercase tracking-wider">
+              <div className="text-gray-500 text-sm font-bold uppercase tracking-widest">
                 {product.brand_name}
               </div>
             )}
 
             {/* Title */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black leading-tight">
               {product.title ?? product.name}
             </h1>
 
             {/* Price Section */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                <span className="text-3xl md:text-4xl font-bold text-black">
                   {displayPrice.price ? format(displayPrice.price) : "—"}
                 </span>
               </div>
               {displayPrice.mrp && displayPrice.mrp > displayPrice.price && (
                 <>
-                  <span className="text-lg text-gray-400 line-through font-medium">
+                  <span className="text-lg text-gray-400 line-through font-normal">
                     {format(displayPrice.mrp)}
                   </span>
                   {displayPrice.discountPct && (
-                    <span className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white text-sm font-bold px-3 py-1 rounded-full">
-                      SAVE {displayPrice.discountPct}%
+                    <span className="bg-black text-white text-sm font-bold px-3 py-1 rounded">
+                      {displayPrice.discountPct}% OFF
                     </span>
                   )}
                 </>
@@ -161,7 +161,7 @@ const ProductInfoDetailsSection = forwardRef(
             {/* Color Selector */}
             {colors.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                <h3 className="text-sm font-bold text-black uppercase tracking-widest">
                   Color{selectedColor && `: ${selectedColor}`}
                 </h3>
                 <div className="flex gap-3 flex-wrap">
@@ -169,10 +169,10 @@ const ProductInfoDetailsSection = forwardRef(
                     <button
                       key={c}
                       onClick={() => setSelectedColor(c)}
-                      className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
+                      className={`px-4 py-2 rounded border-2 text-sm font-medium transition-all duration-200 ${
                         selectedColor === c
-                          ? "border-amber-500 bg-amber-50 text-amber-900 shadow-md scale-105"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                          ? "border-black bg-black text-white"
+                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-500"
                       }`}
                     >
                       {c}
@@ -186,10 +186,10 @@ const ProductInfoDetailsSection = forwardRef(
             {sizes.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                  <h3 className="text-sm font-bold text-black uppercase tracking-widest">
                     Size{selectedSize && `: ${selectedSize}`}
                   </h3>
-                  <button className="text-xs text-amber-600 hover:text-amber-700 font-medium underline">
+                  <button className="text-xs text-gray-600 hover:text-black font-medium underline">
                     Size Guide
                   </button>
                 </div>
@@ -207,12 +207,12 @@ const ProductInfoDetailsSection = forwardRef(
                         key={s}
                         onClick={() => !outOfStock && setSelectedSize(s)}
                         disabled={outOfStock}
-                        className={`min-w-[60px] px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-all duration-200 ${
+                        className={`min-w-[60px] px-4 py-3 rounded border-2 text-sm font-semibold transition-all duration-200 ${
                           outOfStock
                             ? "border-gray-200 bg-gray-100 text-gray-400 line-through cursor-not-allowed"
                             : selectedSize === s
-                            ? "border-amber-500 bg-amber-50 text-amber-900 shadow-md scale-105"
-                            : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
+                            ? "border-black bg-black text-white"
+                            : "border-gray-300 bg-white text-gray-700 hover:border-gray-500"
                         }`}
                       >
                         {s}
@@ -224,10 +224,10 @@ const ProductInfoDetailsSection = forwardRef(
                 <div className="flex items-center gap-2">
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      isOutOfStock ? "bg-red-500" : "bg-emerald-500"
+                      isOutOfStock ? "bg-gray-400" : "bg-black"
                     }`}
                   ></div>
-                  <span className={`text-sm font-medium ${isOutOfStock ? "text-red-600" : "text-emerald-600"}`}>
+                  <span className={`text-sm font-medium ${isOutOfStock ? "text-gray-500" : "text-black"}`}>
                     {isOutOfStock ? "Out of Stock" : "In Stock"}
                   </span>
                 </div>
@@ -244,16 +244,16 @@ const ProductInfoDetailsSection = forwardRef(
                 onClick={handleAddToCart}
                 loading={addingToCart}
                 disabled={isOutOfStock}
-                className="flex-1 h-14 text-base font-semibold"
+                className="flex-1 h-14 text-base font-semibold bg-black hover:bg-gray-800 text-white disabled:bg-gray-300 disabled:text-gray-500"
               >
                 {isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}
               </CTAButton>
               <button
                 onClick={handleWishlistToggle}
-                className={`w-14 h-14 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${
+                className={`w-14 h-14 rounded border-2 flex items-center justify-center transition-all duration-200 ${
                   isWishlisted(product.id)
-                    ? "border-red-500 bg-red-50 text-red-600"
-                    : "border-gray-300 bg-white text-gray-600 hover:border-red-400 hover:text-red-500"
+                    ? "border-black bg-black text-white"
+                    : "border-gray-300 bg-white text-gray-600 hover:border-black hover:text-black"
                 }`}
               >
                 <Heart
