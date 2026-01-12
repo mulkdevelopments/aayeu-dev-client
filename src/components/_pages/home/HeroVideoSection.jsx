@@ -138,9 +138,9 @@ export default function HeroVideoSection() {
               )}
             </div>
           )}
-
+{/* --------------------------------------------------------------------------------------------------------------------------------- */}
           {/* 🔥 SMOOTH CAROUSEL - COMMENTED OUT */}
-          {/* <div className="relative h-[320px] md:h-[400px] lg:h-[460px] flex items-center justify-center overflow-visible">
+          <div className="relative h-[320px] md:h-[400px] lg:h-[460px] flex items-center justify-center overflow-visible">
             {overlayItems.map((item, index) => {
               const pos = getPosition(index)
               if (Math.abs(pos) > 2) return null
@@ -197,21 +197,21 @@ export default function HeroVideoSection() {
                       <h3 className="text-white text-sm font-semibold truncate">
                         {title}
                       </h3>
-                      <p className="text-white font-bold mt-1">
+                      {/* <p className="text-white font-bold mt-1">
                         {format(price || mrp)}
-                      </p>
-                      {discount > 0 && (
+                      </p> */}
+                      {/* {discount > 0 && (
                         <p className="text-white/50 text-xs line-through">
                           {format(mrp)}
                         </p>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 </Link>
               )
             })}
-          </div> */}
-
+          </div>
+{/* -------------------------------------------------------------------------------------- */}
           {/* CTA */}
           {topBanner?.button_text && (
             <div className="text-center mt-6 md:mt-10">

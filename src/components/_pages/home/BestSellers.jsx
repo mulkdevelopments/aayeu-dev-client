@@ -102,24 +102,27 @@ export default function BestSellers() {
               >
                 {/* Image */}
           {/* Image */}
-<div className="relative overflow-hidden rounded-t-2xl">
+<div className="relative overflow-hidden rounded-t-2xl aspect-[3/4] bg-neutral-800">
   <img
     src={image}
     alt={name}
     className="
-      w-full h-[220px] object-contain
+      absolute inset-0
+      w-full h-full
+      object-cover
       transition-transform duration-700
       group-hover:scale-105
     "
   />
 
+
   {/* GOLD BEST SELLER TAG */}
   <div className="
     absolute top-3 right-3
-    bg-gradient-to-br from-[#E6C15A] via-[#D4AF37] to-[#B8962E]
-    text-black
+    bg-black
+    text-white
     text-[10px] tracking-widest
-    px-3 py-1 rounded-full
+    px-3 py-1 rounded-md
     shadow-lg
     uppercase
   ">

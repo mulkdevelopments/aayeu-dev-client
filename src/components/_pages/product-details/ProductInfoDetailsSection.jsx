@@ -21,12 +21,23 @@ const ProductInfoDetailsSection = forwardRef(
       handleAddToCart,
       addingToCart,
       router,
+      liveStockData,
+      stockLoading,
     },
     ref
   ) => {
     const [isOutOfStock, setIsOutOfStock] = useState(false);
     const { toggleWishlist, isWishlisted } = useWishlist();
     const { format } = useCurrency();
+
+    // Helper function to get live stock for a variant
+    const getLiveStock = (variantSize) => {
+      if (!liveStockData || !liveStockData.stockBySize) return null;
+      const stockItem = liveStockData.stockBySize.find(
+        (s) => s.size?.toLowerCase() === variantSize?.toLowerCase()
+      );
+      return stockItem?.quantity ?? 0;
+    };
 
     // ✅ Extract unique sizes
     const sizes = useMemo(() => {
@@ -64,7 +75,7 @@ const ProductInfoDetailsSection = forwardRef(
       }
     }, [product, selectedColor, selectedSize, setSelectedColor, setSelectedSize]);
 
-    // ✅ Stock logic
+    // ✅ Stock logic - NO fallback to DB stock
     useEffect(() => {
       if (!product?.variants?.length) return;
 
@@ -74,8 +85,26 @@ const ProductInfoDetailsSection = forwardRef(
           (!selectedSize || v.variant_size === selectedSize)
       );
 
-      setIsOutOfStock(!variant || variant.stock <= 0);
-    }, [product, selectedColor, selectedSize]);
+      if (!variant) {
+        setIsOutOfStock(true);
+        return;
+      }
+
+      // Only use live stock for vendors with individual syncing capability
+      if (product.vendor_capabilities?.has_individual_syncing) {
+        // If live stock data is available, use it
+        if (liveStockData) {
+          const liveStock = getLiveStock(variant.variant_size);
+          setIsOutOfStock(liveStock <= 0);
+        } else {
+          // No live data available (loading or failed) - show out of stock
+          setIsOutOfStock(true);
+        }
+      } else {
+        // Vendor doesn't support individual syncing - show out of stock
+        setIsOutOfStock(true);
+      }
+    }, [product, selectedColor, selectedSize, liveStockData, stockLoading]);
 
     // ✅ Price
     const displayPrice = useMemo(() => {
@@ -194,42 +223,78 @@ const ProductInfoDetailsSection = forwardRef(
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {sizes.map((s) => {
-                    const variant = product.variants.find(
-                      (v) =>
-                        v.variant_size === s &&
-                        (!selectedColor || v.variant_color === selectedColor)
-                    );
-                    const outOfStock = !variant || variant.stock <= 0;
-
-                    return (
-                      <button
+                  {stockLoading && product.vendor_capabilities?.has_individual_syncing ? (
+                    // Show skeleton loaders for size buttons while loading
+                    sizes.map((s) => (
+                      <div
                         key={s}
-                        onClick={() => !outOfStock && setSelectedSize(s)}
-                        disabled={outOfStock}
-                        className={`min-w-[60px] px-4 py-3 rounded border-2 text-sm font-semibold transition-all duration-200 ${
-                          outOfStock
-                            ? "border-gray-200 bg-gray-100 text-gray-400 line-through cursor-not-allowed"
-                            : selectedSize === s
-                            ? "border-black bg-black text-white"
-                            : "border-gray-300 bg-white text-gray-700 hover:border-gray-500"
-                        }`}
+                        className="min-w-[60px] px-4 py-3 rounded border-2 border-gray-200 bg-gray-100 animate-pulse"
                       >
-                        {s}
-                      </button>
-                    );
-                  })}
+                        <div className="h-4 w-8 bg-gray-200 rounded mx-auto"></div>
+                      </div>
+                    ))
+                  ) : (
+                    sizes.map((s) => {
+                      const variant = product.variants.find(
+                        (v) =>
+                          v.variant_size === s &&
+                          (!selectedColor || v.variant_color === selectedColor)
+                      );
+
+                      // Check stock - NO fallback to DB
+                      let outOfStock;
+                      if (product.vendor_capabilities?.has_individual_syncing) {
+                        // Only use live stock data
+                        if (liveStockData) {
+                          const liveStock = getLiveStock(s);
+                          outOfStock = !variant || liveStock <= 0;
+                        } else {
+                          // No live data - show out of stock
+                          outOfStock = true;
+                        }
+                      } else {
+                        // Vendor doesn't support individual syncing - show out of stock
+                        outOfStock = true;
+                      }
+
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => !outOfStock && setSelectedSize(s)}
+                          disabled={outOfStock}
+                          className={`min-w-[60px] px-4 py-3 rounded border-2 text-sm font-semibold transition-all duration-200 ${
+                            outOfStock
+                              ? "border-gray-200 bg-gray-100 text-gray-400 line-through cursor-not-allowed"
+                              : selectedSize === s
+                              ? "border-black bg-black text-white"
+                              : "border-gray-300 bg-white text-gray-700 hover:border-gray-500"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
                 {/* Stock Status */}
                 <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      isOutOfStock ? "bg-gray-400" : "bg-black"
-                    }`}
-                  ></div>
-                  <span className={`text-sm font-medium ${isOutOfStock ? "text-gray-500" : "text-black"}`}>
-                    {isOutOfStock ? "Out of Stock" : "In Stock"}
-                  </span>
+                  {stockLoading && product.vendor_capabilities?.has_individual_syncing ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-gray-200 animate-pulse"></div>
+                      <div className="h-4 w-20 bg-gray-200 animate-pulse rounded"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          isOutOfStock ? "bg-gray-400" : "bg-black"
+                        }`}
+                      ></div>
+                      <span className={`text-sm font-medium ${isOutOfStock ? "text-gray-500" : "text-black"}`}>
+                        {isOutOfStock ? "Out of Stock" : "In Stock"}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -239,15 +304,20 @@ const ProductInfoDetailsSection = forwardRef(
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <CTAButton
-                color="gold"
-                onClick={handleAddToCart}
-                loading={addingToCart}
-                disabled={isOutOfStock}
-                className="flex-1 h-14 text-base font-semibold bg-black hover:bg-gray-800 text-white disabled:bg-gray-300 disabled:text-gray-500"
-              >
-                {isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}
-              </CTAButton>
+              {stockLoading && product.vendor_capabilities?.has_individual_syncing ? (
+                // Skeleton loader for Add to Cart button
+                <div className="flex-1 h-14 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                <CTAButton
+                  color="gold"
+                  onClick={handleAddToCart}
+                  loading={addingToCart}
+                  disabled={isOutOfStock}
+                  className="flex-1 h-14 text-base font-semibold bg-black hover:bg-gray-800 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                >
+                  {isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}
+                </CTAButton>
+              )}
               <button
                 onClick={handleWishlistToggle}
                 className={`w-14 h-14 rounded border-2 flex items-center justify-center transition-all duration-200 ${

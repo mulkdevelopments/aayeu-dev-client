@@ -22,6 +22,8 @@ export default function ProductInfoSection() {
   const [selectedSize, setSelectedSize] = useState(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
+  const [liveStockData, setLiveStockData] = useState(null);
+  const [stockLoading, setStockLoading] = useState(false);
 
   const { addToCart } = useCart();
 
@@ -30,6 +32,8 @@ export default function ProductInfoSection() {
     loading: productLoading,
     error: productError,
   } = useAxios();
+
+  const { request: getLiveStock } = useAxios();
 
   // ✅ Fetch product details
   useEffect(() => {
@@ -40,9 +44,41 @@ export default function ProductInfoSection() {
         params: { productId },
       });
       if (error) return setProduct(null);
-      setProduct(data?.data ?? data ?? null);
+      const productData = data?.data ?? data ?? null;
+      setProduct(productData);
+
+      // Automatically fetch live stock if vendor supports it
+      if (productData?.vendor_capabilities?.has_individual_syncing) {
+        fetchLiveStock();
+      }
     })();
   }, [productId]);
+
+  // ✅ Fetch live stock from vendor API
+  const fetchLiveStock = async () => {
+    setStockLoading(true);
+    try {
+      const { data, error } = await getLiveStock({
+        url: `/users/check-live-stock`,
+        method: "GET",
+        params: { productId },
+      });
+
+      if (error) {
+        console.warn("Live stock check failed:", error);
+        // Set stock to 0 on error
+        setLiveStockData({ stockBySize: [], totalStock: 0, error: true });
+        return;
+      }
+
+      setLiveStockData(data?.data);
+    } catch (err) {
+      console.warn("Error checking live stock:", err);
+      setLiveStockData({ stockBySize: [], totalStock: 0, error: true });
+    } finally {
+      setStockLoading(false);
+    }
+  };
 
   // ✅ Extract video from media list
   const productVideo = useMemo(() => {
@@ -58,14 +94,19 @@ export default function ProductInfoSection() {
   }, [product]);
 
   // ✅ Images array
-  const images = useMemo(() => {
-    if (!product) return [];
-    const variantImages =
-      product.variants?.flatMap((v) => v.images || [])?.filter(Boolean) || [];
-    if (variantImages.length) return variantImages;
-    if (product.product_img) return [product.product_img];
-    return [];
-  }, [product]);
+const images = useMemo(() => {
+  if (!product) return [];
+
+  const variantImages =
+    product.variants?.flatMap((v) => v.images || []).filter(Boolean) || [];
+
+  if (variantImages.length) return variantImages.slice(0, 6);
+
+  if (product.product_img) return [product.product_img].slice(0, 6);
+
+  return [];
+}, [product]);
+
 
   // ✅ Handle Add to Cart
   const handleAddToCart = async () => {
@@ -142,6 +183,8 @@ export default function ProductInfoSection() {
                 setSelectedSize={setSelectedSize}
                 handleAddToCart={handleAddToCart}
                 router={router}
+                liveStockData={liveStockData}
+                stockLoading={stockLoading}
               />
             </>
           )}

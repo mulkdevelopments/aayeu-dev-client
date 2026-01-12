@@ -73,7 +73,8 @@ export const convertPrice = (eurPrice, selectedCurrency, exchangeRates) => {
   // Get rate with fallback to default for that currency
   const rate = rates[selectedCurrency] || DEFAULT_EXCHANGE_RATES[selectedCurrency] || 1;
 
-  return (eurPrice * rate).toFixed(2);
+  // Round to nearest whole number
+  return Math.round(eurPrice * rate);
 };
 
 // Helper function to format price with currency symbol

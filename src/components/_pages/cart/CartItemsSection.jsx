@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { selectCartItems } from "@/store/selectors/cartSelectors";
 import useCart from "@/hooks/useCart";
 
-export default function CartItemsSection() {
+export default function CartItemsSection({ liveStockMap, stockCheckLoading }) {
   const cartItems = useSelector(selectCartItems);
   const { updateQty, removeItem } = useCart();
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -42,6 +42,8 @@ export default function CartItemsSection() {
               stock: item.stock,
               images: item.images,
             }}
+            liveStockData={liveStockMap[item.cart_item_id]}
+            stockCheckLoading={stockCheckLoading}
             onQtyChange={(newQty) => handleQtyChange(item.cart_item_id, newQty)}
             onRemove={() => handleRemoveItem(item.cart_item_id)}
           />

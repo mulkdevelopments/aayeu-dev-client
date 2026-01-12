@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo } from "react";
-import { Trash, Heart } from "lucide-react";
+import { Trash, Heart, AlertCircle } from "lucide-react";
 import CTAButton from "../_common/CTAButton";
 import Link from "next/link";
 import { slugifyProductName } from "@/utils/seoHelpers";
@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 import SignupDialog from "../_dialogs/SignupDialog";
 import useCurrency from "@/hooks/useCurrency";
 
-export default function CartItemCard({ product, onQtyChange, onRemove }) {
+export default function CartItemCard({ product, liveStockData, stockCheckLoading, onQtyChange, onRemove }) {
   if (!product) return null;
 
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -34,6 +34,7 @@ export default function CartItemCard({ product, onQtyChange, onRemove }) {
     images = [],
     brand_name,
     gender,
+    vendor_capabilities,
   } = product;
 
   const id = productInfo?.id;
@@ -48,8 +49,25 @@ export default function CartItemCard({ product, onQtyChange, onRemove }) {
   const size = variant_id?.size ?? "—";
   const price = sale_price || variant_price || 0;
 
+  // Get live stock for this variant
+  const getLiveStock = () => {
+    if (!liveStockData || !liveStockData.stockBySize) return null;
+    const stockItem = liveStockData.stockBySize.find(
+      (s) => s.size?.toLowerCase() === size?.toLowerCase()
+    );
+    return stockItem?.quantity ?? 0;
+  };
+
+  // Determine actual available stock
+  const availableStock = vendor_capabilities?.has_individual_syncing && liveStockData
+    ? getLiveStock()
+    : parseInt(stock, 10) || 0;
+
+  const isOutOfStock = availableStock === 0;
+  const hasLowStock = availableStock > 0 && availableStock < qty;
+
   const qtyOptions = Array.from(
-    { length: Math.min(parseInt(stock, 10) || 1, 10) },
+    { length: Math.min(availableStock || 1, 10) },
     (_, i) => i + 1
   );
 
@@ -94,16 +112,39 @@ export default function CartItemCard({ product, onQtyChange, onRemove }) {
               <span className="font-medium">Color:</span> {color} &nbsp;|&nbsp;{" "}
               <span className="font-medium">Size:</span> {size}
             </p>
-            {sku && (
+            {/* {sku && (
               <p className="text-sm text-gray-500 mt-1">
                 <span className="font-medium">SKU:</span> {sku}
               </p>
-            )}
+            )} */}
             {gender && (
               <p className="text-sm text-gray-500 mt-1 capitalize">
                 <span className="font-medium">Gender:</span> {gender}
               </p>
             )}
+
+            {/* Stock Warning */}
+            {stockCheckLoading && vendor_capabilities?.has_individual_syncing ? (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-4 w-48 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+            ) : isOutOfStock ? (
+              <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded">
+                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold">Sold out</p>
+                  <p className="text-xs">This item is currently unavailable. Please remove it to proceed.</p>
+                </div>
+              </div>
+            ) : hasLowStock ? (
+              <div className="mt-2 flex items-start gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 px-3 py-2 rounded">
+                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold">Limited Stock</p>
+                  <p className="text-xs">Only {availableStock} left in stock. Please adjust quantity.</p>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* Right: Price */}

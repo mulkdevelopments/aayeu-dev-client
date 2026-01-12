@@ -180,9 +180,9 @@ export default function MiddleHeader() {
               <ShoppingBag className="w-6 h-6 text-gray-700 group-hover:text-black transition-colors" />
               <span className="text-[10px] text-gray-600 group-hover:text-black font-medium">Cart</span>
               {items.length > 0 && (
-                <span className="absolute -top-1 -right-2 bg-gradient-to-br from-[#FFD77A] via-[#D4AF37] to-[#8B6B1F]
-                  text-[#2A1E05] text-[10px] min-w-[20px] h-[20px] rounded-full flex items-center justify-center
-                  font-bold shadow-md border border-[#F5E6A8] animate-pulse">
+                <span className="absolute -top-1 -right-2 bg-black
+                  text-white text-[10px] min-w-[20px] h-[20px] rounded-full flex items-center justify-center
+                  font-bold shadow-md border border-[#F5E6A8] ">
                   {items.length}
                 </span>
               )}

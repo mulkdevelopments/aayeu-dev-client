@@ -240,7 +240,7 @@ export default function AuthForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white py-4 px-6 rounded-lg font-semibold text-base hover:from-amber-600 hover:via-yellow-600 hover:to-amber-700 focus:outline-none focus:ring-4 focus:ring-amber-500/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-amber-500/30"
+              className="w-full flex items-center justify-center gap-2 bg-black text-white py-4 px-6 rounded-md font-semibold text-base  disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 "
             >
               {loading ? (
                 <>

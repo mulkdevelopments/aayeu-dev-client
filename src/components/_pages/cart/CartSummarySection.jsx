@@ -11,10 +11,10 @@ import CartAddressSection from "./CartAddressSection";
 import CartCouponSection from "./CartCouponSection";
 import useCurrency from "@/hooks/useCurrency";
 
-import { selectCartTotals } from "@/store/selectors/cartSelectors";
+import { selectCartTotals, selectCartItems } from "@/store/selectors/cartSelectors";
 import { selectSelectedCurrency, selectExchangeRates, selectCurrencyInfo } from "@/store/slices/currencySlice";
 
-export default function CartSummarySection() {
+export default function CartSummarySection({ liveStockMap, stockCheckLoading }) {
   const router = useRouter();
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { format } = useCurrency();
@@ -25,6 +25,7 @@ export default function CartSummarySection() {
   const currencyInfo = useSelector(selectCurrencyInfo);
 
   const cartTotals = useSelector(selectCartTotals);
+  const cartItems = useSelector(selectCartItems);
 
   const { request: createSession } = useAxios();
   const { request: addressRequest } = useAxios();
@@ -86,7 +87,33 @@ export default function CartSummarySection() {
     }
   }, [isAuthenticated]);
 
+  // Check if any items are out of stock
+  const hasOutOfStockItems = () => {
+    if (!cartItems || !cartItems.length) return false;
+
+    return cartItems.some((item) => {
+      // Only check live stock for vendors with individual syncing
+      if (item.vendor_capabilities?.has_individual_syncing) {
+        const stockData = liveStockMap[item.cart_item_id];
+        if (!stockData) return false; // Still loading
+
+        const stockItem = stockData.stockBySize?.find(
+          (s) => s.size?.toLowerCase() === item.variant_id?.size?.toLowerCase()
+        );
+        const availableStock = stockItem?.quantity ?? 0;
+        return availableStock === 0;
+      }
+      return false;
+    });
+  };
+
   const handlePay = async () => {
+    // Check for out of stock items
+    if (hasOutOfStockItems()) {
+      showToast("error", "Please remove out of stock items from your cart before proceeding.");
+      return;
+    }
+
     if (!shippingAddress) {
       setOpenAddDialog(true);
       return;
@@ -196,14 +223,29 @@ export default function CartSummarySection() {
         />
       )}
 
+      {/* Out of Stock Warning */}
+      {hasOutOfStockItems() && (
+        <div className="mt-3 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
+          <p className="font-semibold">Some items are Out of Stock</p>
+          <p className="text-xs mt-1">Please remove unavailable items to proceed with payment.</p>
+        </div>
+      )}
+
+      {/* Stock Check Loading */}
+      {/* {stockCheckLoading && (
+        <div className="mt-3 bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded text-sm">
+          <p className="text-xs">🔄 Checking live stock availability...</p>
+        </div>
+      )} */}
+
       {isAuthenticated ? (
         <CTAButton
           color="gold"
           className="mt-4 w-full"
           onClick={handlePay}
-          disabled={loading}
+          disabled={loading || stockCheckLoading || hasOutOfStockItems()}
         >
-          {loading ? "Redirecting..." : "Pay"}
+          {loading ? "Redirecting..." : stockCheckLoading ? "..." : "Pay"}
         </CTAButton>
       ) : (
         <SignupDialog
