@@ -14,10 +14,11 @@ export default function Home() {
       <HeroVideoSection />
       <BrandsSection />
       <NewArrivals title="New Arrivals" />
+         <ShopTheLook />
       {/* <SaleSection /> */}
       <BestSellers />
       {/* <FullBanner /> */}
-      {/* <ShopTheLook /> */}
+   
 
       {/* <AboutContactSection /> */}
     </>

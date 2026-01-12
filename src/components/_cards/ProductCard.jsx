@@ -87,22 +87,21 @@ export default function ProductCard({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        {/* Card Container - Responsive Border & Shadow */}
-        <div className="flex-1 flex flex-col bg-white rounded-xl md:rounded-2xl border-2  overflow-hidden transition-all duration-500 active:scale-95 md:active:scale-100 hover:border-gray-300 hover:shadow-[0_10px_40px_rgba(217,119,6,0.25)] hover:-translate-y-1 md:hover:-translate-y-2">
+        {/* Card Container - Professional Design */}
+        <div className="flex-1 flex flex-col bg-white rounded-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:border-black hover:shadow-xl">
 
           {/* Image Section - Responsive Sizing */}
-          <div className="relative w-full overflow-hidden bg-gradient-to-br from-amber-50/30 via-white to-emerald-50/20 aspect-[4/5]">
+          <div className="relative w-full overflow-hidden bg-gray-100 aspect-[4/5]">
             {/* Wishlist Button */}
             <div
               className="
                 absolute top-2 right-2 md:top-3 md:right-3 z-[50]
                 h-8 w-8 md:h-10 md:w-10 flex items-center justify-center
-                bg-white/95 backdrop-blur-md rounded-full
-                shadow-lg border border-amber-200/50
+                bg-white rounded-full
+                shadow-md border border-gray-300
                 cursor-pointer
-                transition-all duration-300
-                hover:scale-110 hover:bg-gradient-to-br hover:from-white hover:to-amber-50
-                hover:border-emerald-400/50
+                transition-all duration-200
+                hover:bg-black hover:border-black
                 active:scale-95
               "
               onClick={
@@ -118,28 +117,28 @@ export default function ProductCard({
             >
               <HeartIcon
                 size={16}
-                className={`md:w-[18px] md:h-[18px] transition-all duration-300 ${
+                className={`md:w-[18px] md:h-[18px] transition-all duration-200 ${
                   isWishlisted(id)
-                    ? "text-red-600 drop-shadow-sm"
-                    : "text-gray-600 group-hover:text-emerald-600"
+                    ? "text-black"
+                    : "text-gray-400 group-hover:text-black"
                 }`}
                 fill={isWishlisted(id) ? "currentColor" : "none"}
                 strokeWidth={2}
               />
             </div>
 
-            {/* Discount Badge - Gold Color */}
+            {/* Discount Badge */}
             {discountPercent > 0 && (
               <div className="absolute top-2 left-2 md:top-3 md:left-3 z-30">
-                <div className="bg-black text-white text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded-full shadow-lg border border-amber-400/50">
-                  -{discountPercent}% OFF
+                <div className="bg-black text-white text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 md:py-1.5 rounded shadow-sm">
+                  -{discountPercent}%
                 </div>
               </div>
             )}
 
             {/* New Badge */}
             <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 z-30">
-              <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white text-[10px] md:text-xs font-semibold px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-md border border-emerald-400/30 backdrop-blur-sm">
+              <div className="bg-white text-black text-[10px] md:text-xs font-semibold px-2 md:px-3 py-0.5 md:py-1 rounded border border-gray-300 shadow-sm">
                 NEW
               </div>
             </div>
@@ -156,8 +155,8 @@ export default function ProductCard({
                     src={src}
                     alt={title}
                     fill
-                    className={`object-cover transition-all duration-700 ease-in-out ${
-                      showImage ? "opacity-100 z-20 scale-100" : "opacity-0 z-10 scale-105"
+                    className={`object-cover transition-all duration-500 ease-out ${
+                      showImage ? "opacity-100 z-20" : "opacity-0 z-10"
                     }`}
                     unoptimized
                   />
@@ -166,39 +165,39 @@ export default function ProductCard({
                     key={index}
                     src={src}
                     alt={title}
-                    className={`absolute top-0 left-0 w-full h-full object-cover transition-all duration-700 ease-in-out ${
-                      showImage ? "opacity-100 z-20 scale-100" : "opacity-0 z-10 scale-105"
+                    className={`absolute top-0 left-0 w-full h-full object-cover transition-all duration-500 ease-out ${
+                      showImage ? "opacity-100 z-20" : "opacity-0 z-10"
                     }`}
                   />
                 );
               })}
             </div>
 
-            {/* Hover Overlay with Brand Color */}
-            <div className={`absolute inset-0 bg-gradient-to-t from-emerald-900/10 via-transparent to-transparent z-[25] transition-opacity duration-500 ${hovered ? 'opacity-100' : 'opacity-0'}`}></div>
+            {/* Hover Overlay */}
+            <div className={`absolute inset-0 bg-black/5 z-[25] transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}></div>
           </div>
 
           {/* Product Info Section - Compact Layout */}
-          <div className="flex-1 flex flex-col p-2.5 md:p-3 bg-white">
+          <div className="flex-1 flex flex-col p-3 md:p-4 bg-white">
             {/* Brand and Category */}
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="uppercase text-amber-700 text-[10px] md:text-xs font-bold tracking-wider">
+            <div className="flex items-center justify-between mb-2">
+              <span className="uppercase text-gray-500 text-[10px] md:text-xs font-bold tracking-widest">
                 {brand}
               </span>
               {category && (
-                <span className="text-[10px] md:text-xs text-emerald-700 bg-emerald-50/80 px-2 py-0.5 rounded-md font-medium">
+                <span className="text-[10px] md:text-xs text-gray-700 bg-gray-100 px-2 py-0.5 rounded font-medium">
                   {category}
                 </span>
               )}
             </div>
 
             {/* Product Title */}
-            <h3 className="font-semibold text-gray-900 text-sm md:text-base line-clamp-2 mb-2 hover:text-emerald-700 transition-colors duration-300 leading-snug">
+            <h3 className="font-medium text-black text-sm md:text-base line-clamp-2 mb-3 leading-tight">
               {title}
             </h3>
 
             {/* Price Section with Animation */}
-            <div className="mt-auto pt-1.5 border-t border-amber-100/50">
+            <div className="mt-auto pt-2 border-t border-gray-200">
               {mrp && mrp > displayPrice ? (
                 <div className="relative h-8 md:h-10 overflow-hidden">
                   {/* Original Price (Strikethrough) - Slides in/out */}
@@ -209,12 +208,11 @@ export default function ProductCard({
                         : "-translate-y-full opacity-0"
                     }`}
                   >
-                    <span className="text-xs md:text-sm line-through text-gray-400 font-medium relative">
+                    <span className="text-xs md:text-sm line-through text-gray-400 font-normal">
                       {format(mrp)}
-                      <span className="absolute inset-0 border-t-2 border-red-500 transform rotate-[-8deg] animate-[drawLine_0.6s_ease-out]"></span>
                     </span>
-                    <span className="text-[10px] md:text-xs text-amber-700 font-semibold bg-amber-50 px-1.5 py-0.5 rounded">
-                      SAVE {discountPercent}%
+                    <span className="text-[10px] md:text-xs text-gray-700 font-semibold bg-gray-100 px-1.5 py-0.5 rounded">
+                      {discountPercent}% OFF
                     </span>
                   </div>
 
@@ -226,14 +224,14 @@ export default function ProductCard({
                         : "translate-y-full opacity-0"
                     }`}
                   >
-                    <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                    <span className="text-lg md:text-2xl font-bold text-black">
                       {format(displayPrice)}
                     </span>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-baseline gap-1 h-8 md:h-10">
-                  <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-amber-700 via-amber-600 to-yellow-700 bg-clip-text text-transparent">
+                  <span className="text-lg md:text-2xl font-bold text-black">
                     {displayPrice ? format(displayPrice) : "N/A"}
                   </span>
                 </div>
