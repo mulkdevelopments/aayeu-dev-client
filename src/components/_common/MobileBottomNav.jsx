@@ -97,27 +97,21 @@ export default function MobileBottomNav() {
                 {/* Icon Container */}
                 <div className="relative z-10 flex flex-col items-center">
                   {/* Icon Background */}
-                  <div
-                    className={`relative flex items-center justify-center w-11 h-11 rounded-md transition-all duration-200 ${
-                      active
-                        ? "bg-black"
-                        : "bg-transparent group-hover:bg-gray-100"
-                    }`}
-                  >
+                  <div className="relative flex items-center justify-center">
                     {/* Icon */}
                     <Icon
-                      size={22}
+                      size={24}
                       strokeWidth={active ? 2.5 : 2}
                       className={`transition-all duration-200 ${
                         active
-                          ? "text-white"
+                          ? "text-black"
                           : "text-gray-600 group-hover:text-black"
                       }`}
                     />
 
                     {/* Badge */}
                     {item.badge && (
-                      <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-black text-white text-[10px] font-bold rounded-full border-2 border-white">
+                      <div className="absolute -top-1 -right-2 min-w-[18px] h-[18px] flex items-center justify-center bg-black text-white text-[10px] font-bold rounded-full border-2 border-white">
                         {item.badge > 99 ? "99+" : item.badge}
                       </div>
                     )}
@@ -125,10 +119,10 @@ export default function MobileBottomNav() {
 
                   {/* Label */}
                   <span
-                    className={`text-[10px] font-medium mt-1 transition-all duration-200 ${
+                    className={`text-[10px] font-medium mt-1.5 px-2 py-0.5 rounded transition-all duration-200 ${
                       active
-                        ? "text-black"
-                        : "text-gray-500"
+                        ? "text-white bg-black"
+                        : "text-gray-500 bg-transparent"
                     }`}
                   >
                     {item.name}

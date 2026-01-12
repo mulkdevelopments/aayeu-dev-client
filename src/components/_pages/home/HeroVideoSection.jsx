@@ -139,8 +139,8 @@ export default function HeroVideoSection() {
             </div>
           )}
 
-          {/* 🔥 SMOOTH CAROUSEL */}
-          <div className="relative h-[320px] md:h-[400px] lg:h-[460px] flex items-center justify-center overflow-visible">
+          {/* 🔥 SMOOTH CAROUSEL - COMMENTED OUT */}
+          {/* <div className="relative h-[320px] md:h-[400px] lg:h-[460px] flex items-center justify-center overflow-visible">
             {overlayItems.map((item, index) => {
               const pos = getPosition(index)
               if (Math.abs(pos) > 2) return null
@@ -173,9 +173,7 @@ export default function HeroVideoSection() {
                     zIndex: zMap[pos],
                   }}
                 >
-                  {/* Card */}
                   <div className="relative w-[160px] md:w-[240px] rounded-3xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
-                    {/* Discount Badge */}
                     {discount > 0 && (
                       <span className="absolute top-3 right-3 z-10
                         rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide
@@ -212,7 +210,7 @@ export default function HeroVideoSection() {
                 </Link>
               )
             })}
-          </div>
+          </div> */}
 
           {/* CTA */}
           {topBanner?.button_text && (

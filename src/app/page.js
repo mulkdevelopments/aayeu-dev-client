@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <>
       <HeroVideoSection />
-      <BrandsSection />
+      {/* <BrandsSection /> */}
       <NewArrivals title="New Arrivals" />
          <ShopTheLook />
       {/* <SaleSection /> */}
