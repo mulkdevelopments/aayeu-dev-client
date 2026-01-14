@@ -31,7 +31,7 @@ export default function ConditionalLayout({ children }) {
       </main>
 
       <Footer />
-      <MobileBottomNav />
+      {/* <MobileBottomNav /> */}
     </>
   );
 }

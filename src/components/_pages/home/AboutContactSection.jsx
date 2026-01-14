@@ -22,35 +22,7 @@ export default function AboutContactSection() {
       {/* =======================================================
          🔹 FULL WIDTH MARQUEE BANNER (bottomTopBanner)
       ======================================================= */}
-      <div className="relative w-full max-w-[1425px] mx-auto aspect-[1425/490] overflow-hidden">
-        {hasTopBanner ? (
-          <Image
-            src={bottomTopBanner.media_url}
-            alt={bottomTopBanner.title ?? "Banner"}
-            fill
-            className="object-cover"
-            priority
-          />
-        ) : (
-          <Image
-            src="/assets/images/full-banner-2.jpg"
-            alt="Fallback Banner"
-            fill
-            className="object-cover"
-            priority
-          />
-        )}
-
-        {/* Marquee */}
-        <div className="absolute top-1/2 left-0 w-full -translate-y-1/2 overflow-hidden whitespace-nowrap z-10 pointer-events-none">
-          <div className="flex animate-marquee">
-            <span className="marquee-text">
-              {bottomTopBanner?.title ??
-                "Welcome to Aayeu - Explore the Adventure"}
-            </span>
-          </div>
-        </div>
-      </div>
+     
 
       {/* =======================================================
          🔹 SPLIT SECTION: LEFT = bottomLeftBanner
@@ -101,33 +73,113 @@ export default function AboutContactSection() {
           </div>
 
           {/* ---------------- Newsletter Form with RHF ---------------- */}
-          <NewsletterForm />
+          {/* <NewsletterForm /> */}
         </div>
       </div>
 
-      {/* ---------------- marquee CSS ---------------- */}
-      <style jsx>{`
-        .animate-marquee {
-          display: flex;
-          animation: marquee 20s linear infinite;
-        }
-        .marquee-text {
-          font-size: clamp(16px, 4vw, 70px);
-          font-weight: bold;
-          color: white;
-          text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
-          padding-right: 4vw;
-          white-space: nowrap;
-        }
-        @keyframes marquee {
-          0% {
-            transform: translateX(0%);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
+      {/* =======================================================
+         🔹 HELP SECTION - 3 Cards
+      ======================================================= */}
+      <div className="bg-white py-12 md:py-16">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+
+            {/* HOW TO SHOP Card */}
+            <a
+              href="/how-to-shop"
+              className="group border border-gray-200 p-6 md:p-8 hover:border-black transition-colors duration-300"
+            >
+              <div className="mb-4">
+                <svg
+                  className="w-8 h-8 text-black"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                  />
+                </svg>
+              </div>
+              <h3
+                className="text-lg font-semibold mb-2 text-black"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                HOW TO SHOP
+              </h3>
+              <p className="text-sm text-gray-600">
+                Your guide to shopping and placing orders
+              </p>
+            </a>
+
+            {/* FAQS Card */}
+            <a
+              href="/faqs"
+              className="group border border-gray-200 p-6 md:p-8 hover:border-black transition-colors duration-300"
+            >
+              <div className="mb-4">
+                <svg
+                  className="w-8 h-8 text-black"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h3
+                className="text-lg font-semibold mb-2 text-black"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                FAQS
+              </h3>
+              <p className="text-sm text-gray-600">
+                Your questions answered
+              </p>
+            </a>
+
+            {/* NEED HELP Card */}
+            <a
+              href="/contact"
+              className="group border border-gray-200 p-6 md:p-8 hover:border-black transition-colors duration-300"
+            >
+              <div className="mb-4">
+                <svg
+                  className="w-8 h-8 text-black"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+              </div>
+              <h3
+                className="text-lg font-semibold mb-2 text-black"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                NEED HELP?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Contact our global Customer Service team
+              </p>
+            </a>
+
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

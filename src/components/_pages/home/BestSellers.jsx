@@ -1,20 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag } from "lucide-react";
+import { Heart } from "lucide-react";
 import { slugifyProductName } from "@/utils/seoHelpers";
 import STATIC from "@/utils/constants";
 import useHomeConfig from "@/hooks/useHomeConfig";
 import useCurrency from "@/hooks/useCurrency";
+import useWishlist from "@/hooks/useWishlist";
+import { useSelector } from "react-redux";
+import { showToast } from "@/providers/ToastProvider";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BestSellers() {
   const router = useRouter();
   const { bestSellers, fetchBestSellers } = useHomeConfig();
   const { format } = useCurrency();
+  const { toggleWishlist, isWishlisted } = useWishlist();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchBestSellers();
+    setIsLoading(true);
+    fetchBestSellers().finally(() => setIsLoading(false));
   }, []);
 
   const goToProduct = (product) => {
@@ -31,49 +41,79 @@ export default function BestSellers() {
     return variants[0] ?? {};
   };
 
-  const formatPrice = (val) => {
-    if (val === undefined || val === null) return "";
-    const num =
-      typeof val === "string" ? Number(val.replace(",", ".")) : Number(val);
-    if (Number.isNaN(num)) return String(val);
-    return num.toFixed(2);
-  };
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <section className="w-full bg-white py-12 md:py-16">
+        <div className="max-w-[1440px] mx-auto">
+          {/* Header Skeleton */}
+          <div className="mb-8 px-4 md:px-8">
+            <Skeleton className="h-10 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+
+          {/* Mobile: Horizontal Scroll Skeleton */}
+          <div className="md:hidden overflow-x-auto px-4 pb-4 scrollbar-hide">
+            <div className="flex gap-4">
+              {[...Array(8)].map((_, idx) => (
+                <div key={idx} className="flex flex-col flex-shrink-0 w-[170px]">
+                  <Skeleton className="aspect-[3/4] w-full mb-3" />
+                  <Skeleton className="h-3 w-20 mb-1" />
+                  <Skeleton className="h-4 w-32 mb-1" />
+                  <Skeleton className="h-4 w-40 mb-2" />
+                  <Skeleton className="h-5 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop: Grid Skeleton */}
+          <div className="hidden md:block px-8">
+            <div className="grid grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {[...Array(8)].map((_, idx) => (
+                <div key={idx} className="flex flex-col">
+                  <Skeleton className="aspect-[3/4] w-full mb-3" />
+                  <Skeleton className="h-3 w-20 mb-1" />
+                  <Skeleton className="h-4 w-32 mb-1" />
+                  <Skeleton className="h-4 w-40 mb-2" />
+                  <Skeleton className="h-5 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (!bestSellers.length) return null;
 
   return (
-    <section
-      id="best-sellers"
-      className="relative bg-neutral-950 text-white overflow-hidden"
-    >
-      {/* soft background glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_60%)]" />
-
-      <div className="relative max-w-7xl mx-auto px-4 py-16">
+    <section className="w-full bg-white py-12 md:py-16">
+      <div className="max-w-[1440px] mx-auto">
         {/* Header */}
-        <div className="mb-10">
-          <p className="text-xs tracking-widest text-neutral-400 mb-2">
-            MOST LOVED
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-light">
-            Best Sellers · Athletics
+        <div className="mb-8 px-4 md:px-8">
+          <h2 className="text-3xl md:text-4xl text-black mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+            Trending: most loved pieces
           </h2>
+          <p className="text-sm text-gray-600">
+
+          </p>
         </div>
 
-        {/* Products */}
-        <div className="
-  grid grid-cols-2 gap-4
-  md:grid-cols-3 lg:grid-cols-4
-  md:gap-6
-">
-          {bestSellers.map((bs, idx) => {
+        {/* Mobile: Horizontal Scroll */}
+        <div className="md:hidden overflow-x-auto px-4 pb-4 scrollbar-hide">
+          <div className="flex gap-4">
+            {bestSellers.map((bs, idx) => {
             const product = bs?.product ?? bs;
             const variant = resolveVariant(product);
 
-            const image =
-              (variant?.images && variant.images[0]) ||
+            const images = variant?.images ?? [];
+            const primaryImage =
+              images[0] ||
               product?.product_img ||
               STATIC.IMAGES.IMAGE_NOT_AVAILABLE;
+            const hoverImage = images[1] || primaryImage;
 
             const name =
               product?.name ??
@@ -81,101 +121,246 @@ export default function BestSellers() {
               product?.product_sku ??
               "Product";
 
+            const brand = product?.brand_name ?? product?.brand ?? "";
+            const category = product?.categories?.[0]?.name ?? "";
+
             const price = variant?.price ?? product?.price ?? null;
             const mrp = variant?.mrp ?? product?.mrp ?? null;
 
+            let discountPercent = 0;
+            if (mrp && price && mrp > price) {
+              discountPercent = Math.round(((mrp - price) / mrp) * 100);
+            }
+
             const productId =
               product?.id ?? product?.pid ?? product?.productid ?? idx;
+
+            const isHovered = hoveredIndex === idx;
+
+            const handleWishlistClick = (e) => {
+              e.stopPropagation();
+              if (!isAuthenticated) {
+                showToast("info", "Please login to manage your wishlist");
+                return;
+              }
+              toggleWishlist(productId);
+            };
 
             return (
               <div
                 key={productId}
                 onClick={() => goToProduct(bs)}
-                className="
-                  min-w-[180px] md:min-w-0
-                  bg-neutral-900 rounded-2xl
-                  cursor-pointer
-                  group
-                  transition
-                  hover:bg-neutral-800
-                "
+                onMouseEnter={() => setHoveredIndex(idx)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                className="group relative flex flex-col cursor-pointer flex-shrink-0 w-[170px]"
               >
-                {/* Image */}
-          {/* Image */}
-<div className="relative overflow-hidden rounded-t-2xl aspect-[3/4] bg-neutral-800">
-  <img
-    src={image}
-    alt={name}
-    className="
-      absolute inset-0
-      w-full h-full
-      object-cover
-      transition-transform duration-700
-      group-hover:scale-105
-    "
-  />
+                {/* Image Section */}
+                <div className="relative w-full overflow-hidden bg-gray-50 aspect-[3/4]">
+                  {/* Wishlist Button */}
+                  <button
+                    className="absolute top-3 right-3 z-30 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
+                    onClick={handleWishlistClick}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    <Heart
+                      size={18}
+                      className="transition-colors"
+                      fill={isWishlisted(productId) ? "black" : "none"}
+                      stroke={isWishlisted(productId) ? "black" : "#666"}
+                      strokeWidth={1.5}
+                    />
+                  </button>
 
+                  {/* Product Images */}
+                  <div className="relative w-full h-full">
+                    <img
+                      src={primaryImage}
+                      alt={name}
+                      className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
+                        isHovered ? "opacity-0" : "opacity-100"
+                      }`}
+                    />
+                    <img
+                      src={hoverImage}
+                      alt={name}
+                      className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
+                        isHovered ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                  </div>
+                </div>
 
-  {/* GOLD BEST SELLER TAG */}
-  <div className="
-    absolute top-3 right-3
-    bg-black
-    text-white
-    text-[10px] tracking-widest
-    px-3 py-1 rounded-md
-    shadow-lg
-    uppercase
-  ">
-    Best Seller
-  </div>
+                {/* Product Info */}
+                <div className="flex flex-col pt-3 pb-2">
+                  {/* Category Label */}
+                  {category && (
+                    <span className="text-xs text-gray-500 mb-1">
+                      {category}
+                    </span>
+                  )}
 
-  {/* Shopping icon */}
-  <div className="
-    absolute top-3 left-3
-    bg-black/60 backdrop-blur
-    rounded-full p-2
-    opacity-0 group-hover:opacity-100
-    transition
-  ">
-    <ShoppingBag size={16} />
-  </div>
-</div>
+                  {/* Brand Name */}
+                  <h3 className="text-sm font-semibold text-black mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    {brand}
+                  </h3>
 
-
-                {/* Info */}
-                <div className="p-4 space-y-2">
-                  <p className="text-sm font-light leading-snug">
+                  {/* Product Title */}
+                  <p className="text-sm text-gray-700 mb-2 line-clamp-1">
                     {name}
                   </p>
 
-                  {/* colors */}
-                  <div className="flex gap-2">
-                    {Array.isArray(product?.colors)
-                      ? product.colors.slice(0, 3).map((color, i) => (
-                          <span
-                            key={i}
-                            className="w-4 h-4 rounded-full border border-white/40"
-                            style={{ backgroundColor: color }}
-                          />
-                        ))
-                      : null}
-                  </div>
-
-                  {/* price */}
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-light">
-                      {price !== null ? format(price) : "—"}
+                  {/* Price Section */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-base font-semibold text-black">
+                      {price !== null ? format(price) : "N/A"}
                     </span>
-                    {mrp && mrp !== price && (
-                      <span className="line-through text-neutral-400">
-                        {format(mrp)}
-                      </span>
+                    {mrp && mrp > price && (
+                      <>
+                        <span className="text-sm line-through text-gray-400">
+                          {format(mrp)}
+                        </span>
+                        <span className="text-xs text-red-600 font-medium">
+                          {discountPercent}% off
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
               </div>
             );
-          })}
+            })}
+          </div>
+        </div>
+
+        {/* Desktop: Grid */}
+        <div className="hidden md:block px-8">
+          <div className="grid grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {bestSellers.map((bs, idx) => {
+              const product = bs?.product ?? bs;
+              const variant = resolveVariant(product);
+
+              const images = variant?.images ?? [];
+              const primaryImage =
+                images[0] ||
+                product?.product_img ||
+                STATIC.IMAGES.IMAGE_NOT_AVAILABLE;
+              const hoverImage = images[1] || primaryImage;
+
+              const name =
+                product?.name ??
+                product?.title ??
+                product?.product_sku ??
+                "Product";
+
+              const brand = product?.brand_name ?? product?.brand ?? "";
+              const category = product?.categories?.[0]?.name ?? "";
+
+              const price = variant?.price ?? product?.price ?? null;
+              const mrp = variant?.mrp ?? product?.mrp ?? null;
+
+              let discountPercent = 0;
+              if (mrp && price && mrp > price) {
+                discountPercent = Math.round(((mrp - price) / mrp) * 100);
+              }
+
+              const productId =
+                product?.id ?? product?.pid ?? product?.productid ?? idx;
+
+              const isHovered = hoveredIndex === idx;
+
+              const handleWishlistClick = (e) => {
+                e.stopPropagation();
+                if (!isAuthenticated) {
+                  showToast("info", "Please login to manage your wishlist");
+                  return;
+                }
+                toggleWishlist(productId);
+              };
+
+              return (
+                <div
+                  key={productId}
+                  onClick={() => goToProduct(bs)}
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  className="group relative flex flex-col cursor-pointer"
+                >
+                  {/* Image Section */}
+                  <div className="relative w-full overflow-hidden bg-gray-50 aspect-[3/4]">
+                    {/* Wishlist Button */}
+                    <button
+                      className="absolute top-3 right-3 z-30 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
+                      onClick={handleWishlistClick}
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      <Heart
+                        size={18}
+                        className="transition-colors"
+                        fill={isWishlisted(productId) ? "black" : "none"}
+                        stroke={isWishlisted(productId) ? "black" : "#666"}
+                        strokeWidth={1.5}
+                      />
+                    </button>
+
+                    {/* Product Images */}
+                    <div className="relative w-full h-full">
+                      <img
+                        src={primaryImage}
+                        alt={name}
+                        className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
+                          isHovered ? "opacity-0" : "opacity-100"
+                        }`}
+                      />
+                      <img
+                        src={hoverImage}
+                        alt={name}
+                        className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
+                          isHovered ? "opacity-100" : "opacity-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="flex flex-col pt-3 pb-2">
+                    {/* Category Label */}
+                    {category && (
+                      <span className="text-xs text-gray-500 mb-1">
+                        {category}
+                      </span>
+                    )}
+
+                    {/* Brand Name */}
+                    <h3 className="text-sm font-semibold text-black mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      {brand}
+                    </h3>
+
+                    {/* Product Title */}
+                    <p className="text-sm text-gray-700 mb-2 line-clamp-1">
+                      {name}
+                    </p>
+
+                    {/* Price Section */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-base font-semibold text-black">
+                        {price !== null ? format(price) : "N/A"}
+                      </span>
+                      {mrp && mrp > price && (
+                        <>
+                          <span className="text-sm line-through text-gray-400">
+                            {format(mrp)}
+                          </span>
+                          <span className="text-xs text-red-600 font-medium">
+                            {discountPercent}% off
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

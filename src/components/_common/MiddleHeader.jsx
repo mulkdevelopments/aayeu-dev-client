@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, User, Heart, ShoppingBag, Menu, Search } from "lucide-react";
+import { Globe, User, Heart, ShoppingBag, Menu, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
@@ -32,7 +32,9 @@ export default function MiddleHeader() {
 
   const [activeCategory, setActiveCategory] = useState(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
 
   useEffect(() => {
     fetchMenu().then((res) => {
@@ -56,6 +58,7 @@ export default function MiddleHeader() {
     if (!search.trim()) return;
     router.push(`/search?query=${encodeURIComponent(search.trim())}`);
     setIsSheetOpen(false);
+    setIsSearchSheetOpen(false);
   };
 
   // Recursive function to render mobile category tree with unlimited depth
@@ -119,85 +122,108 @@ export default function MiddleHeader() {
   /* ---------------- DESKTOP / TABLET ---------------- */
   return (
     <>
-      <header className="sticky top-0 z-55 bg-white shadow-sm hidden md:block">
-        <div className="max-w-7xl mx-auto px-6 py-0 grid grid-cols-[auto_1fr_auto] items-center gap-8">
+      <header className="sticky top-0 z-55 bg-white border-b border-gray-200 hidden md:block">
+        {/* Top Row */}
+        <div className="border-b border-gray-200">
+          <div className="max-w-[1440px] mx-auto px-8 h-16 flex items-center justify-between">
+            {/* Left - Top Level Category Links */}
+            <div className="flex items-center gap-8">
+              {menu.slice(0, 3).map((category, index) => (
+                <Link
+                  key={category.id}
+                  href={`/shop/${toLower(category.name)}/${category.id}`}
+                  className={`text-sm transition-colors ${
+                    index === 0
+                      ? "font-semibold text-gray-900 hover:text-black"
+                      : "text-gray-700 hover:text-black"
+                  }`}
+                >
+                  {safeCap(category.name)}
+                </Link>
+              ))}
+            </div>
 
-          {/* Logo - Larger */}
-          <Link href="/" className="flex items-center flex-shrink-0">
-            <img
-              src="/assets/images/aayeu_logo.png"
-              alt="Aayeu Logo"
-              className="h-20 w-auto hover:opacity-80 transition-opacity duration-300"
-            />
-          </Link>
-
-          {/* Center Search - Enhanced */}
-          <div className="flex justify-center">
-            <div className="relative w-full max-w-2xl">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitSearch()}
-                placeholder="Search for products & brands..."
-                className="w-full h-12 pl-14 pr-6 rounded-full border-2 border-gray-200
-                  focus:border-black focus:ring-0 outline-none text-sm
-                  transition-all duration-300 placeholder:text-gray-400"
+            {/* Center - Logo */}
+            <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+              <img
+                src="/assets/images/aayeu_logo.png"
+                alt="Aayeu Logo"
+                className="h-12 w-auto hover:opacity-80 transition-opacity"
               />
+            </Link>
+
+            {/* Right - Icons */}
+            <div className="flex items-center gap-6">
+              <CurrencySelector />
+
+              <button
+                onClick={() => handleNavigation("/profile-overview", { requireAuth: true })}
+                className="hover:opacity-70 transition-opacity"
+              >
+                <User className="w-5 h-5 text-gray-900" />
+              </button>
+
+              <button
+                onClick={() => handleNavigation("/wishlists", { requireAuth: true })}
+                className="hover:opacity-70 transition-opacity"
+              >
+                <Heart className="w-5 h-5 text-gray-900" />
+              </button>
+
+              <button
+                onClick={() => handleNavigation("/cart", { requireAuth: false })}
+                className="relative hover:opacity-70 transition-opacity"
+              >
+                <ShoppingBag className="w-5 h-5 text-gray-900" />
+                {items.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-black text-white text-[10px]
+                    min-w-[18px] h-[18px] rounded-full flex items-center justify-center font-bold">
+                    {items.length}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Right Icons - Premium Styling */}
-          <div className="flex items-center gap-6 flex-shrink-0">
-            <CurrencySelector />
+        {/* Bottom Row - Navigation */}
+        <div className="max-w-[1440px] mx-auto px-8 h-12 flex items-center justify-between">
+          {/* Left - Main Navigation - First active category's children */}
+          <nav className="flex items-center gap-8">
+            {activeCategory?.children?.slice(0, 9).map((childCategory) => (
+              <Link
+                key={childCategory.id}
+                href={`/shop/${toLower(childCategory.name)}/${childCategory.id}`}
+                className="text-sm text-gray-700 hover:text-black transition-colors whitespace-nowrap"
+              >
+                {safeCap(childCategory.name)}
+              </Link>
+            ))}
+          </nav>
 
-            <button
-              onClick={() =>
-                handleNavigation("/profile-overview", { requireAuth: true })
-              }
-              className="group flex flex-col items-center gap-1 transition-transform duration-200 hover:scale-110"
-            >
-              <User className="w-6 h-6 text-gray-700 group-hover:text-black transition-colors" />
-              <span className="text-[10px] text-gray-600 group-hover:text-black font-medium">Account</span>
-            </button>
-
-            <button
-              onClick={() =>
-                handleNavigation("/wishlists", { requireAuth: true })
-              }
-              className="group flex flex-col items-center gap-1 transition-transform duration-200 hover:scale-110"
-            >
-              <Heart className="w-6 h-6 text-gray-700 group-hover:text-red-500 transition-colors" />
-              <span className="text-[10px] text-gray-600 group-hover:text-red-500 font-medium">Wishlist</span>
-            </button>
-
-            <button
-              onClick={() =>
-                handleNavigation("/cart", { requireAuth: false })
-              }
-              className="group relative flex flex-col items-center gap-1 transition-transform duration-200 hover:scale-110"
-            >
-              <ShoppingBag className="w-6 h-6 text-gray-700 group-hover:text-black transition-colors" />
-              <span className="text-[10px] text-gray-600 group-hover:text-black font-medium">Cart</span>
-              {items.length > 0 && (
-                <span className="absolute -top-1 -right-2 bg-black
-                  text-white text-[10px] min-w-[20px] h-[20px] rounded-full flex items-center justify-center
-                  font-bold shadow-md border border-[#F5E6A8] ">
-                  {items.length}
-                </span>
-              )}
-            </button>
+          {/* Right - Search Bar */}
+          <div className="relative w-[320px] flex-shrink-0">
+            <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+              placeholder="What are you looking for?"
+              className="w-full h-9 pl-6 pr-4 bg-transparent border-0 border-b border-gray-300
+                focus:outline-none focus:border-black text-sm placeholder:text-gray-400"
+            />
           </div>
         </div>
       </header>
 
       {/* ---------------- MOBILE ---------------- */}
-      <header className="md:hidden sticky top-0 z-50 bg-white shadow-md">
-        <div className="h-16 px-4 flex items-center justify-between gap-3">
+      <header className="md:hidden sticky top-0 z-50 bg-white border-b border-gray-200">
+        <div className="h-14 px-4 flex items-center justify-between gap-4">
+          {/* Menu Icon */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
-                <Menu className="w-6 h-6 text-gray-700" />
+              <button className="p-1 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+                <Menu className="w-6 h-6 text-gray-800" />
               </button>
             </SheetTrigger>
 
@@ -216,34 +242,121 @@ export default function MiddleHeader() {
                 </div>
               </SheetHeader>
 
-              <div className="p-4 space-y-2 overflow-y-auto max-h-[calc(100vh-120px)]">
-                {menu.map((cat) => renderMobileCategoryTree(cat))}
+              <div className="overflow-y-auto max-h-[calc(100vh-100px)]">
+                {/* Profile Section */}
+                <div className="p-4 border-b border-gray-200">
+                  {isAuthenticated ? (
+                    <button
+                      onClick={() => handleNavigation("/profile-overview", { requireAuth: true })}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
+                        <User className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="text-sm font-semibold text-gray-900">My Account</div>
+                        <div className="text-xs text-gray-500">View profile & orders</div>
+                      </div>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleNavigation("/auth?type=signin", { requireAuth: false })}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors"
+                    >
+                      <User className="w-5 h-5" />
+                      <span className="text-sm font-medium">Sign In / Register</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Currency Selector - Collapsible */}
+                <div className="border-b border-gray-200">
+                  <button
+                    onClick={() => setIsCurrencyExpanded(!isCurrencyExpanded)}
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Globe className="w-5 h-5 text-gray-700" />
+                      <span className="text-sm font-medium text-gray-900">Currency & Language</span>
+                    </div>
+                    {isCurrencyExpanded ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                  {isCurrencyExpanded && (
+                    <div className="px-4 pb-4">
+                      <CurrencySelector isMobileSidebar={true} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Categories */}
+                <div className="p-4 space-y-2">
+                  {menu.map((cat) => renderMobileCategoryTree(cat))}
+                </div>
               </div>
             </SheetContent>
           </Sheet>
 
-          {/* Mobile Search Bar */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitSearch()}
-              placeholder="Search..."
-              className="w-full h-10 pl-10 pr-3 rounded-full border-2 border-gray-200
-                focus:border-amber-500 focus:ring-0 outline-none text-sm
-                transition-all duration-300 placeholder:text-gray-400"
-            />
-          </div>
+          {/* Search Icon */}
+          <Sheet open={isSearchSheetOpen} onOpenChange={setIsSearchSheetOpen}>
+            <SheetTrigger asChild>
+              <button className="p-1 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+                <Search className="w-6 h-6 text-gray-800" />
+              </button>
+            </SheetTrigger>
 
-          {/* Mobile Logo - Compact */}
-          <Link href="/" className="flex-shrink-0">
+            <SheetContent side="top" className="p-0 h-auto">
+              <SheetHeader className="p-6">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    placeholder="Search for products & brands..."
+                    className="w-full h-14 pl-14 pr-4 rounded-full border-2 border-gray-200
+                      focus:border-black focus:ring-0 outline-none text-base"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitSearch()}
+                    autoFocus
+                  />
+                </div>
+              </SheetHeader>
+            </SheetContent>
+          </Sheet>
+
+          {/* Center Logo */}
+          <Link href="/" className="flex-1 flex justify-center">
             <img
               src="/assets/images/aayeu_logo.png"
-              className="h-10 w-auto"
               alt="Aayeu"
+              className="h-12  w-auto"
             />
           </Link>
+
+          {/* Wishlist Icon */}
+          <button
+            onClick={() => handleNavigation("/wishlists", { requireAuth: true })}
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+          >
+            <Heart className="w-6 h-6 text-gray-800" />
+          </button>
+
+          {/* Cart Icon with Badge */}
+          <button
+            onClick={() => handleNavigation("/cart", { requireAuth: false })}
+            className="relative p-1 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+          >
+            <ShoppingBag className="w-6 h-6 text-gray-800" />
+            {items.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-black text-white text-[10px]
+                min-w-[16px] h-[16px] rounded-full flex items-center justify-center font-bold">
+                {items.length}
+              </span>
+            )}
+          </button>
         </div>
       </header>
 
