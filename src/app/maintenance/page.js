@@ -89,8 +89,8 @@
           {/* Content Container */}
           <div className="relative z-[2] max-w-[900px] w-full">
             {/* Logo with Powered by */}
-            <div className="fade-down mb-12 flex flex-col items-center">
-              <div className="flex items-center gap-3 mb-2">
+            <div className="fade-down   flex flex-col items-center">
+              <div className="flex items-center gap-3 ">
                 <Image
                   src="/assets/images/aayeu_w.png"
                   alt="AAYEU"
@@ -105,14 +105,14 @@
 
             {/* Top Divider */}
             <div
-              className="width-grow h-[1px] mx-auto mb-16 glow-line"
+              className="width-grow h-[1px] mx-auto mb-4 glow-line"
               style={{
                 width: '200px'
               }}
             />
 
             {/* Main Heading */}
-            <h1 className={`${cinzel.className} fade-up-1 text-[2.2rem] sm:text-[3.5rem] md:text-[4rem] mb-8 font-light tracking-[3px] sm:tracking-[4px] leading-[1.3]`}
+            <h1 className={`${cinzel.className} fade-up-1 text-[2.0rem] sm:text-[3.5rem] md:text-[4rem] mb-8 font-light tracking-[3px] sm:tracking-[4px] leading-[1.3]`}
                 style={{
                   background: 'linear-gradient(180deg, #D4AF37 0%, #E6C98A 50%, #D4AF37 100%)',
                   WebkitBackgroundClip: 'text',
@@ -146,7 +146,7 @@
               Launching Soon
             </p>
             <div
-              className="width-grow h-[1px] mx-auto mb-8 glow-line"
+              className="width-grow h-[1px] mx-auto mt-2 glow-line"
               style={{
                 width: '200px'
               }}
