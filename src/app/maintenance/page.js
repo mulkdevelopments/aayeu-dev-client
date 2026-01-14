@@ -112,7 +112,7 @@
             />
 
             {/* Main Heading */}
-            <h1 className={`${cinzel.className} fade-up-1 text-[2.0rem] sm:text-[3.5rem] md:text-[4rem] mb-8 font-light tracking-[3px] sm:tracking-[4px] leading-[1.3]`}
+            <h1 className={`${cinzel.className} fade-up-1 text-[1.6rem] sm:text-[3.5rem] md:text-[4rem] mb-8 font-light tracking-[3px] sm:tracking-[4px] leading-[1.3]`}
                 style={{
                   background: 'linear-gradient(180deg, #D4AF37 0%, #E6C98A 50%, #D4AF37 100%)',
                   WebkitBackgroundClip: 'text',
