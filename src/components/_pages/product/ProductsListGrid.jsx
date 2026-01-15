@@ -100,6 +100,8 @@ export default function ProductsListGrid({
         url += `&q=${encodeURIComponent(searchQuery)}`;
       } else if (categoryId) {
         url += `&category_id=${categoryId}`;
+      } else if (categorySlug && categorySlug !== "Shop") {
+        url += `&category_slug=${encodeURIComponent(categorySlug)}`;
       }
       if (sortValue) url += `&sort_by=${sortValue}`;
 
