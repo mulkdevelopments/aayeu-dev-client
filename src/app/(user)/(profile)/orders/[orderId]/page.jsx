@@ -109,7 +109,7 @@ export default function OrderDetailsPage() {
     order.order_status?.toLowerCase() === "delivered"
       ? "bg-green-100 text-green-700"
       : order.order_status?.toLowerCase() === "processing"
-      ? "bg-yellow-100 text-yellow-700"
+      ? "bg-gray-100 text-gray-700"
       : order.order_status?.toLowerCase() === "created"
       ? "bg-blue-100 text-blue-700"
       : "bg-gray-100 text-gray-700";
@@ -138,7 +138,7 @@ export default function OrderDetailsPage() {
               {order.payment_status}
             </span>
             <CTAButton
-              color="gold"
+              color="black"
               size="sm"
               onClick={handleDownloadInvoice}
               disabled={downloading}
@@ -228,7 +228,7 @@ export default function OrderDetailsPage() {
                         });
                       }
                     }}
-                    className="text-sm text-yellow-600 hover:text-blue-800 underline"
+                    className="text-sm text-gray-600 hover:text-blue-800 underline"
                   >
                     Review this product
                   </button>
@@ -333,7 +333,7 @@ export default function OrderDetailsPage() {
             <Truck className="w-5 h-5 text-gray-600" />
             <h5 className="text-lg font-semibold text-gray-900">Shipping Address</h5>
           </div>
-          <CTAButton color="gold" size="sm">
+          <CTAButton color="black" size="sm">
             Track Order
           </CTAButton>
         </div>

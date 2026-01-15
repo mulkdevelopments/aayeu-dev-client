@@ -92,7 +92,7 @@ export default function AddAddressDialog({
         {trigger ? (
           trigger
         ) : (
-          <CTAButton color="gold">Add New Address</CTAButton>
+          <CTAButton color="black">Add New Address</CTAButton>
         )}
       </DialogTrigger>
 
@@ -235,7 +235,7 @@ export default function AddAddressDialog({
             Cancel
           </CTAButton>
           <CTAButton
-            color="gold"
+            color="black"
             form="add-address-form"
             type="submit"
             disabled={isSubmitting}

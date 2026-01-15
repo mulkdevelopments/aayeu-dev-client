@@ -32,42 +32,42 @@ function ProfileOverviewPage() {
     {
       title: "Orders",
       desc: "Check your order status",
-      icon: <Package className="w-8 h-8 text-yellow-700" />,
+      icon: <Package className="w-8 h-8 text-gray-700" />,
       path: "/orders",
       isActive: true,
     },
     {
       title: "Wishlist",
       desc: "Your curated product collections",
-      icon: <Heart className="w-8 h-8 text-yellow-700" />,
+      icon: <Heart className="w-8 h-8 text-gray-700" />,
       path: "/wishlists",
       isActive: true,
     },
     {
       title: "Saved Cards",
       desc: "Faster checkout experience",
-      icon: <CreditCard className="w-8 h-8 text-yellow-700" />,
+      icon: <CreditCard className="w-8 h-8 text-gray-700" />,
       path: "/saved-cards",
       isActive: false,
     },
     {
       title: "Wallets",
       desc: "View saved wallets",
-      icon: <Wallet className="w-8 h-8 text-yellow-700" />,
+      icon: <Wallet className="w-8 h-8 text-gray-700" />,
       path: "/saved-wallets",
       isActive: false,
     },
     {
       title: "Addresses",
       desc: "Save multiple addresses",
-      icon: <Home className="w-8 h-8 text-yellow-700" />,
+      icon: <Home className="w-8 h-8 text-gray-700" />,
       path: "/addresses",
       isActive: true,
     },
     {
       title: "Coupons",
       desc: "Manage discount coupons",
-      icon: <Ticket className="w-8 h-8 text-yellow-700" />,
+      icon: <Ticket className="w-8 h-8 text-gray-700" />,
       path: "/coupons",
       isActive: false, // ⛔ hidden, but still in code
     },
@@ -114,7 +114,7 @@ function ProfileOverviewPage() {
         {/* Edit Button */}
         <div className="w-full sm:w-auto flex justify-center sm:justify-end">
           <CTAButton
-            color="gold"
+            color="black"
             onClick={() => router.push("/profile")}
             className="w-full sm:w-auto"
           >
@@ -130,7 +130,7 @@ function ProfileOverviewPage() {
             <Link href={card.path} key={card.title} passHref>
               <div className="border p-5 flex flex-col items-center text-center hover:bg-gray-50 transition">
                 <span className="text-2xl">{card.icon}</span>
-                <h6 className="mt-2 font-medium text-yellow-700">
+                <h6 className="mt-2 font-medium text-gray-700">
                   {card.title}
                 </h6>
                 <p className="text-sm text-gray-500">{card.desc}</p>
@@ -140,7 +140,7 @@ function ProfileOverviewPage() {
       </div>
 
       <div className="mt-6 text-center">
-        <CTAButton color="gold" onClick={handleLogout}>
+        <CTAButton color="black" onClick={handleLogout}>
           Logout
         </CTAButton>
       </div>

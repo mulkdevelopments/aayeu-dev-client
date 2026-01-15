@@ -103,7 +103,7 @@ export default function SignupDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        {trigger ? trigger : <CTAButton color="gold">Create Account</CTAButton>}
+        {trigger ? trigger : <CTAButton color="black">Create Account</CTAButton>}
       </DialogTrigger>
 
       <DialogContent
@@ -194,7 +194,7 @@ export default function SignupDialog({
               </CTAButton>
 
               <CTAButton
-                color="gold"
+                color="black"
                 type="submit"
                 disabled={loading}
                 className="min-w-[120px]"

@@ -84,7 +84,7 @@ function AddressesPage() {
       <div className="flex justify-end mt-6 mb-3">
         <CTAButton
           as="button"
-          color="gold"
+          color="black"
           onClick={() => router.push("/addresses?action=add")}
         >
           + Add New Address

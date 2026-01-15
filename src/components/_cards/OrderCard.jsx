@@ -40,7 +40,7 @@ function OrderCard({ order }) {
     order.order_status?.toLowerCase() === "delivered"
       ? "text-green-700 bg-green-100"
       : order.order_status?.toLowerCase() === "processing"
-      ? "text-yellow-700 bg-yellow-100"
+      ? "text-gray-700 bg-gray-100"
       : "text-gray-700 bg-gray-100";
 
   return (
@@ -155,7 +155,7 @@ function OrderCard({ order }) {
           <CTAButton
             as="link"
             href={`/orders/${order.id}`}
-            color="gold"
+            color="black"
             size="sm"
             className="w-full sm:w-auto"
           >

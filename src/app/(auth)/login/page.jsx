@@ -74,7 +74,7 @@ export default function LoginPage() {
                       as={"link"}
                       href="/signup"
                       variant="text"
-                      color="gold"
+                      color="black"
                     >
                       Sign Up
                     </CTAButton>

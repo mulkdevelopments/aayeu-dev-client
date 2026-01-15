@@ -368,7 +368,7 @@ export default function ProductsListGrid({
                       <button
                         key={cat.id}
                         onClick={() => router.push(`/shop/${cat.path}/${cat.id}`)}
-                        className="flex-shrink-0 px-4 py-2.5 md:px-5 md:py-3 bg-white border-2 border-gray-200 rounded-lg hover:border-amber-500 hover:bg-amber-50 hover:shadow-md transition-all duration-200 text-sm font-medium whitespace-nowrap"
+                        className="flex-shrink-0 px-4 py-2.5 md:px-5 md:py-3 bg-white border-2 border-gray-200 rounded-lg hover:border-black  hover:shadow-md transition-all duration-200 text-sm font-medium whitespace-nowrap"
                       >
                         {startCase(toLower(cat.name))}
                       </button>
@@ -383,12 +383,12 @@ export default function ProductsListGrid({
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-all duration-200 font-medium text-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 font-medium text-sm"
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Filters</span>
               {activeFiltersCount > 0 && (
-                <span className="ml-1 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                <span className="ml-1 bg-black text-white text-xs font-bold px-2 py-0.5 rounded-full">
                   {activeFiltersCount}
                 </span>
               )}
@@ -404,7 +404,7 @@ export default function ProductsListGrid({
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
               <Select value={sort} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-[140px] sm:w-48 border-2 border-gray-200 hover:border-amber-500 focus:border-amber-500 transition-colors">
+                <SelectTrigger className="w-[140px] sm:w-48 border-2 border-gray-200 transition-colors">
                   <SelectValue placeholder="Our Picks" />
                 </SelectTrigger>
                 <SelectContent>
@@ -443,7 +443,7 @@ export default function ProductsListGrid({
         <section className="min-h-[60vh]">
           {loading && products.length === 0 ? (
             <div className="flex flex-col justify-center items-center py-20">
-              <Loader2 className="animate-spin h-10 w-10 text-amber-500 mb-4" />
+              {/* <Loader2 className="animate-spin h-10 w-10 text-black mb-4" /> */}
               <p className="text-gray-600 font-medium">Loading products...</p>
             </div>
           ) : products.length === 0 ? (
@@ -456,7 +456,7 @@ export default function ProductsListGrid({
               {activeFiltersCount > 0 && (
                 <button
                   onClick={handleResetFilters}
-                  className="px-6 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-medium"
+                  className="px-6 py-2.5 bg-black text-white rounded-lg transition-colors font-medium"
                 >
                   Clear All Filters
                 </button>
@@ -474,18 +474,18 @@ export default function ProductsListGrid({
               <div ref={observerTarget} className="w-full py-8">
                 {loadingMore && (
                   <div className="flex flex-col justify-center items-center">
-                    <Loader2 className="animate-spin h-8 w-8 text-amber-500 mb-3" />
+                    <Loader2 className="animate-spin h-8 w-8 text-black mb-3" />
                     <p className="text-sm text-gray-600 font-medium">Loading more products...</p>
                   </div>
                 )}
                 {!hasMore && products.length > 0 && (
                   <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-2 border-amber-200 rounded-full">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                    <div className="inline-flex items-center gap-2 px-6 py-3 bg-white">
+                    
                       <p className="text-sm font-semibold text-gray-700">
                         You've reached the end
                       </p>
-                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                     
                     </div>
                   </div>
                 )}

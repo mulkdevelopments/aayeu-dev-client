@@ -135,7 +135,7 @@ export default function SidebarFilters({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex overflow-hidden">
+    <div className="fixed inset-0 z-220 flex overflow-hidden">
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black/40"
@@ -324,7 +324,7 @@ export default function SidebarFilters({
           </Button>
           <Button
             onClick={handleShowResults}
-            className="flex-1 bg-[#c38e1e] hover:bg-[#b2821c] text-white font-medium"
+            className="flex-1 bg-black text-white font-medium"
           >
             Show Results
           </Button>

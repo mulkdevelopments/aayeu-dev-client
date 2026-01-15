@@ -42,7 +42,7 @@ export default function RefundSection({ product }) {
             </label>
           </div>
 
-          <CTAButton variant="solid" color="gold">
+          <CTAButton variant="solid" color="black">
             Submit Refund Request
           </CTAButton>
         </form>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Globe, User, Heart, ShoppingBag, Menu, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Skeleton } from "../ui/skeleton";
 import {
   Sheet,
@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/accordion";
 import useCart from "@/hooks/useCart";
 import useMenu from "@/hooks/useMenu";
-import MegaMenu from "./MegaMenu";
 import CurrencySelector from "./CurrencySelector";
+import NavMenuCategoryImage from "./NavMenuCategoryImage";
 import { startCase, toLower } from "lodash";
 
 export default function MiddleHeader() {
@@ -35,6 +35,8 @@ export default function MiddleHeader() {
   const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
+  const [hoveredCategory, setHoveredCategory] = useState(null);
+  const hoverTimeoutRef = useRef(null);
 
   useEffect(() => {
     fetchMenu().then((res) => {
@@ -53,6 +55,37 @@ export default function MiddleHeader() {
 
   const safeCap = (val) =>
     startCase(toLower(String(val || "").replace(/[-_/]+/g, " ")));
+
+  const handleCategoryHover = (category) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    if (category?.children?.length > 0) {
+      setHoveredCategory(category);
+    }
+  };
+
+  const handleCategoryLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null);
+    }, 150);
+  };
+
+  const handlePanelEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+  };
+
+  const splitIntoColumns = (arr = [], cols = 3) => {
+    const result = Array.from({ length: cols }, () => []);
+    if (!arr?.length) return result;
+    const per = Math.ceil(arr.length / cols);
+    for (let i = 0; i < cols; i++) {
+      result[i] = arr.slice(i * per, i * per + per);
+    }
+    return result;
+  };
 
   const submitSearch = () => {
     if (!search.trim()) return;
@@ -189,16 +222,83 @@ export default function MiddleHeader() {
         {/* Bottom Row - Navigation */}
         <div className="max-w-[1440px] mx-auto px-8 h-12 flex items-center justify-between">
           {/* Left - Main Navigation - First active category's children */}
-          <nav className="flex items-center gap-8">
+          <nav className="flex items-center gap-8 relative">
             {activeCategory?.children?.slice(0, 9).map((childCategory) => (
-              <Link
+              <div
                 key={childCategory.id}
-                href={`/shop/${toLower(childCategory.name)}/${childCategory.id}`}
-                className="text-sm text-gray-700 hover:text-black transition-colors whitespace-nowrap"
+                className="relative"
+                onMouseEnter={() => handleCategoryHover(childCategory)}
+                onMouseLeave={handleCategoryLeave}
               >
-                {safeCap(childCategory.name)}
-              </Link>
+                <Link
+                  href={`/shop/${toLower(childCategory.name)}/${childCategory.id}`}
+                  className={`text-sm transition-colors whitespace-nowrap ${
+                    hoveredCategory?.id === childCategory.id
+                      ? "text-red-600 font-medium"
+                      : "text-gray-700 hover:text-black"
+                  }`}
+                >
+                  {safeCap(childCategory.name)}
+                </Link>
+              </div>
             ))}
+
+            {/* Floating Panel for Children - MegaMenu Style */}
+            {hoveredCategory && hoveredCategory.children?.length > 0 && (
+              <div
+                className="fixed left-0 right-0 top-[144px] bg-white shadow-xl border-t border-gray-200 z-50"
+                onMouseEnter={handlePanelEnter}
+                onMouseLeave={handleCategoryLeave}
+              >
+                <div className="max-w-[1400px] mx-auto px-8 py-10" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    {/* Left 3 columns - Categories */}
+                    <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8">
+                      {splitIntoColumns(hoveredCategory.children, 3).map((col, i) => (
+                        <div key={i} className="space-y-4">
+                          <ul className="space-y-3">
+                            {col.map((child) => (
+                              <li key={child.id}>
+                                <Link
+                                  href={`/shop/${toLower(child.name)}/${child.id}`}
+                                  className="block text-sm font-semibold text-gray-900 hover:text-red-600 transition-colors mb-2"
+                                  onClick={() => setHoveredCategory(null)}
+                                >
+                                  {safeCap(child.name)}
+                                </Link>
+                                {/* Render grandchildren if available */}
+                                {child.children?.length > 0 && (
+                                  <ul className="space-y-2 mt-2">
+                                    {child.children.map((grandchild) => (
+                                      <li key={grandchild.id}>
+                                        <Link
+                                          href={`/shop/${toLower(grandchild.name)}/${grandchild.id}`}
+                                          className="block text-sm text-gray-600 hover:text-red-600 hover:translate-x-1 transition-all py-1 pl-3"
+                                          onClick={() => setHoveredCategory(null)}
+                                        >
+                                          {safeCap(grandchild.name)}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Right column - Image */}
+                    <div className="md:col-span-1">
+                      <div className="sticky top-4 h-[300px]">
+                        <NavMenuCategoryImage activeCategory={hoveredCategory} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </nav>
 
           {/* Right - Search Bar */}
@@ -278,7 +378,7 @@ export default function MiddleHeader() {
                   >
                     <div className="flex items-center gap-3">
                       <Globe className="w-5 h-5 text-gray-700" />
-                      <span className="text-sm font-medium text-gray-900">Currency & Language</span>
+                      <span className="text-sm font-medium text-gray-900">Change Region</span>
                     </div>
                     {isCurrencyExpanded ? (
                       <ChevronUp className="w-4 h-4 text-gray-500" />
@@ -359,17 +459,6 @@ export default function MiddleHeader() {
           </button>
         </div>
       </header>
-
-      {/* Mega Menu */}
-      <MegaMenu
-        activeCategoryData={
-          activeCategory
-            ? { ...activeCategory, children: activeCategory.children }
-            : null
-        }
-        allCategories={menu}
-        onCategoryChange={setActiveCategory}
-      />
     </>
   );
 }

@@ -228,7 +228,7 @@ export default function CartCouponSection({
               disabled={couponLoading || autoRevalidating}
             />
             <CTAButton
-              color="gold"
+              color="black"
               onClick={() => handleApplyCoupon()}
               loading={couponLoading}
               disabled={couponLoading || autoRevalidating || !couponCode.trim()}

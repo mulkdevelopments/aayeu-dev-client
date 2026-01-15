@@ -64,7 +64,7 @@ export default function AddressCard({
               )}
             </div>
             {is_default && (
-              <span className="mt-2 text-xs font-semibold bg-yellow-400 text-black px-2 py-1 rounded-md">
+              <span className="mt-2 text-xs font-semibold bg-gray-300 text-black px-2 py-1 rounded-md">
                 Default
               </span>
             )}

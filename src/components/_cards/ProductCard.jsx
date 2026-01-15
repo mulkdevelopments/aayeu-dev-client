@@ -161,7 +161,7 @@ export default function ProductCard({
               <span className="text-base font-semibold text-black">
                 {displayPrice ? format(displayPrice) : "N/A"}
               </span>
-              {mrp && displayPrice && mrp > displayPrice && (
+              {/* {mrp && displayPrice && mrp > displayPrice && (
                 <>
                   <span className="text-sm line-through text-gray-400">
                     {format(mrp)}
@@ -170,7 +170,7 @@ export default function ProductCard({
                     {discountPercent}% off
                   </span>
                 </>
-              )}
+              )} */}
             </div>
           </div>
         </div>

@@ -70,7 +70,7 @@ export default function AddCardDialog({
         {trigger ? (
           trigger
         ) : (
-          <CTAButton color="gold">Add New Card</CTAButton>
+          <CTAButton color="black">Add New Card</CTAButton>
         )}
       </DialogTrigger>
 
@@ -165,7 +165,7 @@ export default function AddCardDialog({
             >
               Cancel
             </CTAButton>
-            <CTAButton color="gold" type="submit">
+            <CTAButton color="black" type="submit">
               Save Card
             </CTAButton>
           </DialogFooter>

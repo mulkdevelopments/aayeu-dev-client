@@ -28,7 +28,7 @@ export default function CouponCard({ coupon }) {
 
       {/* Apply Button */}
       <div className="coupon-action w-full sm:w-1/8 flex justify-center items-start">
-        <CTAButton color="gold" className="mt-2 px-4 py-1 w-full">
+        <CTAButton color="black" className="mt-2 px-4 py-1 w-full">
           Apply
         </CTAButton>
       </div>

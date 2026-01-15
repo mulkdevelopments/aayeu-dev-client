@@ -127,7 +127,7 @@ export default function SignupPage() {
                       as={"link"}
                       href="/login"
                       variant="text"
-                      color="gold"
+                      color="black"
                     >
                       Log In
                     </CTAButton>

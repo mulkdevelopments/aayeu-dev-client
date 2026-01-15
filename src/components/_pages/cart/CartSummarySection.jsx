@@ -159,7 +159,7 @@ export default function CartSummarySection({ liveStockMap, stockCheckLoading }) 
   return (
     <div className="p-4">
       <div className="flex justify-end mb-4">
-        <CTAButton color="gold" onClick={() => router.push("/shop")}>
+        <CTAButton color="black" onClick={() => router.push("/shop")}>
           Continue Shopping
         </CTAButton>
       </div>
@@ -240,7 +240,7 @@ export default function CartSummarySection({ liveStockMap, stockCheckLoading }) 
 
       {isAuthenticated ? (
         <CTAButton
-          color="gold"
+          color="black"
           className="mt-4 w-full"
           onClick={handlePay}
           disabled={loading || stockCheckLoading || hasOutOfStockItems()}
@@ -250,7 +250,7 @@ export default function CartSummarySection({ liveStockMap, stockCheckLoading }) 
       ) : (
         <SignupDialog
           trigger={
-            <CTAButton color="gold" className="mt-4 w-full">
+            <CTAButton color="black" className="mt-4 w-full">
               Pay
             </CTAButton>
           }

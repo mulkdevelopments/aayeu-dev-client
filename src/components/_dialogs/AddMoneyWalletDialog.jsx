@@ -55,7 +55,7 @@ export default function AddMoneyWalletDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* ✅ Default Trigger */}
       <DialogTrigger asChild>
-        {trigger ? trigger : <CTAButton color="gold">Add Money</CTAButton>}
+        {trigger ? trigger : <CTAButton color="black">Add Money</CTAButton>}
       </DialogTrigger>
 
       {/* ✅ Dialog Content */}
@@ -114,7 +114,7 @@ export default function AddMoneyWalletDialog({
             >
               Cancel
             </CTAButton>
-            <CTAButton color="gold" type="submit">
+            <CTAButton color="black" type="submit">
               Add Money
             </CTAButton>
           </DialogFooter>

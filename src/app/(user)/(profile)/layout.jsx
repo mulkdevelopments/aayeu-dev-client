@@ -85,7 +85,7 @@ export default function ProfileOverviewLayout({ children }) {
                     key={item.href}
                     href={item.href}
                     variant={pathname === item.href ? "solid" : "outline"}
-                    color={"gold"}
+                    color={"black"}
                   >
                     {item.label}
                   </CTAButton>

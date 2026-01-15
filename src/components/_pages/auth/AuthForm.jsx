@@ -21,7 +21,7 @@ function SocialIcon({ icon, color, label }) {
   return (
     <Link
       href="#"
-      className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-200 hover:border-amber-500 hover:bg-amber-50 transition-all duration-200 group"
+      className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-200 hover:border-black hover:bg-black transition-all duration-200 group"
       aria-label={label}
     >
       <span className={`text-lg transition-colors duration-200 ${color}`}>
@@ -48,7 +48,7 @@ function InputField({ label, icon: Icon, error, ...props }) {
           {...props}
           className={`w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 py-3.5 bg-white border-2 ${
             error ? 'border-red-500' : 'border-gray-200'
-          } rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all duration-200`}
+          } rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20 transition-all duration-200`}
         />
       </div>
       {error && (
@@ -114,13 +114,13 @@ export default function AuthForm() {
   return (
     <div className="w-full max-w-md mx-auto">
       {/* Card Container */}
-      <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-100 p-8 md:p-10">
+      <div className="bg-white p-8 md:p-10">
         {/* Header with Icon */}
         <div className="text-center mb-8">
           {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 rounded-full mb-4 shadow-lg shadow-amber-500/30">
             <ShoppingBag className="w-8 h-8 text-white" />
           </div> */}
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-4xl text-gray-900 mb-2">
             {type === "signup" && "Create Account"}
             {type === "signin" && "Welcome Back"}
             {type === "forgot-password" && "Reset Password"}
@@ -275,7 +275,7 @@ export default function AuthForm() {
                 Already have an account?{" "}
                 <Link
                   href="/auth?type=signin"
-                  className="font-semibold text-amber-600 hover:text-amber-700 underline"
+                  className="font-semibold text-black underline"
                 >
                   Sign In
                 </Link>
@@ -288,7 +288,7 @@ export default function AuthForm() {
                   Don't have an account?{" "}
                   <Link
                     href="/auth?type=signup"
-                    className="font-semibold text-amber-600 hover:text-amber-700 underline"
+                    className="font-semibold text-black underline"
                   >
                     Create Account
                   </Link>
@@ -307,7 +307,7 @@ export default function AuthForm() {
                 Remembered your password?{" "}
                 <Link
                   href="/auth?type=signin"
-                  className="font-semibold text-amber-600 hover:text-amber-700 underline"
+                  className="font-semibold text-black underline"
                 >
                   Sign In
                 </Link>

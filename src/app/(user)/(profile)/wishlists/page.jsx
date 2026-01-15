@@ -16,13 +16,13 @@ export default function WishlistsPage() {
     <main className="md:col-span-9">
       <div className="grid grid-cols-3 items-center mb-6">
         <div className="text-left">
-          <CTAButton as="link" href="/profile-overview" color="gold">
+          <CTAButton as="link" href="/profile-overview" color="black">
             Back
           </CTAButton>
         </div>
         <h1 className="text-center text-2xl font-light">My Wishlist</h1>
         <div className="text-right">
-          <CTAButton as="link" href="/cart" color="gold">
+          <CTAButton as="link" href="/cart" color="black">
             Go to Cart
           </CTAButton>
         </div>

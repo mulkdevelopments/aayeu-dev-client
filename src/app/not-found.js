@@ -28,7 +28,7 @@ export default function NotFound() {
               Home
             </CTAButton>
 
-            <CTAButton as="link" href="/shop" color="gold">
+            <CTAButton as="link" href="/shop" color="black">
               Shop
             </CTAButton>
           </div>

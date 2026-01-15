@@ -238,7 +238,7 @@ export default function AddressForm({ address = null, onSuccess }) {
         {/* Actions */}
         <div className="pt-4 flex flex-col md:flex-row gap-3 items-center">
           <CTAButton
-            color="gold"
+            color="black"
             type="submit"
             className="w-full md:w-auto"
             disabled={isSubmitting}

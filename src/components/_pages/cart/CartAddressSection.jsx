@@ -22,7 +22,7 @@ export default function CartAddressSection({
         <div className="flex justify-between items-center">
           <h6 className="text-xl">Shipping Address</h6>
           <AddAddressDialog
-            trigger={<CTAButton color="gold">+ Add New</CTAButton>}
+            trigger={<CTAButton color="black">+ Add New</CTAButton>}
             onAddressSubmit={onAddNewAddress}
             open={openAddDialog}
             onOpenChange={setOpenAddDialog}

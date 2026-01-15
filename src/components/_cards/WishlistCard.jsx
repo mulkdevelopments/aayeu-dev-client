@@ -58,7 +58,7 @@ function WishlistCard({ item, onRemove, onAddToBag }) {
           Remove
         </CTAButton>
 
-        {/* <CTAButton color="gold" onClick={() => onAddToBag(item)}>
+        {/* <CTAButton color="black" onClick={() => onAddToBag(item)}>
           Add to Bag
         </CTAButton> */}
       </div>

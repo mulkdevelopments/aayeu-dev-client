@@ -309,7 +309,7 @@ const ProductInfoDetailsSection = forwardRef(
                 <div className="flex-1 h-14 bg-gray-200 animate-pulse rounded"></div>
               ) : (
                 <CTAButton
-                  color="gold"
+                  color="black"
                   onClick={handleAddToCart}
                   loading={addingToCart}
                   disabled={isOutOfStock}

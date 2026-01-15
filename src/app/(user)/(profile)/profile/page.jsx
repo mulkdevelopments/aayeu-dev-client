@@ -171,7 +171,7 @@ function ProfilePage() {
             </div>
 
             <div className="text-left">
-              <CTAButton variant="solid" color="gold">
+              <CTAButton variant="solid" color="black">
                 Save Changes
               </CTAButton>
             </div>

@@ -49,7 +49,7 @@ export default function AboutContactSection() {
           <div className="relative z-10 mt-6 lg:mt-auto">
             {bottomLeftBanner?.button_text ? (
               <CTAButton
-                color="gold"
+                color="black"
                 className="mb-4"
                 as="link"
                 href={bottomLeftBanner.link_url ?? "#"}
@@ -57,7 +57,7 @@ export default function AboutContactSection() {
                 {bottomLeftBanner.button_text}
               </CTAButton>
             ) : (
-              <CTAButton color="gold" className="mb-4">
+              <CTAButton color="black" className="mb-4">
                 DISCOVER THE CLUB
               </CTAButton>
             )}
