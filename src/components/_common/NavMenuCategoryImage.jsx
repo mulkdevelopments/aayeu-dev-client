@@ -7,10 +7,11 @@ import { useEffect, useState } from "react";
 const imageCache = {};
 // Structure: { "category-name" : { url: "...", failed: false } }
 
-export default function NavMenuCategoryImage({ activeCategory }) {
+export default function NavMenuCategoryImage({ activeCategory, fallbackCategory = null }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [imgSrc, setImgSrc] = useState(null);
+  const [usingFallback, setUsingFallback] = useState(false);
 
   if (!activeCategory)
     return (
@@ -40,32 +41,18 @@ export default function NavMenuCategoryImage({ activeCategory }) {
   };
 
   const name = fixSpelling(activeCategory.name || "");
+  const fallbackName = fallbackCategory ? fixSpelling(fallbackCategory.name || "") : null;
   const extensions = ["webp", "jpg", "jpeg", "png"];
 
-  // ⚡ PARALLEL PRELOAD WITH CACHING
-  useEffect(() => {
-    if (!name) return;
-
-    const cached = imageCache[name];
-
-    // ⚡ INSTANT FETCH FROM CACHE
+  // Helper to try loading an image
+  const tryLoadImage = async (categoryName) => {
+    const cached = imageCache[categoryName];
     if (cached) {
-      setLoaded(true);
-      setFailed(cached.failed);
-      setImgSrc(cached.url);
-      return;
+      return cached;
     }
 
-    // First-time load
-    setLoaded(false);
-    setFailed(false);
-    setImgSrc(null);
-
-    let cancelled = false;
-    const urls = extensions.map((ext) => `${BASE}${name}.${ext}`);
-
-    // Preload all candidate URLs in parallel
-    Promise.all(
+    const urls = extensions.map((ext) => `${BASE}${categoryName}.${ext}`);
+    const results = await Promise.all(
       urls.map(
         (url) =>
           new Promise((resolve) => {
@@ -75,30 +62,65 @@ export default function NavMenuCategoryImage({ activeCategory }) {
             img.src = url;
           })
       )
-    ).then((results) => {
+    );
+
+    const success = results.find((r) => r.ok);
+    const result = success
+      ? { url: success.url, failed: false }
+      : { url: null, failed: true };
+
+    imageCache[categoryName] = result;
+    return result;
+  };
+
+  // ⚡ PARALLEL PRELOAD WITH CACHING AND FALLBACK
+  useEffect(() => {
+    if (!name) return;
+
+    let cancelled = false;
+
+    const loadImage = async () => {
+      setLoaded(false);
+      setFailed(false);
+      setImgSrc(null);
+      setUsingFallback(false);
+
+      // Try main category first
+      const mainResult = await tryLoadImage(name);
+
       if (cancelled) return;
 
-      const success = results.find((r) => r.ok);
-
-      if (success) {
-        // Save to global cache
-        imageCache[name] = { url: success.url, failed: false };
-
-        setImgSrc(success.url);
+      if (!mainResult.failed) {
+        setImgSrc(mainResult.url);
         setLoaded(true);
-      } else {
-        // Save failure to cache
-        imageCache[name] = { url: null, failed: true };
-
-        setFailed(true);
-        setLoaded(true);
+        return;
       }
-    });
+
+      // Try fallback if main failed and fallback exists
+      if (fallbackName && fallbackName !== name) {
+        const fallbackResult = await tryLoadImage(fallbackName);
+
+        if (cancelled) return;
+
+        if (!fallbackResult.failed) {
+          setImgSrc(fallbackResult.url);
+          setLoaded(true);
+          setUsingFallback(true);
+          return;
+        }
+      }
+
+      // Both failed
+      setFailed(true);
+      setLoaded(true);
+    };
+
+    loadImage();
 
     return () => {
       cancelled = true;
     };
-  }, [name]);
+  }, [name, fallbackName]);
 
   return (
     <div className="relative w-full h-full flex items-center justify-center p-4">
@@ -114,7 +136,7 @@ export default function NavMenuCategoryImage({ activeCategory }) {
         imgSrc && (
           <img
             src={imgSrc}
-            alt={activeCategory.name}
+            alt={usingFallback ? fallbackCategory?.name : activeCategory.name}
             className="max-w-full max-h-full object-contain transition-opacity duration-300"
           />
         )

@@ -36,6 +36,7 @@ export default function MiddleHeader() {
   const [search, setSearch] = useState("");
   const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState(null);
+  const [hoveredSubCategory, setHoveredSubCategory] = useState(null);
   const hoverTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -161,18 +162,18 @@ export default function MiddleHeader() {
           <div className="max-w-[1440px] mx-auto px-8 h-16 flex items-center justify-between">
             {/* Left - Top Level Category Links */}
             <div className="flex items-center gap-8">
-              {menu.slice(0, 3).map((category, index) => (
-                <Link
+              {menu.slice(0, 5).map((category) => (
+                <button
                   key={category.id}
-                  href={`/shop/${toLower(category.name)}/${category.id}`}
+                  onClick={() => setActiveCategory(category)}
                   className={`text-sm transition-colors ${
-                    index === 0
-                      ? "font-semibold text-gray-900 hover:text-black"
-                      : "text-gray-700 hover:text-black"
+                    activeCategory?.id === category.id
+                      ? "font-semibold text-gray-900"
+                      : "text-gray-600 hover:text-black"
                   }`}
                 >
                   {safeCap(category.name)}
-                </Link>
+                </button>
               ))}
             </div>
 
@@ -231,7 +232,7 @@ export default function MiddleHeader() {
                 onMouseLeave={handleCategoryLeave}
               >
                 <Link
-                  href={`/shop/${toLower(childCategory.name)}/${childCategory.id}`}
+                  href={`/shop/${toLower(activeCategory?.name)}/${toLower(childCategory.name)}/${childCategory.id}`}
                   className={`text-sm transition-colors whitespace-nowrap ${
                     hoveredCategory?.id === childCategory.id
                       ? "text-red-600 font-medium"
@@ -248,51 +249,107 @@ export default function MiddleHeader() {
               <div
                 className="fixed left-0 right-0 top-[144px] bg-white shadow-xl border-t border-gray-200 z-50"
                 onMouseEnter={handlePanelEnter}
-                onMouseLeave={handleCategoryLeave}
+                onMouseLeave={() => {
+                  handleCategoryLeave();
+                  setHoveredSubCategory(null);
+                }}
               >
-                <div className="max-w-[1400px] mx-auto px-8 py-10" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    {/* Left 3 columns - Categories */}
-                    <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8">
-                      {splitIntoColumns(hoveredCategory.children, 3).map((col, i) => (
-                        <div key={i} className="space-y-4">
-                          <ul className="space-y-3">
-                            {col.map((child) => (
-                              <li key={child.id}>
-                                <Link
-                                  href={`/shop/${toLower(child.name)}/${child.id}`}
-                                  className="block text-sm font-semibold text-gray-900 hover:text-red-600 transition-colors mb-2"
-                                  onClick={() => setHoveredCategory(null)}
-                                >
-                                  {safeCap(child.name)}
-                                </Link>
-                                {/* Render grandchildren if available */}
-                                {child.children?.length > 0 && (
-                                  <ul className="space-y-2 mt-2">
-                                    {child.children.map((grandchild) => (
-                                      <li key={grandchild.id}>
-                                        <Link
-                                          href={`/shop/${toLower(grandchild.name)}/${grandchild.id}`}
-                                          className="block text-sm text-gray-600 hover:text-red-600 hover:translate-x-1 transition-all py-1 pl-3"
-                                          onClick={() => setHoveredCategory(null)}
-                                        >
-                                          {safeCap(grandchild.name)}
-                                        </Link>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
+                <div className="max-w-[1400px] mx-auto px-8 py-8" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                  <div className="flex gap-8">
+                    {/* Left sidebar - Subcategories list */}
+                    <div className="w-56 flex-shrink-0 border-r border-gray-100 pr-6">
+                      <ul className="space-y-1">
+                        {hoveredCategory.children.map((subCat) => (
+                          <li key={subCat.id}>
+                            <Link
+                              href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(subCat.name)}/${subCat.id}`}
+                              className={`block text-sm py-2 px-3 rounded-lg transition-all ${
+                                hoveredSubCategory?.id === subCat.id
+                                  ? "bg-gray-100 text-gray-900 font-semibold"
+                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                              }`}
+                              onMouseEnter={() => setHoveredSubCategory(subCat)}
+                              onClick={() => {
+                                setHoveredCategory(null);
+                                setHoveredSubCategory(null);
+                              }}
+                            >
+                              {safeCap(subCat.name)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Right content - Grandchildren of hovered subcategory */}
+                    <div className="flex-1">
+                      {hoveredSubCategory && hoveredSubCategory.children?.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-8">
+                          {splitIntoColumns(hoveredSubCategory.children, 3).map((col, i) => (
+                            <div key={i} className="space-y-4">
+                              <ul className="space-y-3">
+                                {col.map((grandchild) => (
+                                  <li key={grandchild.id}>
+                                    <Link
+                                      href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(hoveredSubCategory.name)}/${toLower(grandchild.name)}/${grandchild.id}`}
+                                      className="block text-sm font-medium text-gray-900 hover:text-red-600 transition-colors"
+                                      onClick={() => {
+                                        setHoveredCategory(null);
+                                        setHoveredSubCategory(null);
+                                      }}
+                                    >
+                                      {safeCap(grandchild.name)}
+                                    </Link>
+                                    {/* Render great-grandchildren if available */}
+                                    {grandchild.children?.length > 0 && (
+                                      <ul className="space-y-1 mt-2">
+                                        {grandchild.children.map((greatGrandchild) => (
+                                          <li key={greatGrandchild.id}>
+                                            <Link
+                                              href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(hoveredSubCategory.name)}/${toLower(grandchild.name)}/${toLower(greatGrandchild.name)}/${greatGrandchild.id}`}
+                                              className="block text-sm text-gray-500 hover:text-red-600 transition-colors py-1 pl-3"
+                                              onClick={() => {
+                                                setHoveredCategory(null);
+                                                setHoveredSubCategory(null);
+                                              }}
+                                            >
+                                              {safeCap(greatGrandchild.name)}
+                                            </Link>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : hoveredSubCategory ? (
+                        <Link
+                          href={`/search?query=${encodeURIComponent(hoveredSubCategory.name)}`}
+                          className="flex items-center justify-center h-40 text-gray-500 text-sm hover:text-red-600 transition-colors"
+                          onClick={() => {
+                            setHoveredCategory(null);
+                            setHoveredSubCategory(null);
+                          }}
+                        >
+                          Search "{safeCap(hoveredSubCategory.name)}"
+                        </Link>
+                      ) : (
+                        <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
+                          Hover over a category to see subcategories
+                        </div>
+                      )}
                     </div>
 
                     {/* Right column - Image */}
-                    <div className="md:col-span-1">
-                      <div className="sticky top-4 h-[300px]">
-                        <NavMenuCategoryImage activeCategory={hoveredCategory} />
+                    <div className="w-64 flex-shrink-0">
+                      <div className="sticky top-4 h-[280px]">
+                        <NavMenuCategoryImage
+                          activeCategory={hoveredSubCategory || hoveredCategory}
+                          fallbackCategory={hoveredCategory}
+                        />
                       </div>
                     </div>
                   </div>
