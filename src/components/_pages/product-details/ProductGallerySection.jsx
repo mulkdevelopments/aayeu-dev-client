@@ -104,7 +104,7 @@ export default function ProductGallerySection({
                         {/* LENS */}
                         {lens.visible && (
                           <div
-                            className="absolute pointer-events-none rounded-full border-2 border-white shadow-xl"
+                            className="absolute pointer-events-none rounded-full border-2 border-white shadow-xl z-10"
                             style={{
                               width: LENS_SIZE,
                               height: LENS_SIZE,
@@ -135,10 +135,10 @@ export default function ProductGallerySection({
           {/* NAV */}
           {mediaItems.length > 1 && (
             <>
-              <button className="swiper-button-prev-custom absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow">
+              <button className="swiper-button-prev-custom absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow z-20 hover:bg-white transition-colors">
                 <ChevronLeft />
               </button>
-              <button className="swiper-button-next-custom absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow">
+              <button className="swiper-button-next-custom absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-2 shadow z-20 hover:bg-white transition-colors">
                 <ChevronRight />
               </button>
             </>
