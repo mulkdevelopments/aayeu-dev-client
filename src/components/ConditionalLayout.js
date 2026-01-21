@@ -24,7 +24,7 @@ export default function ConditionalLayout({ children }) {
       <Analytics />
       <CountrySelectionModal />
       <TopStrip />
-      <MiddleHeader />
+      <MiddleHeader />  
 
       <main className="pb-0 md:pb-0">
         {children}

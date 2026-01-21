@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, User, Heart, ShoppingBag, Menu, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Globe, User, Heart, ShoppingBag, Menu, Search, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Skeleton } from "../ui/skeleton";
 import {
   Sheet,
@@ -35,15 +35,40 @@ export default function MiddleHeader() {
   const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
+  const [mobileActiveCategory, setMobileActiveCategory] = useState(null);
+  const [mobileRootTab, setMobileRootTab] = useState(null);
   const [hoveredCategory, setHoveredCategory] = useState(null);
-  const [hoveredSubCategory, setHoveredSubCategory] = useState(null);
   const hoverTimeoutRef = useRef(null);
+  const headerRef = useRef(null);
+  const [panelTop, setPanelTop] = useState(0);
+
+  const sortedSubCategories = useMemo(() => {
+    const list = hoveredCategory?.children ? [...hoveredCategory.children] : [];
+    return list.sort((a, b) => {
+      const aCount = Array.isArray(a?.children) ? a.children.length : 0;
+      const bCount = Array.isArray(b?.children) ? b.children.length : 0;
+      return bCount - aCount;
+    });
+  }, [hoveredCategory]);
 
   useEffect(() => {
     fetchMenu().then((res) => {
       if (res?.data?.length) setActiveCategory(res.data[0]);
     });
   }, []);
+
+  useEffect(() => {
+    if (!menu?.length) return;
+    if (!mobileRootTab) setMobileRootTab(menu[0]);
+  }, [menu, mobileRootTab]);
+
+  useEffect(() => {
+    if (!isSheetOpen) {
+      setMobileActiveCategory(null);
+      setIsCurrencyExpanded(false);
+      setMobileRootTab(menu?.[0] || null);
+    }
+  }, [isSheetOpen, menu]);
 
   const handleNavigation = (path, { requireAuth = true } = {}) => {
     setIsSheetOpen(false);
@@ -77,6 +102,25 @@ export default function MiddleHeader() {
       clearTimeout(hoverTimeoutRef.current);
     }
   };
+
+  const updatePanelTop = () => {
+    if (!headerRef.current) return;
+    const rect = headerRef.current.getBoundingClientRect();
+    setPanelTop(Math.round(rect.bottom));
+  };
+
+  useEffect(() => {
+    if (!hoveredCategory) return;
+    updatePanelTop();
+    const onScroll = () => updatePanelTop();
+    const onResize = () => updatePanelTop();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [hoveredCategory]);
 
   const splitIntoColumns = (arr = [], cols = 3) => {
     const result = Array.from({ length: cols }, () => []);
@@ -156,7 +200,10 @@ export default function MiddleHeader() {
   /* ---------------- DESKTOP / TABLET ---------------- */
   return (
     <>
-      <header className="sticky top-0 z-55 bg-white border-b border-gray-200 hidden md:block">
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-55 bg-white border-b border-gray-200 hidden md:block"
+      >
         {/* Top Row */}
         <div className="border-b border-gray-200">
           <div className="max-w-[1440px] mx-auto px-8 h-16 flex items-center justify-between">
@@ -247,107 +294,50 @@ export default function MiddleHeader() {
             {/* Floating Panel for Children - MegaMenu Style */}
             {hoveredCategory && hoveredCategory.children?.length > 0 && (
               <div
-                className="fixed left-0 right-0 top-[144px] bg-white shadow-xl border-t border-gray-200 z-50"
+                className="fixed left-0 right-0 bg-white shadow-xl border-t border-gray-200 z-50"
+                style={{ top: panelTop }}
                 onMouseEnter={handlePanelEnter}
-                onMouseLeave={() => {
-                  handleCategoryLeave();
-                  setHoveredSubCategory(null);
-                }}
+                onMouseLeave={handleCategoryLeave}
               >
                 <div className="max-w-[1400px] mx-auto px-8 py-8" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                  <div className="flex gap-8">
-                    {/* Left sidebar - Subcategories list */}
-                    <div className="w-56 flex-shrink-0 border-r border-gray-100 pr-6">
-                      <ul className="space-y-1">
-                        {hoveredCategory.children.map((subCat) => (
-                          <li key={subCat.id}>
+                  <div className="flex gap-12">
+                    {/* Left content - Farfetch style columns */}
+                    <div className="flex-1">
+                      <div className="grid grid-cols-3 gap-12">
+                        {sortedSubCategories.map((subCat) => (
+                          <div key={subCat.id} className="space-y-3">
                             <Link
                               href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(subCat.name)}/${subCat.id}`}
-                              className={`block text-sm py-2 px-3 rounded-lg transition-all ${
-                                hoveredSubCategory?.id === subCat.id
-                                  ? "bg-gray-100 text-gray-900 font-semibold"
-                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                              }`}
-                              onMouseEnter={() => setHoveredSubCategory(subCat)}
-                              onClick={() => {
-                                setHoveredCategory(null);
-                                setHoveredSubCategory(null);
-                              }}
+                              className="block text-[11px] tracking-[0.2em] text-gray-600 uppercase hover:text-black transition-colors"
+                              onClick={() => setHoveredCategory(null)}
                             >
                               {safeCap(subCat.name)}
                             </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Right content - Grandchildren of hovered subcategory */}
-                    <div className="flex-1">
-                      {hoveredSubCategory && hoveredSubCategory.children?.length > 0 ? (
-                        <div className="grid grid-cols-3 gap-8">
-                          {splitIntoColumns(hoveredSubCategory.children, 3).map((col, i) => (
-                            <div key={i} className="space-y-4">
-                              <ul className="space-y-3">
-                                {col.map((grandchild) => (
+                            {subCat.children?.length > 0 && (
+                              <ul className="space-y-2">
+                                {subCat.children.map((grandchild) => (
                                   <li key={grandchild.id}>
                                     <Link
-                                      href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(hoveredSubCategory.name)}/${toLower(grandchild.name)}/${grandchild.id}`}
-                                      className="block text-sm font-medium text-gray-900 hover:text-red-600 transition-colors"
-                                      onClick={() => {
-                                        setHoveredCategory(null);
-                                        setHoveredSubCategory(null);
-                                      }}
+                                      href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(subCat.name)}/${toLower(grandchild.name)}/${grandchild.id}`}
+                                      className="block text-sm text-gray-800 hover:text-black transition-colors"
+                                      onClick={() => setHoveredCategory(null)}
                                     >
                                       {safeCap(grandchild.name)}
                                     </Link>
-                                    {/* Render great-grandchildren if available */}
-                                    {grandchild.children?.length > 0 && (
-                                      <ul className="space-y-1 mt-2">
-                                        {grandchild.children.map((greatGrandchild) => (
-                                          <li key={greatGrandchild.id}>
-                                            <Link
-                                              href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(hoveredSubCategory.name)}/${toLower(grandchild.name)}/${toLower(greatGrandchild.name)}/${greatGrandchild.id}`}
-                                              className="block text-sm text-gray-500 hover:text-red-600 transition-colors py-1 pl-3"
-                                              onClick={() => {
-                                                setHoveredCategory(null);
-                                                setHoveredSubCategory(null);
-                                              }}
-                                            >
-                                              {safeCap(greatGrandchild.name)}
-                                            </Link>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    )}
                                   </li>
                                 ))}
                               </ul>
-                            </div>
-                          ))}
-                        </div>
-                      ) : hoveredSubCategory ? (
-                        <Link
-                          href={`/search?query=${encodeURIComponent(hoveredSubCategory.name)}`}
-                          className="flex items-center justify-center h-40 text-gray-500 text-sm hover:text-red-600 transition-colors"
-                          onClick={() => {
-                            setHoveredCategory(null);
-                            setHoveredSubCategory(null);
-                          }}
-                        >
-                          Search "{safeCap(hoveredSubCategory.name)}"
-                        </Link>
-                      ) : (
-                        <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
-                          Hover over a category to see subcategories
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Right column - Image */}
-                    <div className="w-64 flex-shrink-0">
-                      <div className="sticky top-4 h-[280px]">
+                    <div className="w-[320px] flex-shrink-0">
+                      <div className="sticky top-4">
                         <NavMenuCategoryImage
-                          activeCategory={hoveredSubCategory || hoveredCategory}
+                          activeCategory={hoveredCategory}
                           fallbackCategory={hoveredCategory}
                         />
                       </div>
@@ -385,75 +375,185 @@ export default function MiddleHeader() {
             </SheetTrigger>
 
             <SheetContent side="left" className="p-0 w-[85%]">
-              <SheetHeader className="p-4 border-b bg-gradient-to-r from-gray-50 to-white">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    placeholder="Search products..."
-                    className="w-full h-11 pl-11 pr-4 rounded-full border-2 border-gray-200
-                      focus:border-black focus:ring-0 outline-none text-sm"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && submitSearch()}
-                  />
-                </div>
-              </SheetHeader>
-
-              <div className="overflow-y-auto max-h-[calc(100vh-100px)]">
-                {/* Profile Section */}
-                <div className="p-4 border-b border-gray-200">
-                  {isAuthenticated ? (
+              <div className="sticky top-0 z-10 bg-white border-b">
+                <div className="h-12 px-4 flex items-center justify-between">
+                  {mobileActiveCategory ? (
                     <button
-                      onClick={() => handleNavigation("/profile-overview", { requireAuth: true })}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                      onClick={() => setMobileActiveCategory(null)}
+                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                      aria-label="Back"
                     >
-                      <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left flex-1">
-                        <div className="text-sm font-semibold text-gray-900">My Account</div>
-                        <div className="text-xs text-gray-500">View profile & orders</div>
-                      </div>
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                      <ChevronLeft className="w-5 h-5" />
                     </button>
                   ) : (
-                    <button
-                      onClick={() => handleNavigation("/auth?type=signin", { requireAuth: false })}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors"
-                    >
-                      <User className="w-5 h-5" />
-                      <span className="text-sm font-medium">Sign In / Register</span>
-                    </button>
+                    <div className="flex items-center">
+                      <img
+                        src="/assets/images/aayeu_logo.png"
+                        alt="AAYEU"
+                        className="h-7 w-auto"
+                      />
+                    </div>
                   )}
-                </div>
-
-                {/* Currency Selector - Collapsible */}
-                <div className="border-b border-gray-200">
+                  <div className="text-sm font-semibold">
+                    {mobileActiveCategory ? safeCap(mobileActiveCategory.name) : ""}
+                  </div>
                   <button
-                    onClick={() => setIsCurrencyExpanded(!isCurrencyExpanded)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                    onClick={() => setIsSheetOpen(false)}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Close"
                   >
-                    <div className="flex items-center gap-3">
-                      <Globe className="w-5 h-5 text-gray-700" />
-                      <span className="text-sm font-medium text-gray-900">Change Region</span>
-                    </div>
-                    {isCurrencyExpanded ? (
-                      <ChevronUp className="w-4 h-4 text-gray-500" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-500" />
-                    )}
+                    <X className="w-5 h-5" />
                   </button>
-                  {isCurrencyExpanded && (
-                    <div className="px-4 pb-4">
-                      <CurrencySelector isMobileSidebar={true} />
-                    </div>
-                  )}
                 </div>
+              </div>
 
+              <div className="overflow-y-auto max-h-[calc(100vh-48px)]">
+                {/* Parent category tabs (Farfetch-style) */}
+                {!mobileActiveCategory && (
+                  <div className="px-4 pt-3 border-b border-gray-200">
+                    <div className="flex gap-4 overflow-x-auto no-scrollbar">
+                      {menu.length === 0 ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-4 w-20" />
+                        ))
+                      ) : (
+                        menu.slice(0, 3).map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => setMobileRootTab(cat)}
+                            className={`pb-2 text-xs tracking-[0.16em] uppercase border-b-2 ${
+                              mobileRootTab?.id === cat.id
+                                ? "text-gray-900 border-gray-900"
+                                : "text-gray-500 border-transparent hover:border-gray-900"
+                            }`}
+                          >
+                            {safeCap(cat.name)}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
                 {/* Categories */}
-                <div className="p-4 space-y-2">
-                  {menu.map((cat) => renderMobileCategoryTree(cat))}
-                </div>
+                {!mobileActiveCategory ? (
+                  <div className="py-2">
+                    {menu.length === 0 ? (
+                      <div className="p-4 space-y-3">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <Skeleton key={i} className="h-4 w-3/4" />
+                        ))}
+                      </div>
+                    ) : (
+                      (mobileRootTab?.children || []).map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setMobileActiveCategory(cat)}
+                          className="w-full flex items-center justify-between px-4 py-3 text-left text-sm text-gray-900 hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="font-medium">{safeCap(cat.name)}</span>
+                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                        </button>
+                      ))
+                    )}
+                    <div className="border-b border-gray-200" />
+
+                    <div className="p-4 border-b border-gray-200">
+                      {isAuthenticated ? (
+                        <button
+                          onClick={() => handleNavigation("/profile-overview", { requireAuth: true })}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
+                            <User className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="text-left flex-1">
+                            <div className="text-sm font-semibold text-gray-900">My Account</div>
+                            <div className="text-xs text-gray-500">View profile & orders</div>
+                          </div>
+                          <ChevronDown className="w-4 h-4 text-gray-400" />
+                        </button>
+                      ) : (
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => handleNavigation("/auth?type=signin", { requireAuth: false })}
+                            className="w-full flex items-center justify-center gap-2 p-3 rounded-md bg-black text-white hover:bg-gray-800 transition-colors text-sm font-medium"
+                          >
+                            Sign In
+                          </button>
+                          <button
+                            onClick={() => handleNavigation("/auth?type=signup", { requireAuth: false })}
+                            className="w-full flex items-center justify-center gap-2 p-3 rounded-md border border-gray-300 text-gray-900 hover:bg-gray-50 transition-colors text-sm font-medium"
+                          >
+                            Register
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border-b border-gray-200">
+                      <button
+                        onClick={() => setIsCurrencyExpanded(!isCurrencyExpanded)}
+                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Globe className="w-5 h-5 text-gray-700" />
+                          <span className="text-sm font-medium text-gray-900">Change Region</span>
+                        </div>
+                        {isCurrencyExpanded ? (
+                          <ChevronUp className="w-4 h-4 text-gray-500" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                        )}
+                      </button>
+                      {isCurrencyExpanded && (
+                        <div className="px-4 pb-4">
+                          <CurrencySelector isMobileSidebar={true} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 space-y-6">
+                    <Link
+                      href={`/shop/${toLower(mobileActiveCategory.name)}/${mobileActiveCategory.id}`}
+                      className="block text-sm font-medium text-gray-900"
+                      onClick={() => setIsSheetOpen(false)}
+                    >
+                      All {safeCap(mobileActiveCategory.name)}
+                    </Link>
+
+                    {(mobileActiveCategory.children || []).map((subCat) => (
+                      <div key={subCat.id} className="space-y-3">
+                        <div className="text-xs tracking-[0.2em] text-gray-500 uppercase">
+                          {safeCap(subCat.name)}
+                        </div>
+                        {subCat.children?.length > 0 ? (
+                          <ul className="space-y-2">
+                            {subCat.children.map((grandchild) => (
+                              <li key={grandchild.id}>
+                                <Link
+                                  href={`/shop/${toLower(mobileActiveCategory.name)}/${toLower(subCat.name)}/${toLower(grandchild.name)}/${grandchild.id}`}
+                                  className="block text-sm text-gray-900"
+                                  onClick={() => setIsSheetOpen(false)}
+                                >
+                                  {safeCap(grandchild.name)}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <Link
+                            href={`/shop/${toLower(mobileActiveCategory.name)}/${toLower(subCat.name)}/${subCat.id}`}
+                            className="block text-sm text-gray-900"
+                            onClick={() => setIsSheetOpen(false)}
+                          >
+                            {safeCap(subCat.name)}
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </SheetContent>
           </Sheet>
