@@ -15,8 +15,13 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "Aayeu Ecommerce",
-  description: "Ecommerce website for Aayeu",
+  title: "Aayeu Designer Fashion  ",
+  description: "Aayeu is a designer fashion and lifestyle ecommerce website that offers a wide range of products for men, women.",
+  icons: {
+    icon: "/assets/images/favicon.png",
+    shortcut: "/assets/images/favicon.png",
+    apple: "/assets/images/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }) {

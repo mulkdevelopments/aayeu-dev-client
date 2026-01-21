@@ -229,7 +229,7 @@ export default function MiddleHeader() {
               <img
                 src="/assets/images/aayeu_logo.png"
                 alt="Aayeu Logo"
-                className="h-12 w-auto hover:opacity-80 transition-opacity"
+                className="h-auto w-42 hover:opacity-80 transition-opacity"
               />
             </Link>
 
@@ -390,7 +390,7 @@ export default function MiddleHeader() {
                       <img
                         src="/assets/images/aayeu_logo.png"
                         alt="AAYEU"
-                        className="h-7 w-auto"
+                        className="h-auto w-22"
                       />
                     </div>
                   )}
@@ -589,7 +589,7 @@ export default function MiddleHeader() {
             <img
               src="/assets/images/aayeu_logo.png"
               alt="Aayeu"
-              className="h-12  w-auto"
+              className="h-auto w-32"
             />
           </Link>
 
