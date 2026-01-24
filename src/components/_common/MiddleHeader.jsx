@@ -42,13 +42,16 @@ export default function MiddleHeader() {
   const headerRef = useRef(null);
   const [panelTop, setPanelTop] = useState(0);
 
-  const sortedSubCategories = useMemo(() => {
+  const categorizedSubCategories = useMemo(() => {
     const list = hoveredCategory?.children ? [...hoveredCategory.children] : [];
-    return list.sort((a, b) => {
+    const withChildren = list.filter((item) => item?.children?.length > 0);
+    const leafItems = list.filter((item) => !item?.children?.length);
+    withChildren.sort((a, b) => {
       const aCount = Array.isArray(a?.children) ? a.children.length : 0;
       const bCount = Array.isArray(b?.children) ? b.children.length : 0;
       return bCount - aCount;
     });
+    return { withChildren, leafItems };
   }, [hoveredCategory]);
 
   useEffect(() => {
@@ -282,7 +285,7 @@ export default function MiddleHeader() {
                   href={`/shop/${toLower(activeCategory?.name)}/${toLower(childCategory.name)}/${childCategory.id}`}
                   className={`text-sm transition-colors whitespace-nowrap ${
                     hoveredCategory?.id === childCategory.id
-                      ? "text-red-600 font-medium"
+                      ? "text-gray-600 font-medium"
                       : "text-gray-700 hover:text-black"
                   }`}
                 >
@@ -304,32 +307,62 @@ export default function MiddleHeader() {
                     {/* Left content - Farfetch style columns */}
                     <div className="flex-1">
                       <div className="grid grid-cols-3 gap-12">
-                        {sortedSubCategories.map((subCat) => (
-                          <div key={subCat.id} className="space-y-3">
-                            <Link
-                              href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(subCat.name)}/${subCat.id}`}
-                              className="block text-[11px] tracking-[0.2em] text-gray-600 uppercase hover:text-black transition-colors"
-                              onClick={() => setHoveredCategory(null)}
-                            >
-                              {safeCap(subCat.name)}
-                            </Link>
-                            {subCat.children?.length > 0 && (
-                              <ul className="space-y-2">
-                                {subCat.children.map((grandchild) => (
-                                  <li key={grandchild.id}>
-                                    <Link
-                                      href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(subCat.name)}/${toLower(grandchild.name)}/${grandchild.id}`}
+                        {categorizedSubCategories.withChildren.length > 0 ? (
+                          categorizedSubCategories.withChildren.map((subCat, idx) => (
+                            <div key={subCat.id} className="space-y-3">
+                              <Link
+                                href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(subCat.name)}/${subCat.id}`}
+                                className="block text-[11px] tracking-[0.2em] text-gray-600 uppercase hover:text-black transition-colors"
+                                onClick={() => setHoveredCategory(null)}
+                              >
+                                {safeCap(subCat.name)}
+                              </Link>
+                              {subCat.children?.length > 0 && (
+                                <ul className="space-y-2">
+                                  {subCat.children.map((grandchild) => (
+                                    <li key={grandchild.id}>
+                                      <Link
+                                        href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(subCat.name)}/${toLower(grandchild.name)}/${grandchild.id}`}
                                       className="block text-sm text-gray-800 hover:text-black transition-colors"
-                                      onClick={() => setHoveredCategory(null)}
-                                    >
-                                      {safeCap(grandchild.name)}
-                                    </Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
+                                        onClick={() => setHoveredCategory(null)}
+                                      >
+                                        {safeCap(grandchild.name)}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                  {idx === categorizedSubCategories.withChildren.length - 1 &&
+                                    categorizedSubCategories.leafItems.map((leaf) => (
+                                      <li key={leaf.id}>
+                                        <Link
+                                          href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(leaf.name)}/${leaf.id}`}
+                                          className="block text-[11px] tracking-[0.2em] text-gray-600 uppercase hover:text-black transition-colors"
+                                          onClick={() => setHoveredCategory(null)}
+                                        >
+                                          {safeCap(leaf.name)}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="space-y-3">
+                            <ul className="space-y-2">
+                              {categorizedSubCategories.leafItems.map((leaf) => (
+                                <li key={leaf.id}>
+                                  <Link
+                                    href={`/shop/${toLower(activeCategory?.name)}/${toLower(hoveredCategory.name)}/${toLower(leaf.name)}/${leaf.id}`}
+                                    className="block text-[11px] tracking-[0.2em] text-gray-600 uppercase hover:text-black transition-colors"
+                                    onClick={() => setHoveredCategory(null)}
+                                  >
+                                    {safeCap(leaf.name)}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
 

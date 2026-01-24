@@ -92,8 +92,11 @@ export default function CartSummarySection({ liveStockMap, stockCheckLoading }) 
     if (!cartItems || !cartItems.length) return false;
 
     return cartItems.some((item) => {
-      // Only check live stock for vendors with individual syncing
-      if (item.vendor_capabilities?.has_individual_syncing) {
+      const canLiveStock =
+        item.vendor_capabilities?.has_stock_check_api ||
+        item.vendor_capabilities?.has_individual_syncing;
+      // Only check live stock for vendors that support live stock checks
+      if (canLiveStock) {
         const stockData = liveStockMap[item.cart_item_id];
         if (!stockData) return false; // Still loading
 

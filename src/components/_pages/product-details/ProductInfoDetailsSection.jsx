@@ -29,6 +29,9 @@ const ProductInfoDetailsSection = forwardRef(
     const [isOutOfStock, setIsOutOfStock] = useState(false);
     const { toggleWishlist, isWishlisted } = useWishlist();
     const { format } = useCurrency();
+    const canLiveStock =
+      product?.vendor_capabilities?.has_stock_check_api ||
+      product?.vendor_capabilities?.has_individual_syncing;
 
     // Helper function to get live stock for a variant
     const getLiveStock = (variantSize) => {
@@ -90,8 +93,8 @@ const ProductInfoDetailsSection = forwardRef(
         return;
       }
 
-      // Only use live stock for vendors with individual syncing capability
-      if (product.vendor_capabilities?.has_individual_syncing) {
+      // Only use live stock for vendors that support live stock checks
+      if (canLiveStock) {
         // If live stock data is available, use it
         if (liveStockData) {
           const liveStock = getLiveStock(variant.variant_size);
@@ -223,7 +226,7 @@ const ProductInfoDetailsSection = forwardRef(
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {stockLoading && product.vendor_capabilities?.has_individual_syncing ? (
+                  {stockLoading && canLiveStock ? (
                     // Show skeleton loaders for size buttons while loading
                     sizes.map((s) => (
                       <div
@@ -243,7 +246,7 @@ const ProductInfoDetailsSection = forwardRef(
 
                       // Check stock - NO fallback to DB
                       let outOfStock;
-                      if (product.vendor_capabilities?.has_individual_syncing) {
+                      if (canLiveStock) {
                         // Only use live stock data
                         if (liveStockData) {
                           const liveStock = getLiveStock(s);
@@ -278,7 +281,7 @@ const ProductInfoDetailsSection = forwardRef(
                 </div>
                 {/* Stock Status */}
                 <div className="flex items-center gap-2">
-                  {stockLoading && product.vendor_capabilities?.has_individual_syncing ? (
+                  {stockLoading && canLiveStock ? (
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-gray-200 animate-pulse"></div>
                       <div className="h-4 w-20 bg-gray-200 animate-pulse rounded"></div>
@@ -304,7 +307,7 @@ const ProductInfoDetailsSection = forwardRef(
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              {stockLoading && product.vendor_capabilities?.has_individual_syncing ? (
+              {stockLoading && canLiveStock ? (
                 // Skeleton loader for Add to Cart button
                 <div className="flex-1 h-14 bg-gray-200 animate-pulse rounded"></div>
               ) : (

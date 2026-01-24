@@ -58,26 +58,26 @@ export default function NewsletterForm() {
           }}
           render={({ field }) => (
             <div className="flex flex-col w-full">
-              <div className="flex w-full border-2 border-gray-200 rounded-lg overflow-hidden focus-within:border-amber-500 transition-colors">
+              <div className="flex w-full border-2 border-gray-300 rounded-lg overflow-hidden focus-within:border-black transition-colors bg-white">
                 <input
                   {...field}
                   type="email"
                   placeholder="Enter your email"
                   className={clsx(
-                    "flex-grow px-3 py-2 text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none",
-                    { "border-red-500": errors.email }
+                    "flex-grow px-3 py-2 text-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none",
+                    { "border-gray-600": errors.email }
                   )}
                 />
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white px-4 py-2 text-xs font-semibold hover:from-amber-600 hover:via-yellow-600 hover:to-amber-700 transition-all disabled:opacity-50"
+                  className="bg-black text-white px-4 py-2 text-xs font-semibold hover:bg-gray-900 transition-colors disabled:opacity-50"
                 >
                   {isSubmitting ? "..." : "SUBSCRIBE"}
                 </button>
               </div>
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-gray-700 text-xs mt-1">
                   {errors.email.message}
                 </p>
               )}
@@ -91,16 +91,16 @@ export default function NewsletterForm() {
           control={control}
           rules={{ required: "You must agree to the terms" }}
           render={({ field }) => (
-            <label className="flex items-start text-xs text-gray-600 gap-2 cursor-pointer">
+            <label className="flex items-start text-xs text-gray-700 gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={field.value}
                 onChange={(e) => field.onChange(e.target.checked)}
-                className="accent-amber-500 mt-0.5 cursor-pointer"
+                className="accent-black mt-0.5 cursor-pointer"
               />
               <span>
                 I agree with the{" "}
-                <Link href="/terms-and-conditions" className="text-amber-600 hover:text-amber-700 underline">
+                <Link href="/terms-and-conditions" className="text-gray-900 hover:text-black underline">
                   Terms of service
                 </Link>
               </span>
@@ -109,7 +109,7 @@ export default function NewsletterForm() {
         />
 
         {errors.agree && (
-          <p className="text-red-500 text-xs">{errors.agree.message}</p>
+          <p className="text-gray-700 text-xs">{errors.agree.message}</p>
         )}
       </form>
     </div>

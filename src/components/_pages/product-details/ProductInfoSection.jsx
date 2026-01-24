@@ -48,7 +48,10 @@ export default function ProductInfoSection() {
       setProduct(productData);
 
       // Automatically fetch live stock if vendor supports it
-      if (productData?.vendor_capabilities?.has_individual_syncing) {
+      const canLiveStock =
+        productData?.vendor_capabilities?.has_stock_check_api ||
+        productData?.vendor_capabilities?.has_individual_syncing;
+      if (canLiveStock) {
         fetchLiveStock();
       }
     })();

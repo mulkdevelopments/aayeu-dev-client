@@ -8,14 +8,13 @@ import {
   FaPinterestP,
   FaTwitter,
 } from "react-icons/fa";
-import NewsletterForm from "../_pages/home/NewsletterForm";
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-200">
+    <footer className="bg-gray-100 text-gray-900 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        {/* Main Content */}
-        <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-16">
+        {/* Top Links Section */}
+        <div className="py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10">
           {/* Brand Section */}
           <div className="lg:col-span-4">
             <Link href="/" className="inline-block mb-6">
@@ -24,26 +23,26 @@ export default function Footer() {
                 alt="AAYEU"
                 width={140}
                 height={50}
-                className="h-12 w-auto"
+                className="h-10 w-auto"
               />
             </Link>
-            <p className="text-gray-600 text-sm leading-relaxed mb-6 max-w-xs">
+            <p className="text-sm text-gray-700 leading-relaxed mb-6 max-w-xs">
               Curated collections that inspire style. Quality craftsmanship meets timeless design.
             </p>
             <div className="space-y-2 text-sm">
               <Link
                 href="mailto:help@aayeu.com"
-                className="block text-gray-900 hover:text-gray-600 transition-colors"
+                className="block text-gray-900 hover:text-black transition-colors"
               >
                 help@aayeu.com
               </Link>
-              <p className="text-gray-500">Mon - Fri: 10:00 AM - 6:00 PM</p>
+              <p className="text-gray-700">Mon - Fri: 10:00 AM - 6:00 PM</p>
             </div>
           </div>
 
           {/* Shop Section */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
+            <h3 className="text-xs font-semibold tracking-[0.2em] uppercase mb-5 text-gray-900">
               Shop
             </h3>
             <ul className="space-y-3">
@@ -51,7 +50,7 @@ export default function Footer() {
                 <li key={item}>
                   <Link
                     href="/shop"
-                    className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    className="text-sm text-gray-700 hover:text-black transition-colors"
                   >
                     {item}
                   </Link>
@@ -62,7 +61,7 @@ export default function Footer() {
 
           {/* Company Section */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
+            <h3 className="text-xs font-semibold tracking-[0.2em] uppercase mb-5 text-gray-900">
               Company
             </h3>
             <ul className="space-y-3">
@@ -75,7 +74,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    className="text-sm text-gray-700 hover:text-black transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -86,7 +85,7 @@ export default function Footer() {
 
           {/* Account Section */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
+            <h3 className="text-xs font-semibold tracking-[0.2em] uppercase mb-5 text-gray-900">
               Account
             </h3>
             <ul className="space-y-3">
@@ -97,7 +96,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    className="text-sm text-gray-700 hover:text-black transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -106,78 +105,70 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter Section */}
+          {/* Follow Us Section */}
           <div className="lg:col-span-2">
-            <h3 className="text-sm font-semibold tracking-wide uppercase mb-6 text-gray-900">
-              Newsletter
+            <h3 className="text-xs font-semibold tracking-[0.2em] uppercase mb-5 text-gray-900">
+              Follow us
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Sign up and get 10% off your first order
-            </p>
-            <NewsletterForm />
-          </div>
-        </div>
-
-        {/* Social Media Section */}
-        <div className="border-t border-gray-200 py-8">
-          <div className="flex justify-center gap-6">
-            <Link
-              href="#"
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-              aria-label="Instagram"
-            >
-              <FaInstagram className="w-6 h-6" />
-            </Link>
-            <Link
-              href="#"
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-              aria-label="Facebook"
-            >
-              <FaFacebookF className="w-6 h-6" />
-            </Link>
-            <Link
-              href="#"
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-              aria-label="Pinterest"
-            >
-              <FaPinterestP className="w-6 h-6" />
-            </Link>
-            <Link
-              href="#"
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-              aria-label="Twitter"
-            >
-              <FaTwitter className="w-6 h-6" />
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                href="#"
+                className="text-gray-900 hover:text-black transition-colors"
+                aria-label="Instagram"
+              >
+                <FaInstagram className="w-5 h-5" />
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-900 hover:text-black transition-colors"
+                aria-label="Facebook"
+              >
+                <FaFacebookF className="w-5 h-5" />
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-900 hover:text-black transition-colors"
+                aria-label="Pinterest"
+              >
+                <FaPinterestP className="w-5 h-5" />
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-900 hover:text-black transition-colors"
+                aria-label="Twitter"
+              >
+                <FaTwitter className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-200 py-8">
+        <div className="border-t border-gray-200 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500">
-              © 2025 AAYEU. All rights reserved.
-            </p>
-            <div className="flex gap-6 text-sm">
+            <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm">
               <Link
                 href="/privacy-policy"
-                className="text-gray-500 hover:text-gray-900 transition-colors"
+                className="text-gray-700 hover:text-black transition-colors"
               >
-                Privacy
+                Privacy Policy
               </Link>
               <Link
                 href="/terms-and-conditions"
-                className="text-gray-500 hover:text-gray-900 transition-colors"
+                className="text-gray-700 hover:text-black transition-colors"
               >
-                Terms
+                Terms and conditions
               </Link>
               <Link
                 href="/accessibility"
-                className="text-gray-500 hover:text-gray-900 transition-colors"
+                className="text-gray-700 hover:text-black transition-colors"
               >
                 Accessibility
               </Link>
             </div>
+            <p className="text-xs text-gray-700">
+              © 2025 AAYEU. All rights reserved.
+            </p>
           </div>
         </div>
       </div>

@@ -37,6 +37,10 @@ export default function CartItemCard({ product, liveStockData, stockCheckLoading
     vendor_capabilities,
   } = product;
 
+  const canLiveStock =
+    vendor_capabilities?.has_stock_check_api ||
+    vendor_capabilities?.has_individual_syncing;
+
   const id = productInfo?.id;
   const name = productInfo?.name ?? "Unnamed Product";
   const brand = brand_name ?? "";
@@ -59,7 +63,7 @@ export default function CartItemCard({ product, liveStockData, stockCheckLoading
   };
 
   // Determine actual available stock
-  const availableStock = vendor_capabilities?.has_individual_syncing && liveStockData
+  const availableStock = canLiveStock && liveStockData
     ? getLiveStock()
     : parseInt(stock, 10) || 0;
 
@@ -124,7 +128,7 @@ export default function CartItemCard({ product, liveStockData, stockCheckLoading
             )}
 
             {/* Stock Warning */}
-            {stockCheckLoading && vendor_capabilities?.has_individual_syncing ? (
+            {stockCheckLoading && canLiveStock ? (
               <div className="mt-2 flex items-center gap-2">
                 <div className="h-4 w-48 bg-gray-200 animate-pulse rounded"></div>
               </div>

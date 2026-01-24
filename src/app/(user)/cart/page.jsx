@@ -50,12 +50,14 @@ export default function CartPage() {
     setLoading(false);
   };
 
-  // Check live stock for all items with individual syncing capability
+  // Check live stock for all items with live stock capability
   const checkLiveStockForAllItems = async () => {
     if (!cartItems.length) return;
 
     const itemsToCheck = cartItems.filter(
-      (item) => item.vendor_capabilities?.has_individual_syncing
+      (item) =>
+        item.vendor_capabilities?.has_stock_check_api ||
+        item.vendor_capabilities?.has_individual_syncing
     );
 
     if (!itemsToCheck.length) return;

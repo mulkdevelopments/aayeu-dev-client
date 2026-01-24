@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { XIcon, Search } from "lucide-react";
+import { XIcon, Search, ChevronDown } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -38,6 +37,7 @@ export default function SidebarFilters({
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [brandSearch, setBrandSearch] = useState("");
+  const [openSection, setOpenSection] = useState(null);
 
   const hasInteracted = useRef(false); // ensures no URL update on mount
 
@@ -132,6 +132,21 @@ export default function SidebarFilters({
     [brands, brandSearch]
   );
 
+  const availableSections = useMemo(() => {
+    const list = [];
+    if (brands.length > 0) list.push("brand");
+    if (colors.length > 0) list.push("color");
+    if (sizes.length > 0) list.push("size");
+    if (priceRange.min < priceRange.max) list.push("price");
+    return list;
+  }, [brands.length, colors.length, sizes.length, priceRange.min, priceRange.max]);
+
+  useEffect(() => {
+    if (!openSection && availableSections.length) {
+      setOpenSection(availableSections[0]);
+    }
+  }, [availableSections, openSection]);
+
   if (!open) return null;
 
   return (
@@ -145,13 +160,13 @@ export default function SidebarFilters({
 
       {/* Sidebar */}
       <aside
-        className="relative bg-white w-80 h-full shadow-xl flex flex-col"
+        className="relative bg-white w-full sm:w-[420px] h-full shadow-xl flex flex-col"
         role="dialog"
         aria-modal="true"
       >
         {/* Header */}
-        <div className="flex-shrink-0 px-5 py-4 border-b border-gray-200 flex items-center justify-between bg-white z-10">
-          <h5 className="text-lg font-semibold">Filters</h5>
+        <div className="flex-shrink-0 px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-white z-10">
+          <h5 className="text-xl font-medium">All Filters</h5>
           <Button
             variant="ghost"
             size="icon"
@@ -163,7 +178,7 @@ export default function SidebarFilters({
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 scroll-smooth">
+        <div className="flex-1 overflow-y-auto px-6 py-4 scroll-smooth">
           {loading && (
             <p className="text-sm text-gray-500 mb-3">Loading filters...</p>
           )}
@@ -171,150 +186,206 @@ export default function SidebarFilters({
           {/* --- Brand Filter --- */}
           {brands.length > 0 && (
             <>
-              <Label className="text-sm font-medium text-gray-700">
-                Brands
-              </Label>
-              <div className="relative my-2">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search brand..."
-                  value={brandSearch}
-                  onChange={(e) => setBrandSearch(e.target.value)}
-                  className="pl-8"
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenSection(openSection === "brand" ? null : "brand")
+                }
+                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
+              >
+                Brand
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    openSection === "brand" ? "rotate-180" : ""
+                  }`}
                 />
-              </div>
-
-              <ScrollArea className="h-40 p-2 mt-2 mb-4">
-                {filteredBrands.map((b) => (
-                  <div key={b} className="flex items-center gap-2 py-1">
-                    <Checkbox
-                      checked={selectedBrands.includes(b)}
-                      onCheckedChange={() =>
-                        toggle(setSelectedBrands, selectedBrands, b)
-                      }
+              </button>
+              {openSection === "brand" && (
+                <div className="pb-5">
+                  <div className="relative mb-4">
+                    <Search className="absolute left-0 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      placeholder="Search brands"
+                      value={brandSearch}
+                      onChange={(e) => setBrandSearch(e.target.value)}
+                      className="pl-6 border-0 border-b border-gray-300 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
-                    <span className="text-sm">{_.startCase(_.toLower(b))}</span>
                   </div>
-                ))}
-              </ScrollArea>
-              <Separator className="my-3" />
+                  <div className="max-h-52 overflow-y-auto pr-2">
+                    <div className="space-y-3">
+                      {filteredBrands.map((b) => (
+                        <label key={b} className="flex items-center gap-3 text-sm">
+                          <Checkbox
+                            checked={selectedBrands.includes(b)}
+                            onCheckedChange={() =>
+                              toggle(setSelectedBrands, selectedBrands, b)
+                            }
+                          />
+                          <span>{_.startCase(_.toLower(b))}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <Separator className="my-1" />
             </>
           )}
 
           {/* --- Color Filter --- */}
           {colors.length > 0 && (
             <>
-              <Label className="text-sm font-medium text-gray-700">
-                Colors
-              </Label>
-              <ScrollArea className="h-40 p-2 mt-2 mb-4">
-                {colors.map((c) => (
-                  <div key={c} className="flex items-center gap-2 py-1">
-                    <Checkbox
-                      checked={selectedColors.includes(c)}
-                      onCheckedChange={() =>
-                        toggle(setSelectedColors, selectedColors, c)
-                      }
-                    />
-                    <span className="text-sm">{c}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenSection(openSection === "color" ? null : "color")
+                }
+                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
+              >
+                Colour
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    openSection === "color" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {openSection === "color" && (
+                <div className="pb-5">
+                  <div className="space-y-3">
+                    {colors.map((c) => (
+                      <label key={c} className="flex items-center gap-3 text-sm">
+                        <Checkbox
+                          checked={selectedColors.includes(c)}
+                          onCheckedChange={() =>
+                            toggle(setSelectedColors, selectedColors, c)
+                          }
+                        />
+                        <span>{c}</span>
+                      </label>
+                    ))}
                   </div>
-                ))}
-              </ScrollArea>
-              <Separator className="my-3" />
+                </div>
+              )}
+              <Separator className="my-1" />
             </>
           )}
 
           {/* --- Size Filter --- */}
           {sizes.length > 0 && (
             <>
-              <Label className="text-sm font-medium text-gray-700">Sizes</Label>
-              <ScrollArea className="h-40 p-2 mt-2 mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {sizes.map((s) => (
-                    <Button
-                      key={s}
-                      variant={
-                        selectedSizes.includes(s) ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => toggle(setSelectedSizes, selectedSizes, s)}
-                      className={`text-xs ${
-                        selectedSizes.includes(s)
-                          ? "bg-[#c38e1e] hover:bg-[#b2821c]"
-                          : ""
-                      }`}
-                    >
-                      {s}
-                    </Button>
-                  ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenSection(openSection === "size" ? null : "size")
+                }
+                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
+              >
+                Size
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    openSection === "size" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {openSection === "size" && (
+                <div className="pb-5">
+                  <div className="grid grid-cols-3 gap-3">
+                    {sizes.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => toggle(setSelectedSizes, selectedSizes, s)}
+                        className={`h-10 text-sm border transition-colors ${
+                          selectedSizes.includes(s)
+                            ? "border-black text-black"
+                            : "border-gray-300 text-gray-700"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </ScrollArea>
-              <Separator className="my-3" />
+              )}
+              <Separator className="my-1" />
             </>
           )}
 
           {/* --- Price Filter --- */}
           {priceRange.min < priceRange.max && (
             <>
-              <Label className="text-sm font-medium text-gray-700">
-                Price (AED)
-              </Label>
-              <div className="flex items-center gap-2 text-sm mt-2 mb-2">
-                <Input
-                  type="number"
-                  value={price.min}
-                  onChange={(e) => {
-                    hasInteracted.current = true;
-                    setPrice((p) => ({
-                      ...p,
-                      min: Math.max(
-                        priceRange.min,
-                        Math.min(Number(e.target.value), p.max)
-                      ),
-                    }));
-                  }}
-                  className="w-1/2"
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenSection(openSection === "price" ? null : "price")
+                }
+                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
+              >
+                Price
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    openSection === "price" ? "rotate-180" : ""
+                  }`}
                 />
-                <Input
-                  type="number"
-                  value={price.max}
-                  onChange={(e) => {
-                    hasInteracted.current = true;
-                    setPrice((p) => ({
-                      ...p,
-                      max: Math.min(
-                        priceRange.max,
-                        Math.max(Number(e.target.value), p.min)
-                      ),
-                    }));
-                  }}
-                  className="w-1/2"
-                />
-              </div>
+              </button>
+              {openSection === "price" && (
+                <div className="pb-5">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Input
+                      type="number"
+                      value={price.min}
+                      onChange={(e) => {
+                        hasInteracted.current = true;
+                        setPrice((p) => ({
+                          ...p,
+                          min: Math.max(
+                            priceRange.min,
+                            Math.min(Number(e.target.value), p.max)
+                          ),
+                        }));
+                      }}
+                      className="w-1/2 rounded-none border-gray-300"
+                    />
+                    <Input
+                      type="number"
+                      value={price.max}
+                      onChange={(e) => {
+                        hasInteracted.current = true;
+                        setPrice((p) => ({
+                          ...p,
+                          max: Math.min(
+                            priceRange.max,
+                            Math.max(Number(e.target.value), p.min)
+                          ),
+                        }));
+                      }}
+                      className="w-1/2 rounded-none border-gray-300"
+                    />
+                  </div>
 
-              <Slider
-                min={priceRange.min}
-                max={priceRange.max}
-                step={1}
-                value={[price.min, price.max]}
-                onValueChange={([min, max]) => {
-                  hasInteracted.current = true;
-                  setPrice({ min, max });
-                }}
-                className="mt-3"
-              />
+                  <Slider
+                    min={priceRange.min}
+                    max={priceRange.max}
+                    step={1}
+                    value={[price.min, price.max]}
+                    onValueChange={([min, max]) => {
+                      hasInteracted.current = true;
+                      setPrice({ min, max });
+                    }}
+                    className="mt-4"
+                  />
 
-              <div className="text-xs text-gray-500 mt-1 mb-3">
-                AED {price.min.toFixed(2)} – AED {price.max.toFixed(2)}
-              </div>
-
-              <Separator className="my-3" />
+                  <div className="text-xs text-gray-500 mt-2">
+                    AED {price.min.toFixed(2)} – AED {price.max.toFixed(2)}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 border-t border-gray-200 bg-white px-5 py-3 shadow-sm flex gap-3">
+        <div className="flex-shrink-0 border-t border-gray-200 bg-white px-6 py-4 shadow-sm flex gap-3">
           <Button
             onClick={handleReset}
             variant="outline"
