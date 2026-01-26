@@ -45,14 +45,26 @@ export default function SidebarFilters({
   useEffect(() => {
     const fetchFilters = async () => {
       try {
+        const params = new URLSearchParams();
+
+        if (searchQuery) {
+          params.set("q", searchQuery);
+        } else if (categoryId) {
+          params.set("category_id", categoryId);
+        }
+
+        selectedBrands.forEach((b) => params.append("brand", b));
+        selectedColors.forEach((c) => params.append("color", c));
+        selectedSizes.forEach((s) => params.append("size", s));
+
+        if (price?.min) params.set("min_price", String(price.min));
+        if (price?.max) params.set("max_price", String(price.max));
+
+        const queryString = params.toString();
         const { data } = await request({
           method: "GET",
-          url: searchQuery
-            ? `/users/get-filters-for-products?q=${encodeURIComponent(
-                searchQuery
-              )}`
-            : categoryId
-            ? `/users/get-filters-for-products?category_id=${categoryId}`
+          url: queryString
+            ? `/users/get-filters-for-products?${queryString}`
             : `/users/get-filters-for-products`,
         });
 
@@ -71,7 +83,7 @@ export default function SidebarFilters({
       }
     };
     fetchFilters();
-  }, [categoryId, searchQuery]);
+  }, [categoryId, searchQuery, selectedBrands, selectedColors, selectedSizes, price]);
 
   // ✅ Sync local filter state when parent updates (e.g. after refresh)
   useEffect(() => {

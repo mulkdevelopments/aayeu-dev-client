@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/accordion";
 import useCart from "@/hooks/useCart";
 import useMenu from "@/hooks/useMenu";
+import useAxios from "@/hooks/useAxios";
 import CurrencySelector from "./CurrencySelector";
 import NavMenuCategoryImage from "./NavMenuCategoryImage";
 import { startCase, toLower } from "lodash";
@@ -29,6 +30,7 @@ export default function MiddleHeader() {
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { items } = useCart();
   const { menu, fetchMenu } = useMenu();
+  const { request } = useAxios();
 
   const [activeCategory, setActiveCategory] = useState(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -41,6 +43,9 @@ export default function MiddleHeader() {
   const hoverTimeoutRef = useRef(null);
   const headerRef = useRef(null);
   const [panelTop, setPanelTop] = useState(0);
+  const [brandGroups, setBrandGroups] = useState([]);
+  const [allBrands, setAllBrands] = useState([]);
+  const [activeBrandLetter, setActiveBrandLetter] = useState("A");
 
   const categorizedSubCategories = useMemo(() => {
     const list = hoveredCategory?.children ? [...hoveredCategory.children] : [];
@@ -58,6 +63,24 @@ export default function MiddleHeader() {
     fetchMenu().then((res) => {
       if (res?.data?.length) setActiveCategory(res.data[0]);
     });
+  }, []);
+
+  useEffect(() => {
+    const fetchBrandData = async () => {
+      try {
+        const [groupsRes, brandsRes] = await Promise.all([
+          request({ method: "GET", url: "/users/get-brand-groups" }),
+          request({ method: "GET", url: "/users/get-all-brands" }),
+        ]);
+        const groups = groupsRes?.data?.data?.items || [];
+        const brands = brandsRes?.data?.data || [];
+        setBrandGroups(groups);
+        setAllBrands(brands.map((b) => b.brand_name).filter(Boolean));
+      } catch (err) {
+        console.error("Failed to fetch brand data:", err);
+      }
+    };
+    fetchBrandData();
   }, []);
 
   useEffect(() => {
@@ -105,6 +128,25 @@ export default function MiddleHeader() {
       clearTimeout(hoverTimeoutRef.current);
     }
   };
+
+  const displayedBrandGroups = useMemo(
+    () => brandGroups.slice(0, 2),
+    [brandGroups]
+  );
+
+  const brandLetters = useMemo(
+    () => ["0-9", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")],
+    []
+  );
+
+  const brandsByLetter = useMemo(() => {
+    if (!allBrands.length) return [];
+    if (activeBrandLetter === "0-9") {
+      return allBrands.filter((b) => /^[0-9]/.test(b));
+    }
+    return allBrands.filter((b) => b?.[0]?.toUpperCase() === activeBrandLetter);
+  }, [allBrands, activeBrandLetter]);
+
 
   const updatePanelTop = () => {
     if (!headerRef.current) return;
@@ -295,7 +337,7 @@ export default function MiddleHeader() {
             ))}
 
             {/* Floating Panel for Children - MegaMenu Style */}
-            {hoveredCategory && hoveredCategory.children?.length > 0 && (
+            {hoveredCategory && (hoveredCategory.children?.length > 0 || hoveredCategory?.name?.toLowerCase() === "brands") && (
               <div
                 className="fixed left-0 right-0 bg-white shadow-xl border-t border-gray-200 z-50"
                 style={{ top: panelTop }}
@@ -306,6 +348,65 @@ export default function MiddleHeader() {
                   <div className="flex gap-12">
                     {/* Left content - Farfetch style columns */}
                     <div className="flex-1">
+                      {hoveredCategory?.name?.toLowerCase() === "brands" ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                          {displayedBrandGroups.map((group) => (
+                            <div key={group.id} className="space-y-3">
+                              <p className="text-[11px] tracking-[0.2em] text-gray-600 uppercase">
+                                {group.name}
+                              </p>
+                              <ul className="space-y-2">
+                                {(group.brands || []).map((brand) => (
+                                  <li key={brand.id || brand.brand_name}>
+                                    <Link
+                                      href={`/shop?brand=${encodeURIComponent(toLower(brand.brand_name))}`}
+                                      className="block text-sm text-gray-800 hover:text-black transition-colors"
+                                      onClick={() => setHoveredCategory(null)}
+                                    >
+                                      {brand.brand_name}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+
+                          <div className="space-y-3">
+                            <p className="text-[11px] tracking-[0.2em] text-gray-600 uppercase">Brands A-Z</p>
+                            <div className="grid grid-cols-8 gap-y-2 gap-x-4 text-xs text-gray-700">
+                              {brandLetters.map((letter) => (
+                                <button
+                                  key={letter}
+                                  type="button"
+                                  onClick={() => setActiveBrandLetter(letter)}
+                                  className={`text-left ${activeBrandLetter === letter ? "text-black font-semibold" : "hover:text-black"}`}
+                                >
+                                  {letter}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                              {brandsByLetter.slice(0, 8).map((brand) => (
+                                <Link
+                                  key={brand}
+                                  href={`/shop?brand=${encodeURIComponent(toLower(brand))}`}
+                                  className="text-gray-800 hover:text-black transition-colors"
+                                  onClick={() => setHoveredCategory(null)}
+                                >
+                                  {brand}
+                                </Link>
+                              ))}
+                            </div>
+                            <Link
+                              href={`/brands${activeBrandLetter ? `?letter=${activeBrandLetter}` : ""}`}
+                              className="inline-block mt-4 text-sm text-gray-800 hover:text-black underline"
+                              onClick={() => setHoveredCategory(null)}
+                            >
+                              View All
+                            </Link>
+                          </div>
+                        </div>
+                      ) : (
                       <div className="grid grid-cols-3 gap-12">
                         {categorizedSubCategories.withChildren.length > 0 ? (
                           categorizedSubCategories.withChildren.map((subCat, idx) => (
@@ -364,6 +465,7 @@ export default function MiddleHeader() {
                           </div>
                         )}
                       </div>
+                      )}
                     </div>
 
                     {/* Right column - Image */}

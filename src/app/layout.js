@@ -1,5 +1,5 @@
 // app/layout.tsx
-import { Poppins } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import "../styles/globals.css";
 import AppProviders from "@/providers/AppProviders";
 import Script from "next/script";
@@ -11,6 +11,12 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-poppins",
+  display: "swap",
+});
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -27,7 +33,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${poppins.className} antialiased`}>
+      <body className={`${poppins.className} ${inter.variable} antialiased`}>
         {/* GA SCRIPT */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}

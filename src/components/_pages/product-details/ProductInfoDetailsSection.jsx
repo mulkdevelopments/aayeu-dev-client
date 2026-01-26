@@ -7,6 +7,77 @@ import useWishlist from "@/hooks/useWishlist";
 import { showToast } from "@/providers/ToastProvider";
 import useCurrency from "@/hooks/useCurrency";
 
+const SIZE_GUIDE_SOURCES = [
+  {
+    label: "4Partners size charts",
+    href: "https://store.4partners.io/help/size-chart",
+  },
+  {
+    label: "Mytheresa sizes table",
+    href: "https://www.mytheresa.com/me/en/customer-care/sizes-table",
+  },
+];
+
+const SIZE_GUIDE_TABLES = {
+  women: {
+    conversion: {
+      title: "Women's clothing conversion",
+      columns: ["XXS", "XS-S", "S-M", "M-L", "L-XL", "XL", "XXL"],
+      rows: [
+        { label: "Germany", values: ["32", "34", "36", "38", "40", "42", "44"] },
+        { label: "Italy", values: ["38", "40", "42", "44", "46", "48", "50"] },
+        { label: "France", values: ["34", "36", "38", "40", "42", "44", "46"] },
+      ],
+    },
+    measurements: {
+      title: "Women's clothing measurements (cm)",
+      columns: ["XS", "S", "M", "L", "XL"],
+      rows: [
+        { label: "Bust", values: ["78.7–81.3", "83.8–86.4", "88.9–91.4", "94–96.5", "100.3–105.4"] },
+        { label: "Waist", values: ["63.5", "66–68.6", "71.1–73.7", "76.2–80", "83.8–87.6"] },
+        { label: "Hips", values: ["88.9", "91.4–94", "96.5–99.1", "101.6–105.4", "109.2–113"] },
+      ],
+    },
+    shoes: {
+      title: "Women's shoes conversion",
+      columns: ["21.5", "22", "22.5", "23", "23.5", "24", "24.5", "25", "25.5", "26", "26.5", "27", "27.5", "28", "28.5"],
+      rows: [
+        { label: "CM (foot length)", values: ["21.5", "22", "22.5", "23", "23.5", "24", "24.5", "25", "25.5", "26", "26.5", "27", "27.5", "28", "28.5"] },
+        { label: "EU", values: ["35", "35.5", "36", "36.5", "37", "37.5", "38", "38.5", "39", "39.5", "40–41", "41", "41–42", "42", "42–43"] },
+        { label: "US", values: ["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12"] },
+        { label: "UK", values: ["3", "3.5", "4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10"] },
+      ],
+    },
+  },
+  men: {
+    conversion: {
+      title: "Men's clothing conversion",
+      columns: ["S", "M", "L", "XL", "XXL", "XXXL"],
+      rows: [
+        { label: "RU size", values: ["44–46", "48–50", "52", "54", "56", "58"] },
+      ],
+    },
+    measurements: {
+      title: "Men's clothing measurements (cm)",
+      columns: ["S", "M", "L", "XL", "XXL", "XXXL"],
+      rows: [
+        { label: "Chest", values: ["86.4–91.4", "96.5–101.6", "106.7–111.8", "116.8–121.9", "127–132.1", "137.2–142.2"] },
+        { label: "Waist", values: ["71.1–73.7", "76.2–83.8", "86.4–91.4", "94–101.6", "104.1–109.2", "111.8–119.4"] },
+      ],
+    },
+    shoes: {
+      title: "Men's shoes conversion",
+      columns: ["25", "25.5", "26", "26.5", "27", "27.5", "28", "28.5", "29", "29.5", "30", "31", "32"],
+      rows: [
+        { label: "CM (foot length)", values: ["25", "25.5", "26", "26.5", "27", "27.5", "28", "28.5", "29", "29.5", "30", "31", "32"] },
+        { label: "EU", values: ["40", "40.5", "41", "41.5", "42", "42.5", "43", "43.5", "44", "44.5", "45", "46", "47"] },
+        { label: "US", values: ["7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "13", "14"] },
+        { label: "UK", values: ["6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "13"] },
+      ],
+    },
+  },
+};
+
 const ProductInfoDetailsSection = forwardRef(
   (
     {
@@ -27,6 +98,8 @@ const ProductInfoDetailsSection = forwardRef(
     ref
   ) => {
     const [isOutOfStock, setIsOutOfStock] = useState(false);
+    const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+    const [sizeGuideTab, setSizeGuideTab] = useState("conversion");
     const { toggleWishlist, isWishlisted } = useWishlist();
     const { format } = useCurrency();
     const canLiveStock =
@@ -60,6 +133,87 @@ const ProductInfoDetailsSection = forwardRef(
       const uniqueColors = [...new Set(allColors)];
       return uniqueColors.length > 1 ? uniqueColors : [];
     }, [product]);
+
+    const sizeGuideContext = useMemo(() => {
+      if (!sizes.length) return null;
+      const normalized = sizes.map((s) => String(s || "").trim().toLowerCase());
+      const condensed = normalized.map((s) => s.replace(/\s+/g, ""));
+      const oneSizeTokens = new Set([
+        "one size",
+        "onesize",
+        "os",
+        "o/s",
+        "uni",
+        "universal",
+      ]);
+      const allOneSize = condensed.every((s) => {
+        if (oneSizeTokens.has(s)) return true;
+        return oneSizeTokens.has(s.replace("/", ""));
+      });
+      if (allOneSize) return null;
+
+      const alphaTokens = new Set([
+        "xxs",
+        "xs",
+        "xs-s",
+        "s",
+        "s-m",
+        "m",
+        "m-l",
+        "l",
+        "l-xl",
+        "xl",
+        "xxl",
+        "xxxl",
+      ]);
+      const hasAlphaSizes = condensed.some((s) => alphaTokens.has(s));
+      const numericSizes = condensed
+        .map((s) => s.replace(",", "."))
+        .filter((s) => /^\d+(\.\d+)?$/.test(s))
+        .map((s) => Number(s));
+      const hasRegionSizes = condensed.some((s) => /(eu|uk|us)\d/.test(s));
+
+      let type = null;
+      if (hasAlphaSizes) {
+        type = "apparel";
+      } else if (hasRegionSizes) {
+        type = "shoes";
+      } else if (numericSizes.length && numericSizes.length === normalized.length) {
+        const min = Math.min(...numericSizes);
+        const max = Math.max(...numericSizes);
+        if (min >= 34 && max <= 47) type = "shoes";
+        else if (min >= 5 && max <= 14) type = "shoes";
+        else if (min >= 28 && max <= 42) type = "apparel";
+      }
+
+      if (!type) return null;
+
+      const genderRaw = String(product?.gender || "").toLowerCase();
+      const gender =
+        genderRaw.includes("female") || genderRaw.includes("women")
+          ? "women"
+          : genderRaw.includes("male") || genderRaw.includes("men")
+          ? "men"
+          : null;
+
+      return { type, gender: gender || "women" };
+    }, [sizes, product]);
+
+    const sizeGuideTables = useMemo(() => {
+      if (!sizeGuideContext) return null;
+      const { gender, type } = sizeGuideContext;
+      const data = SIZE_GUIDE_TABLES[gender];
+      if (!data) return null;
+      if (type === "shoes") return { conversion: data.shoes };
+      return { conversion: data.conversion, measurements: data.measurements };
+    }, [sizeGuideContext]);
+
+    useEffect(() => {
+      if (!sizeGuideTables) return;
+      if (!sizeGuideTables.measurements && sizeGuideTab === "measurements") {
+        setSizeGuideTab("conversion");
+      }
+    }, [sizeGuideTables, sizeGuideTab]);
 
     // ✅ Auto-select first available variant
     useEffect(() => {
@@ -221,9 +375,14 @@ const ProductInfoDetailsSection = forwardRef(
                   <h3 className="text-sm font-bold text-black uppercase tracking-widest">
                     Size{selectedSize && `: ${selectedSize}`}
                   </h3>
-                  <button className="text-xs text-gray-600 hover:text-black font-medium underline">
-                    Size Guide
-                  </button>
+                  {sizeGuideTables && (
+                    <button
+                      className="text-xs text-gray-600 hover:text-black font-medium underline"
+                      onClick={() => setIsSizeGuideOpen(true)}
+                    >
+                      Size Guide
+                    </button>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {stockLoading && canLiveStock ? (
@@ -372,6 +531,142 @@ const ProductInfoDetailsSection = forwardRef(
                 </div>
               </div>
             </div> */}
+          </div>
+        )}
+
+        {isSizeGuideOpen && sizeGuideTables && (
+          <div className="fixed inset-0 z-500 bg-black/60 flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-4xl border border-black shadow-[0_20px_60px_rgba(0,0,0,0.35)] overflow-hidden font-size-guide">
+              <div className="flex items-start justify-between px-6 py-5 border-b border-black">
+                <div>
+                  <div className="text-xs text-black uppercase tracking-widest font-bold">
+                    Size Guide
+                  </div>
+                  <div className="text-lg font-semibold text-black mt-1">
+                    {product?.brand_name || "Brand"} •{" "}
+                    {sizeGuideContext?.gender === "men" ? "Men" : "Women"}
+                  </div>
+                  <div className="text-sm text-black/70 mt-1">
+                    {/* {sizeGuideContext?.type === "shoes"
+                      ? ""
+                      : "Clothing"} */}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsSizeGuideOpen(false)}
+                  className="text-black hover:text-black text-xl leading-none"
+                  aria-label="Close size guide"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="px-6 pt-4">
+                <div className="flex gap-6 text-sm font-semibold text-black/60 border-b border-black">
+                  <button
+                    className={`pb-3 border-b-2 ${
+                      sizeGuideTab === "conversion"
+                        ? "border-black text-black"
+                        : "border-transparent text-black/60"
+                    }`}
+                    onClick={() => setSizeGuideTab("conversion")}
+                  >
+                    Conversion chart
+                  </button>
+                  {sizeGuideTables.measurements && (
+                    <button
+                      className={`pb-3 border-b-2 ${
+                        sizeGuideTab === "measurements"
+                          ? "border-black text-black"
+                          : "border-transparent text-black/60"
+                      }`}
+                      onClick={() => setSizeGuideTab("measurements")}
+                    >
+                      Measurements
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="px-6 py-6 max-h-[65vh] overflow-y-auto">
+                {sizeGuideTab === "conversion" && sizeGuideTables.conversion && (
+                  <div className="space-y-3">
+                    {/* <h4 className="text-sm font-semibold text-gray-900">
+                      {sizeGuideTables.conversion.title}
+                    </h4> */}
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm text-black">
+                        <thead className="bg-white text-black border-b border-black">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold"> </th>
+                            {sizeGuideTables.conversion.columns.map((col) => (
+                              <th key={col} className="px-4 py-3 font-semibold">
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sizeGuideTables.conversion.rows.map((row) => (
+                            <tr key={row.label} className="border-t border-black">
+                              <td className="px-4 py-3 font-medium text-black whitespace-nowrap">
+                                {row.label}
+                              </td>
+                              {row.values.map((val, index) => (
+                                <td key={`${row.label}-${index}`} className="px-4 py-3 text-center">
+                                  {val}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {sizeGuideTab === "measurements" &&
+                  sizeGuideTables.measurements && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-black">
+                        {sizeGuideTables.measurements.title}
+                      </h4>
+                      <div className="overflow-x-auto border border-black rounded-xl">
+                        <table className="min-w-full text-sm text-black">
+                          <thead className="bg-white text-black border-b border-black">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-semibold"> </th>
+                              {sizeGuideTables.measurements.columns.map((col) => (
+                                <th key={col} className="px-4 py-3 font-semibold">
+                                  {col}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sizeGuideTables.measurements.rows.map((row) => (
+                              <tr key={row.label} className="border-t border-black">
+                                <td className="px-4 py-3 font-medium text-black whitespace-nowrap">
+                                  {row.label}
+                                </td>
+                                {row.values.map((val, index) => (
+                                  <td key={`${row.label}-${index}`} className="px-4 py-3 text-center">
+                                    {val}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+              </div>
+
+              <div className="px-6 pb-6 text-xs text-black/70 flex flex-wrap gap-2">
+                <span>Measurements are approximate and may vary by brand.</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
