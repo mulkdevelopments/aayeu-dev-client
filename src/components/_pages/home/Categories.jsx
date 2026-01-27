@@ -96,7 +96,7 @@ export default function HeroVideoSection() {
               <Link
                 key={index}
                 href={item?.product_redirect_url || item?.url || "#"}
-                className="group relative flex-shrink-0 w-56 h-28 md:w-96 md:h-40 lg:w-[680px] lg:h-48 overflow-hidden  transition-transform duration-300 hover:scale-105"
+                className="group relative flex-shrink-0 w-56 h-28 md:w-96 md:h-40 lg:w-[680px] lg:h-68 overflow-hidden  transition-transform duration-300 hover:scale-105"
               >
                 {/* Background Image */}
                 <div className="absolute inset-0">

@@ -44,8 +44,6 @@ export default function MiddleHeader() {
   const headerRef = useRef(null);
   const [panelTop, setPanelTop] = useState(0);
   const [brandGroups, setBrandGroups] = useState([]);
-  const [allBrands, setAllBrands] = useState([]);
-  const [activeBrandLetter, setActiveBrandLetter] = useState("A");
 
   const categorizedSubCategories = useMemo(() => {
     const list = hoveredCategory?.children ? [...hoveredCategory.children] : [];
@@ -68,14 +66,11 @@ export default function MiddleHeader() {
   useEffect(() => {
     const fetchBrandData = async () => {
       try {
-        const [groupsRes, brandsRes] = await Promise.all([
+        const [groupsRes] = await Promise.all([
           request({ method: "GET", url: "/users/get-brand-groups" }),
-          request({ method: "GET", url: "/users/get-all-brands" }),
         ]);
         const groups = groupsRes?.data?.data?.items || [];
-        const brands = brandsRes?.data?.data || [];
         setBrandGroups(groups);
-        setAllBrands(brands.map((b) => b.brand_name).filter(Boolean));
       } catch (err) {
         console.error("Failed to fetch brand data:", err);
       }
@@ -138,14 +133,6 @@ export default function MiddleHeader() {
     () => ["0-9", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")],
     []
   );
-
-  const brandsByLetter = useMemo(() => {
-    if (!allBrands.length) return [];
-    if (activeBrandLetter === "0-9") {
-      return allBrands.filter((b) => /^[0-9]/.test(b));
-    }
-    return allBrands.filter((b) => b?.[0]?.toUpperCase() === activeBrandLetter);
-  }, [allBrands, activeBrandLetter]);
 
 
   const updatePanelTop = () => {
@@ -316,7 +303,39 @@ export default function MiddleHeader() {
         <div className="max-w-[1440px] mx-auto px-8 h-12 flex items-center justify-between">
           {/* Left - Main Navigation - First active category's children */}
           <nav className="flex items-center gap-8 relative">
-            {activeCategory?.children?.slice(0, 9).map((childCategory) => (
+            {activeCategory?.children?.slice(0, 1).map((childCategory) => (
+              <div
+                key={childCategory.id}
+                className="relative"
+                onMouseEnter={() => handleCategoryHover(childCategory)}
+                onMouseLeave={handleCategoryLeave}
+              >
+                <Link
+                  href={`/shop/${toLower(activeCategory?.name)}/${toLower(childCategory.name)}/${childCategory.id}`}
+                  className={`text-sm transition-colors whitespace-nowrap ${
+                    hoveredCategory?.id === childCategory.id
+                      ? "text-gray-600 font-medium"
+                      : "text-gray-700 hover:text-black"
+                  }`}
+                >
+                  {safeCap(childCategory.name)}
+                </Link>
+              </div>
+            ))}
+            <div
+              className="relative"
+              onMouseEnter={() => setHoveredCategory({ name: "Brands", children: [] })}
+              onMouseLeave={handleCategoryLeave}
+            >
+              <Link
+                href="/brands"
+                className="text-sm transition-colors whitespace-nowrap text-gray-700 hover:text-black"
+                onClick={() => setHoveredCategory(null)}
+              >
+                Brands
+              </Link>
+            </div>
+            {activeCategory?.children?.slice(1, 9).map((childCategory) => (
               <div
                 key={childCategory.id}
                 className="relative"
@@ -375,30 +394,18 @@ export default function MiddleHeader() {
                             <p className="text-[11px] tracking-[0.2em] text-gray-600 uppercase">Brands A-Z</p>
                             <div className="grid grid-cols-8 gap-y-2 gap-x-4 text-xs text-gray-700">
                               {brandLetters.map((letter) => (
-                                <button
+                                <Link
                                   key={letter}
-                                  type="button"
-                                  onClick={() => setActiveBrandLetter(letter)}
-                                  className={`text-left ${activeBrandLetter === letter ? "text-black font-semibold" : "hover:text-black"}`}
+                                  href={`/brands?letter=${letter}`}
+                                  onClick={() => setHoveredCategory(null)}
+                                  className="text-left hover:text-black"
                                 >
                                   {letter}
-                                </button>
-                              ))}
-                            </div>
-                            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                              {brandsByLetter.slice(0, 8).map((brand) => (
-                                <Link
-                                  key={brand}
-                                  href={`/shop?brand=${encodeURIComponent(toLower(brand))}`}
-                                  className="text-gray-800 hover:text-black transition-colors"
-                                  onClick={() => setHoveredCategory(null)}
-                                >
-                                  {brand}
                                 </Link>
                               ))}
                             </div>
                             <Link
-                              href={`/brands${activeBrandLetter ? `?letter=${activeBrandLetter}` : ""}`}
+                              href="/brands"
                               className="inline-block mt-4 text-sm text-gray-800 hover:text-black underline"
                               onClick={() => setHoveredCategory(null)}
                             >
@@ -579,16 +586,35 @@ export default function MiddleHeader() {
                         ))}
                       </div>
                     ) : (
-                      (mobileRootTab?.children || []).map((cat) => (
+                      <>
+                        {(mobileRootTab?.children || []).slice(0, 1).map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => setMobileActiveCategory(cat)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-left text-sm text-gray-900 hover:bg-gray-50 transition-colors"
+                          >
+                            <span className="font-medium">{safeCap(cat.name)}</span>
+                            <ChevronRight className="w-4 h-4 text-gray-400" />
+                          </button>
+                        ))}
                         <button
-                          key={cat.id}
-                          onClick={() => setMobileActiveCategory(cat)}
+                          onClick={() => handleNavigation("/brands", { requireAuth: false })}
                           className="w-full flex items-center justify-between px-4 py-3 text-left text-sm text-gray-900 hover:bg-gray-50 transition-colors"
                         >
-                          <span className="font-medium">{safeCap(cat.name)}</span>
+                          <span className="font-medium">Brands</span>
                           <ChevronRight className="w-4 h-4 text-gray-400" />
                         </button>
-                      ))
+                        {(mobileRootTab?.children || []).slice(1).map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => setMobileActiveCategory(cat)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-left text-sm text-gray-900 hover:bg-gray-50 transition-colors"
+                          >
+                            <span className="font-medium">{safeCap(cat.name)}</span>
+                            <ChevronRight className="w-4 h-4 text-gray-400" />
+                          </button>
+                        ))}
+                      </>
                     )}
                     <div className="border-b border-gray-200" />
 

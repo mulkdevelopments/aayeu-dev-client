@@ -46,13 +46,20 @@ export default function Footer() {
               Shop
             </h3>
             <ul className="space-y-3">
-              {["Clothing", "Shoes", "Bags", "Accessories", "Jewellery", "Brands"].map((item) => (
-                <li key={item}>
+              {[
+                { label: "Clothing", href: "/search?query=clothing" },
+                { label: "Shoes", href: "/search?query=shoes" },
+                { label: "Bags", href: "/search?query=bags" },
+                { label: "Accessories", href: "/search?query=accessories" },
+                { label: "Jewellery", href: "/search?query=jewellery" },
+                { label: "Brands", href: "/brands" },
+              ].map((item) => (
+                <li key={item.label}>
                   <Link
-                    href="/shop"
+                    href={item.href}
                     className="text-sm text-gray-700 hover:text-black transition-colors"
                   >
-                    {item}
+                    {item.label}
                   </Link>
                 </li>
               ))}
@@ -70,6 +77,7 @@ export default function Footer() {
                 { name: "Contact", href: "/contact-us" },
                 { name: "Shipping", href: "/shipping-policy" },
                 { name: "Returns", href: "/refund-policy" },
+                { name: "Payments", href: "/payment-policy" },
               ].map((link) => (
                 <li key={link.name}>
                   <Link
@@ -125,13 +133,7 @@ export default function Footer() {
               >
                 <FaFacebookF className="w-5 h-5" />
               </Link>
-              <Link
-                href="#"
-                className="text-gray-900 hover:text-black transition-colors"
-                aria-label="Pinterest"
-              >
-                <FaPinterestP className="w-5 h-5" />
-              </Link>
+              
               <Link
                 href="#"
                 className="text-gray-900 hover:text-black transition-colors"
@@ -158,12 +160,6 @@ export default function Footer() {
                 className="text-gray-700 hover:text-black transition-colors"
               >
                 Terms and conditions
-              </Link>
-              <Link
-                href="/accessibility"
-                className="text-gray-700 hover:text-black transition-colors"
-              >
-                Accessibility
               </Link>
             </div>
             <p className="text-xs text-gray-700">

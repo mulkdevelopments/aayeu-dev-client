@@ -48,6 +48,7 @@ export default function ProductsListGrid({
   const isSyncing = useRef(false);
   const hasMounted = useRef(false);
   const observerTarget = useRef(null);
+  const categoryScrollRef = useRef(null);
 
   const { request: getAllProducts } = useAxios();
   const { request: getCategory } = useAxios();
@@ -221,17 +222,22 @@ export default function ProductsListGrid({
   // ✅ Fetch category info
   useEffect(() => {
     const fetchCategoryData = async () => {
-      if (!categoryId) return;
       try {
-        const { data } = await getCategory({
-          method: "GET",
-          url: `/users/get-category/${categoryId}`,
-        });
-        if (data?.status === 200) setCategoryData(data.data);
+        if (categoryId) {
+          const { data } = await getCategory({
+            method: "GET",
+            url: `/users/get-category/${categoryId}`,
+          });
+          if (data?.status === 200) setCategoryData(data.data);
+        } else {
+          setCategoryData(null);
+        }
 
         const { data: childData } = await getChildCategories({
           method: "GET",
-          url: `/users/get-child-categories?category_id=${categoryId}`,
+          url: categoryId
+            ? `/users/get-child-categories?category_id=${categoryId}`
+            : `/users/get-child-categories`,
         });
         if (childData?.status === 200 && Array.isArray(childData.data))
           setChildCategories(childData.data);
@@ -362,17 +368,48 @@ export default function ProductsListGrid({
               </div>
             ) : (
               childCategories.length > 0 && (
-                <div className="overflow-x-auto category-scroll pb-3">
-                  <div className="flex gap-2 md:gap-3">
+                <div className="relative mb-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      categoryScrollRef.current?.scrollBy({
+                        left: -320,
+                        behavior: "smooth",
+                      })
+                    }
+                    className="hidden lg:flex items-center justify-center absolute left-0 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
+                    aria-label="Scroll categories left"
+                  >
+                    <ChevronRight className="h-4 w-4 rotate-180" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      categoryScrollRef.current?.scrollBy({
+                        left: 320,
+                        behavior: "smooth",
+                      })
+                    }
+                    className="hidden lg:flex items-center justify-center absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
+                    aria-label="Scroll categories right"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <div
+                    ref={categoryScrollRef}
+                    className="overflow-x-auto category-scroll lg:px-12"
+                  >
+                    <div className="flex gap-2 md:gap-3 lg:justify-center">
                     {childCategories.map((cat) => (
                       <button
                         key={cat.id}
                         onClick={() => router.push(`/shop/${cat.path}/${cat.id}`)}
-                        className="flex-shrink-0 px-4 py-2.5 md:px-5 md:py-3 bg-white border-2 border-gray-200 rounded-lg hover:border-black  hover:shadow-md transition-all duration-200 text-sm font-medium whitespace-nowrap"
+                        className="flex-shrink-0 px-4 py-2.5 md:px-5 md:py-3 bg-white border-2 border-gray-200   hover:border-black  hover:shadow-md transition-all duration-200 text-sm font-medium whitespace-nowrap"
                       >
                         {startCase(toLower(cat.name))}
                       </button>
                     ))}
+                    </div>
                   </div>
                 </div>
               )
@@ -498,6 +535,7 @@ export default function ProductsListGrid({
       <SidebarFilters
         open={isSidebarOpen}
         initialFilters={selectedFilters}
+        categories={childCategories}
         onClose={() => setSidebarOpen(false)}
         onApply={(filters) => {
           const query = buildQuery(filters, sort);

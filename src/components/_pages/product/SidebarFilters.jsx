@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { XIcon, Search, ChevronDown } from "lucide-react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,10 @@ export default function SidebarFilters({
   onApply,
   onReset,
   initialFilters = {}, // parent passes filters parsed from URL
+  categories = [],
 }) {
   const { request, loading } = useAxios();
+  const router = useRouter();
   const params = useParams();
   const categoryId = params?.category?.[params.category.length - 1];
   const searchParams = useSearchParams();
@@ -146,12 +148,13 @@ export default function SidebarFilters({
 
   const availableSections = useMemo(() => {
     const list = [];
+    if (categories.length > 0) list.push("category");
     if (brands.length > 0) list.push("brand");
     if (colors.length > 0) list.push("color");
     if (sizes.length > 0) list.push("size");
     if (priceRange.min < priceRange.max) list.push("price");
     return list;
-  }, [brands.length, colors.length, sizes.length, priceRange.min, priceRange.max]);
+  }, [categories.length, brands.length, colors.length, sizes.length, priceRange.min, priceRange.max]);
 
   useEffect(() => {
     if (!openSection && availableSections.length) {
@@ -193,6 +196,44 @@ export default function SidebarFilters({
         <div className="flex-1 overflow-y-auto px-6 py-4 scroll-smooth">
           {loading && (
             <p className="text-sm text-gray-500 mb-3">Loading filters...</p>
+          )}
+
+          {/* --- Category Filter --- */}
+          {categories.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenSection(openSection === "category" ? null : "category")
+                }
+                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
+              >
+                Category
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    openSection === "category" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {openSection === "category" && (
+                <div className="pb-5 space-y-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        onClose?.();
+                        router.push(`/shop/${cat.path}/${cat.id}`);
+                      }}
+                      className="w-full text-left text-sm text-gray-800 hover:text-black transition-colors py-1"
+                    >
+                      {_.startCase(_.toLower(cat.name))}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <Separator />
+            </>
           )}
 
           {/* --- Brand Filter --- */}
