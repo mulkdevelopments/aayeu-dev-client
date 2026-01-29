@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaInstagram, FaFacebook, FaGoogle } from "react-icons/fa";
+import { FaApple } from "react-icons/fa";
 import { Mail, User, Phone, Lock, ShoppingBag, Loader2, ArrowRight } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,18 +16,18 @@ import { showToast } from "@/providers/ToastProvider";
 import { login } from "@/store/slices/authSlice";
 import { useDispatch } from "react-redux";
 
-/* ----- Social Icon ----- */
-function SocialIcon({ icon, color, label }) {
+/* ----- Social Button ----- */
+function SocialButton({ icon, label, onClick }) {
   return (
-    <Link
-      href="#"
-      className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-200 hover:border-black hover:bg-black transition-all duration-200 group"
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center justify-center gap-2 w-full border-2 border-gray-200 hover:border-black hover:bg-black hover:text-white transition-all duration-200 rounded-md py-3"
       aria-label={label}
     >
-      <span className={`text-lg transition-colors duration-200 ${color}`}>
-        {icon}
-      </span>
-    </Link>
+      <span className="text-lg">{icon}</span>
+      <span className="text-sm font-semibold">{label}</span>
+    </button>
   );
 }
 
@@ -69,6 +69,15 @@ export default function AuthForm() {
   const dispatch = useDispatch();
 
   const { request, loading } = useAxios();
+
+  const handleOAuth = (provider) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      showToast("error", "API URL not configured");
+      return;
+    }
+    window.location.href = `${apiUrl}/users/${provider}`;
+  };
 
   const schema =
     type === "signup"
@@ -315,40 +324,28 @@ export default function AuthForm() {
             )}
           </div>
 
-          {/* Divider */}
-          {/* {(type === "signin" || type === "signup") && (
-            <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
+          {(type === "signin" || type === "signup") && (
+            <>
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="px-4 bg-white text-sm text-gray-500 font-medium">
+                    Or continue with
+                  </span>
+                </div>
               </div>
-              <div className="relative flex justify-center">
-                <span className="px-4 bg-white text-sm text-gray-500 font-medium">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-          )} */}
 
-          {/* Social Login */}
-          {/* {(type === "signin" || type === "signup") && (
-            <div className="flex items-center justify-center gap-4">
-              <SocialIcon
-                icon={<FaGoogle />}
-                color="group-hover:text-red-500"
-                label="Sign in with Google"
-              />
-              <SocialIcon
-                icon={<FaFacebook />}
-                color="group-hover:text-blue-600"
-                label="Sign in with Facebook"
-              />
-              <SocialIcon
-                icon={<FaInstagram />}
-                color="group-hover:text-pink-500"
-                label="Sign in with Instagram"
-              />
-            </div>
-          )} */}
+              <div className="grid grid-cols-1 gap-3">
+                <SocialButton
+                  icon={<FaApple />}
+                  label="Apple"
+                  onClick={() => handleOAuth("apple")}
+                />
+              </div>
+            </>
+          )}
         </form>
       </div>
 

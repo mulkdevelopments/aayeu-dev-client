@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import VideoSection from "@/components/_pages/auth/VideoSection";
 import AuthForm from "@/components/_pages/auth/AuthForm";
 import MagicLogin from "@/components/_pages/auth/MagicLogin";
+import OAuthCallback from "@/components/_pages/auth/OAuthCallback";
 
 /* Main Authentication Page */
 export default function AuthenticationPage() {
@@ -21,6 +22,8 @@ export default function AuthenticationPage() {
           <>
             <MagicLogin />
           </>
+        ) : type === "apple" || type === "google" ? (
+          <OAuthCallback />
         ) : (
           <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
             <AuthForm type={type} />
