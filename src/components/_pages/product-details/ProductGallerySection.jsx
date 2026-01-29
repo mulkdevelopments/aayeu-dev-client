@@ -7,7 +7,7 @@ import "swiper/css";
 import "swiper/css/free-mode";
 import "swiper/css/navigation";
 import "swiper/css/thumbs";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export default function ProductGallerySection({
   images = [],
@@ -16,38 +16,26 @@ export default function ProductGallerySection({
 }) {
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
-  const [lens, setLens] = useState({
-    visible: false,
-    x: 0,
-    y: 0,
-    bgX: 0,
-    bgY: 0,
-  });
-
-  const LENS_SIZE = 160;
-  const ZOOM = 5.5;
-
-  const handleMouseMove = (e, img) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const bgX = (x / rect.width) * 100;
-    const bgY = (y / rect.height) * 100;
-
-    setLens({
-      visible: true,
-      x: x - LENS_SIZE / 2,
-      y: y - LENS_SIZE / 2,
-      bgX,
-      bgY,
-      img,
-    });
+  const openFullscreen = (index) => {
+    setFullscreenIndex(index);
+    setIsFullscreenOpen(true);
   };
 
-  const handleMouseLeave = () => {
-    setLens({ ...lens, visible: false });
+  const closeFullscreen = () => setIsFullscreenOpen(false);
+
+  const goPrev = () => {
+    setFullscreenIndex((prev) =>
+      prev === 0 ? mediaItems.length - 1 : prev - 1
+    );
+  };
+
+  const goNext = () => {
+    setFullscreenIndex((prev) =>
+      prev === mediaItems.length - 1 ? 0 : prev + 1
+    );
   };
 
   const mediaItems = [...images];
@@ -75,7 +63,10 @@ export default function ProductGallerySection({
           >
             {mediaItems.map((item, index) => (
               <SwiperSlide key={index}>
-                <div className="w-full h-full flex items-center justify-center p-4 md:p-8 relative">
+                <div
+                  className="w-full h-full flex items-center justify-center p-4 md:p-8 relative cursor-zoom-in"
+                  onClick={() => openFullscreen(index)}
+                >
                   {item.type === "video" ? (
                     <video
                       autoPlay
@@ -86,12 +77,7 @@ export default function ProductGallerySection({
                     />
                   ) : (
                     <>
-                      {/* BASE IMAGE */}
-                      <div
-                        className="relative w-full h-full hidden md:block"
-                        onMouseMove={(e) => handleMouseMove(e, item)}
-                        onMouseLeave={handleMouseLeave}
-                      >
+                      <div className="relative w-full h-full hidden md:block">
                         <img
                           src={item}
                           alt={`${product?.name || "Product"} ${
@@ -101,22 +87,6 @@ export default function ProductGallerySection({
                           draggable={false}
                         />
 
-                        {/* LENS */}
-                        {lens.visible && (
-                          <div
-                            className="absolute pointer-events-none rounded-full border-2 border-white shadow-xl z-10"
-                            style={{
-                              width: LENS_SIZE,
-                              height: LENS_SIZE,
-                              left: lens.x,
-                              top: lens.y,
-                              backgroundImage: `url(${lens.img})`,
-                              backgroundRepeat: "no-repeat",
-                              backgroundSize: `${ZOOM * 100}%`,
-                              backgroundPosition: `${lens.bgX}% ${lens.bgY}%`,
-                            }}
-                          />
-                        )}
                       </div>
 
                       {/* MOBILE */}
@@ -172,6 +142,60 @@ export default function ProductGallerySection({
           </Swiper>
         )}
       </div>
+
+      {isFullscreenOpen && (
+        <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={closeFullscreen}
+            className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-7 h-7" />
+          </button>
+
+          {mediaItems.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={goPrev}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-200 transition-colors"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-9 h-9" />
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-200 transition-colors"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-9 h-9" />
+              </button>
+            </>
+          )}
+
+          <div className="w-full h-full max-w-[90vw] max-h-[90vh] flex items-center justify-center">
+            {mediaItems[fullscreenIndex]?.type === "video" ? (
+              <video
+                src={mediaItems[fullscreenIndex].src}
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                className="max-w-full max-h-full object-contain"
+              />
+            ) : (
+              <img
+                src={mediaItems[fullscreenIndex]}
+                alt={`${product?.name || "Product"} ${fullscreenIndex + 1}`}
+                className="max-w-full max-h-full object-contain"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
