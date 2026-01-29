@@ -223,21 +223,21 @@ export default function ProductsListGrid({
   useEffect(() => {
     const fetchCategoryData = async () => {
       try {
-        if (categoryId) {
-          const { data } = await getCategory({
-            method: "GET",
-            url: `/users/get-category/${categoryId}`,
-          });
-          if (data?.status === 200) setCategoryData(data.data);
-        } else {
+        if (!categoryId) {
           setCategoryData(null);
+          setChildCategories([]);
+          return;
         }
+
+        const { data } = await getCategory({
+          method: "GET",
+          url: `/users/get-category/${categoryId}`,
+        });
+        if (data?.status === 200) setCategoryData(data.data);
 
         const { data: childData } = await getChildCategories({
           method: "GET",
-          url: categoryId
-            ? `/users/get-child-categories?category_id=${categoryId}`
-            : `/users/get-child-categories`,
+          url: `/users/get-child-categories?category_id=${categoryId}`,
         });
         if (childData?.status === 200 && Array.isArray(childData.data))
           setChildCategories(childData.data);
@@ -535,7 +535,7 @@ export default function ProductsListGrid({
       <SidebarFilters
         open={isSidebarOpen}
         initialFilters={selectedFilters}
-        categories={childCategories}
+        categories={categoryId ? childCategories : []}
         onClose={() => setSidebarOpen(false)}
         onApply={(filters) => {
           const query = buildQuery(filters, sort);
