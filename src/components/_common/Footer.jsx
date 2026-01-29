@@ -6,8 +6,8 @@ import {
   FaInstagram,
   FaFacebookF,
   FaPinterestP,
-  FaTwitter,
-} from "react-icons/fa";
+  FaTiktok,
+} from "react-icons/fa6";
 
 export default function Footer() {
   return (
@@ -137,9 +137,16 @@ export default function Footer() {
               <Link
                 href="#"
                 className="text-gray-900 hover:text-black transition-colors"
-                aria-label="Twitter"
+                aria-label="Pinterest"
               >
-                <FaTwitter className="w-5 h-5" />
+                <FaPinterestP className="w-5 h-5" />
+              </Link>
+              <Link
+                href="#"
+                className="text-gray-900 hover:text-black transition-colors"
+                aria-label="TikTok"
+              >
+                <FaTiktok className="w-5 h-5" />
               </Link>
             </div>
           </div>
