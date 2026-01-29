@@ -87,7 +87,6 @@ export default function MiddleHeader() {
     if (!isSheetOpen) {
       setMobileActiveCategory(null);
       setIsCurrencyExpanded(false);
-      setMobileRootTab(menu?.[0] || null);
     }
   }, [isSheetOpen, menu]);
 
