@@ -18,6 +18,8 @@ export default function ProductGallerySection({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
   const touchStartRef = useRef({ x: 0, y: 0 });
   const touchEndRef = useRef({ x: 0, y: 0 });
 
@@ -26,18 +28,31 @@ export default function ProductGallerySection({
     setIsFullscreenOpen(true);
   };
 
-  const closeFullscreen = () => setIsFullscreenOpen(false);
+  const closeFullscreen = () => {
+    setIsZoomed(false);
+    setZoomOrigin("50% 50%");
+    setIsFullscreenOpen(false);
+  };
 
   const goPrev = () => {
+    setIsZoomed(false);
     setFullscreenIndex((prev) =>
       prev === 0 ? mediaItems.length - 1 : prev - 1
     );
   };
 
   const goNext = () => {
+    setIsZoomed(false);
     setFullscreenIndex((prev) =>
       prev === mediaItems.length - 1 ? 0 : prev + 1
     );
+  };
+  const handleZoomClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomOrigin(`${x}% ${y}%`);
+    setIsZoomed((prev) => !prev);
   };
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
@@ -166,7 +181,7 @@ export default function ProductGallerySection({
 
       {isFullscreenOpen && (
         <div
-          className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
+          className="fixed inset-0 z-[999] bg-white flex items-center justify-center"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -174,7 +189,7 @@ export default function ProductGallerySection({
           <button
             type="button"
             onClick={closeFullscreen}
-            className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
+            className="absolute top-6 right-6 text-gray-700 hover:text-black transition-colors"
             aria-label="Close"
           >
             <X className="w-7 h-7" />
@@ -185,7 +200,7 @@ export default function ProductGallerySection({
             <button
               type="button"
               onClick={goPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-black hover:text-gray-700 transition-colors"
+                className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-800 hover:text-black transition-colors"
               aria-label="Previous image"
             >
               <ChevronLeft className="w-9 h-9" />
@@ -193,7 +208,7 @@ export default function ProductGallerySection({
             <button
               type="button"
               onClick={goNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-gray-700 transition-colors"
+                className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-800 hover:text-black transition-colors"
               aria-label="Next image"
             >
               <ChevronRight className="w-9 h-9" />
@@ -201,7 +216,7 @@ export default function ProductGallerySection({
             </>
           )}
 
-          <div className="w-full h-full max-w-[90vw] max-h-[90vh] flex items-center justify-center">
+          <div className="w-full h-full max-w-[88vw] max-h-[88vh] flex items-center justify-center">
             {mediaItems[fullscreenIndex]?.type === "video" ? (
               <video
                 src={mediaItems[fullscreenIndex].src}
@@ -216,7 +231,14 @@ export default function ProductGallerySection({
               <img
                 src={mediaItems[fullscreenIndex]}
                 alt={`${product?.name || "Product"} ${fullscreenIndex + 1}`}
-                className="max-w-full max-h-full object-contain"
+                onClick={handleZoomClick}
+                className={`max-w-full max-h-full object-contain transition-transform duration-200 ${
+                  isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
+                }`}
+                style={{
+                  transformOrigin: zoomOrigin,
+                  transform: isZoomed ? "scale(2)" : "scale(1)",
+                }}
               />
             )}
           </div>
