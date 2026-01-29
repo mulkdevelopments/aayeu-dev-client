@@ -326,7 +326,7 @@ const ProductInfoDetailsSection = forwardRef(
 
             {/* Title */}
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black leading-tight">
-              {product.title ?? product.name}
+              {product.name}
             </h1>
 
             {/* Price Section */}

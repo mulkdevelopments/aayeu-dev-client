@@ -29,7 +29,8 @@ export default function ProductCard({
   const id = product.id ?? product._id;
   const title = product.title ?? product.name ?? "Product";
   const brand = product.brand_name ?? product.brand ?? "";
-  const category = product.categories?.[0]?.name ?? "";
+  const mappedCategory = product.mapped_categories?.[0] || null;
+  const category = mappedCategory?.name ?? "NA";
   const minPrice = product.min_price ?? product.variants?.[0]?.price ?? null;
 
   const firstVariant =
@@ -57,12 +58,9 @@ export default function ProductCard({
     discountPercent = Math.round(((mrp - displayPrice) / mrp) * 100);
   }
 
-  const link =
-    (product.categories?.[0]?.slug &&
-      `/shop/product/${slugifyProductName(product.name)}/${product.id}?cat=${
-        product.categories[0].slug
-      }`) ||
-    `/shop/product/${slugifyProductName(product.name)}/${product.id}`;
+  const link = mappedCategory?.slug
+    ? `/shop/product/${slugifyProductName(product.name)}/${product.id}?cat=${mappedCategory.slug}`
+    : `/shop/product/${slugifyProductName(product.name)}/${product.id}`;
 
   const toggleWish = (e) => {
     e.preventDefault();
@@ -140,11 +138,9 @@ export default function ProductCard({
           {/* Product Info Section - Clean & Minimal */}
           <div className="flex flex-col pt-3 pb-2">
             {/* Category Label */}
-            {category && (
-              <span className="text-xs text-gray-500 mb-1">
-                {category}
-              </span>
-            )}
+            <span className="text-xs text-gray-500 mb-1">
+              {category}
+            </span>
 
             {/* Brand Name */}
             <h3 className="text-sm font-semibold text-black mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>

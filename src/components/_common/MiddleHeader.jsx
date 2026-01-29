@@ -244,7 +244,10 @@ export default function MiddleHeader() {
               {menu.slice(0, 5).map((category) => (
                 <button
                   key={category.id}
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => {
+                    setActiveCategory(category);
+                    router.push(`/shop/${toLower(category.name)}/${category.id}`);
+                  }}
                   className={`text-sm transition-colors ${
                     activeCategory?.id === category.id
                       ? "font-semibold text-gray-900"
@@ -676,7 +679,9 @@ export default function MiddleHeader() {
                 ) : (
                   <div className="p-4 space-y-6">
                     <Link
-                      href={`/shop/${toLower(mobileActiveCategory.name)}/${mobileActiveCategory.id}`}
+                      href={`/shop/${toLower(mobileRootTab?.name || "shop")}/${toLower(
+                        mobileActiveCategory.name
+                      )}/${mobileActiveCategory.id}`}
                       className="block text-sm font-medium text-gray-900"
                       onClick={() => setIsSheetOpen(false)}
                     >
@@ -692,11 +697,15 @@ export default function MiddleHeader() {
                           <ul className="space-y-2">
                             {subCat.children.map((grandchild) => (
                               <li key={grandchild.id}>
-                                <Link
-                                  href={`/shop/${toLower(mobileActiveCategory.name)}/${toLower(subCat.name)}/${toLower(grandchild.name)}/${grandchild.id}`}
-                                  className="block text-sm text-gray-900"
-                                  onClick={() => setIsSheetOpen(false)}
-                                >
+                              <Link
+                                href={`/shop/${toLower(mobileRootTab?.name || "shop")}/${toLower(
+                                  mobileActiveCategory.name
+                                )}/${toLower(subCat.name)}/${toLower(grandchild.name)}/${
+                                  grandchild.id
+                                }`}
+                                className="block text-sm text-gray-900"
+                                onClick={() => setIsSheetOpen(false)}
+                              >
                                   {safeCap(grandchild.name)}
                                 </Link>
                               </li>
@@ -704,7 +713,9 @@ export default function MiddleHeader() {
                           </ul>
                         ) : (
                           <Link
-                            href={`/shop/${toLower(mobileActiveCategory.name)}/${toLower(subCat.name)}/${subCat.id}`}
+                            href={`/shop/${toLower(mobileRootTab?.name || "shop")}/${toLower(
+                              mobileActiveCategory.name
+                            )}/${toLower(subCat.name)}/${subCat.id}`}
                             className="block text-sm text-gray-900"
                             onClick={() => setIsSheetOpen(false)}
                           >

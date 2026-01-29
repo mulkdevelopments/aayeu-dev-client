@@ -27,7 +27,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-sm text-gray-700 leading-relaxed mb-6 max-w-xs">
-              Curated collections that inspire style. Quality craftsmanship meets timeless design.
+             AAYEU - Defining Luxury & Quality
             </p>
             <div className="space-y-2 text-sm">
               <Link
