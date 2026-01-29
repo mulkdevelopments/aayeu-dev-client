@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Navigation, Thumbs } from "swiper/modules";
 import "swiper/css";
@@ -18,6 +18,8 @@ export default function ProductGallerySection({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const touchEndRef = useRef({ x: 0, y: 0 });
 
   const openFullscreen = (index) => {
     setFullscreenIndex(index);
@@ -36,6 +38,25 @@ export default function ProductGallerySection({
     setFullscreenIndex((prev) =>
       prev === mediaItems.length - 1 ? 0 : prev + 1
     );
+  };
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    touchEndRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchMove = (e) => {
+    const touch = e.touches[0];
+    touchEndRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = () => {
+    const deltaX = touchStartRef.current.x - touchEndRef.current.x;
+    const deltaY = touchStartRef.current.y - touchEndRef.current.y;
+    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+    if (!isHorizontalSwipe) return;
+    if (deltaX > 40) goNext();
+    if (deltaX < -40) goPrev();
   };
 
   const mediaItems = [...images];
@@ -144,7 +165,12 @@ export default function ProductGallerySection({
       </div>
 
       {isFullscreenOpen && (
-        <div className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center">
+        <div
+          className="fixed inset-0 z-[999] bg-black/90 flex items-center justify-center"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <button
             type="button"
             onClick={closeFullscreen}
@@ -156,22 +182,22 @@ export default function ProductGallerySection({
 
           {mediaItems.length > 1 && (
             <>
-              <button
-                type="button"
-                onClick={goPrev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-200 transition-colors"
-                aria-label="Previous image"
-              >
-                <ChevronLeft className="w-9 h-9" />
-              </button>
-              <button
-                type="button"
-                onClick={goNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-200 transition-colors"
-                aria-label="Next image"
-              >
-                <ChevronRight className="w-9 h-9" />
-              </button>
+            <button
+              type="button"
+              onClick={goPrev}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-black hover:text-gray-700 transition-colors"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-9 h-9" />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-gray-700 transition-colors"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-9 h-9" />
+            </button>
             </>
           )}
 
