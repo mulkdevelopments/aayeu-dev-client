@@ -148,7 +148,7 @@ export default function AboutContactSection() {
 
             {/* NEED HELP Card */}
             <a
-              href="/contact"
+              href="mailto:help@aayeu.com"
               className="group border border-gray-200 p-6 md:p-8 hover:border-black transition-colors duration-300"
             >
               <div className="mb-4">

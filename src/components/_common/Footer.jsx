@@ -170,7 +170,7 @@ export default function Footer() {
               </Link>
             </div>
             <p className="text-xs text-gray-700">
-              © 2025 AAYEU. All rights reserved.
+              © {new Date().getFullYear()} AAYEU. All rights reserved.
             </p>
           </div>
         </div>
