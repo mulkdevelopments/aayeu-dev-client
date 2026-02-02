@@ -120,14 +120,14 @@ export default function Footer() {
             </h3>
             <div className="flex items-center gap-4">
               <Link
-                href="#"
+                href="https://www.instagram.com/aayeu_official/"
                 className="text-gray-900 hover:text-black transition-colors"
                 aria-label="Instagram"
               >
                 <FaInstagram className="w-5 h-5" />
               </Link>
               <Link
-                href="#"
+                href="https://www.facebook.com/aayeu.official"
                 className="text-gray-900 hover:text-black transition-colors"
                 aria-label="Facebook"
               >
@@ -135,14 +135,14 @@ export default function Footer() {
               </Link>
               
               <Link
-                href="#"
+                href="http://www.pinterest.com/aayeu_official"
                 className="text-gray-900 hover:text-black transition-colors"
                 aria-label="Pinterest"
               >
                 <FaPinterestP className="w-5 h-5" />
               </Link>
               <Link
-                href="#"
+                href="https://www.tiktok.com/@aayeu_official?lang=en"
                 className="text-gray-900 hover:text-black transition-colors"
                 aria-label="TikTok"
               >

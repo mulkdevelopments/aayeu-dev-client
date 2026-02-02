@@ -63,8 +63,11 @@ export default function CartItemCard({ product, liveStockData, stockCheckLoading
   };
 
   // Determine actual available stock
-  const availableStock = canLiveStock && liveStockData
-    ? getLiveStock()
+  const liveStockValue = getLiveStock();
+  const availableStock = canLiveStock
+    ? liveStockData?.error || liveStockValue === null
+      ? 0
+      : liveStockValue
     : parseInt(stock, 10) || 0;
 
   const isOutOfStock = availableStock === 0;
