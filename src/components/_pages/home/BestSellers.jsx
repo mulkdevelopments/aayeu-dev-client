@@ -94,7 +94,7 @@ export default function BestSellers() {
         {/* Header */}
         <div className="mb-8 px-4 md:px-8">
           <h2 className="text-3xl md:text-4xl text-black mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
-            Trending: most loved pieces
+            Trending: Most Loved Pieces
           </h2>
           <p className="text-sm text-gray-600">
 

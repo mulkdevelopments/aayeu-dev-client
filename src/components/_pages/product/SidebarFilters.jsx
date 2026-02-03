@@ -55,12 +55,19 @@ export default function SidebarFilters({
           params.set("category_id", categoryId);
         }
 
-        selectedBrands.forEach((b) => params.append("brand", b));
-        selectedColors.forEach((c) => params.append("color", c));
-        selectedSizes.forEach((s) => params.append("size", s));
+        // Use applied filters from parent (URL) so sidebar changes
+        // don't refetch until Show Results is pressed.
+        const appliedBrands = initialFilters.brands || [];
+        const appliedColors = initialFilters.colors || [];
+        const appliedSizes = initialFilters.sizes || [];
+        const appliedPrice = initialFilters.price || null;
 
-        if (price?.min) params.set("min_price", String(price.min));
-        if (price?.max) params.set("max_price", String(price.max));
+        appliedBrands.forEach((b) => params.append("brand", b));
+        appliedColors.forEach((c) => params.append("color", c));
+        appliedSizes.forEach((s) => params.append("size", s));
+
+        if (appliedPrice?.min) params.set("min_price", String(appliedPrice.min));
+        if (appliedPrice?.max) params.set("max_price", String(appliedPrice.max));
 
         const queryString = params.toString();
         const { data } = await request({
@@ -85,7 +92,7 @@ export default function SidebarFilters({
       }
     };
     fetchFilters();
-  }, [categoryId, searchQuery, selectedBrands, selectedColors, selectedSizes, price]);
+  }, [categoryId, searchQuery, initialFilters]);
 
   // ✅ Sync local filter state when parent updates (e.g. after refresh)
   useEffect(() => {
@@ -103,15 +110,7 @@ export default function SidebarFilters({
     price,
   });
 
-  // ✅ Auto-apply filters only after user interaction (not on mount)
-  useEffect(() => {
-    if (hasInteracted.current) {
-      const timeout = setTimeout(() => {
-        onApply(buildFilters());
-      }, 250);
-      return () => clearTimeout(timeout);
-    }
-  }, [selectedBrands, selectedColors, selectedSizes, price]);
+  // Auto-apply is disabled; Show Results handles non-category filters.
 
   // ✅ Helper: toggle array values
   const toggle = (setter, arr, value) => {
@@ -146,6 +145,27 @@ export default function SidebarFilters({
     [brands, brandSearch]
   );
 
+  const groupedBrands = useMemo(() => {
+    const groups = new Map();
+    filteredBrands.forEach((brand) => {
+      const label = _.startCase(_.toLower(brand));
+      let key = (label[0] || "#").toUpperCase();
+      if (!/^[A-Z]$/.test(key)) key = "#";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push({ value: brand, label });
+    });
+    const entries = Array.from(groups.entries()).map(([key, items]) => {
+      items.sort((a, b) => a.label.localeCompare(b.label));
+      return { key, items };
+    });
+    entries.sort((a, b) => {
+      if (a.key === "#") return 1;
+      if (b.key === "#") return -1;
+      return a.key.localeCompare(b.key);
+    });
+    return entries;
+  }, [filteredBrands]);
+
   const availableSections = useMemo(() => {
     const list = [];
     if (categories.length > 0) list.push("category");
@@ -156,11 +176,14 @@ export default function SidebarFilters({
     return list;
   }, [categories.length, brands.length, colors.length, sizes.length, priceRange.min, priceRange.max]);
 
+  const hasInitializedSection = useRef(false);
+
   useEffect(() => {
-    if (!openSection && availableSections.length) {
-      setOpenSection(availableSections[0]);
-    }
-  }, [availableSections, openSection]);
+    if (!availableSections.length) return;
+    if (hasInitializedSection.current) return;
+    setOpenSection(availableSections[0]);
+    hasInitializedSection.current = true;
+  }, [availableSections]);
 
   if (!open) return null;
 
@@ -258,24 +281,36 @@ export default function SidebarFilters({
                   <div className="relative mb-4">
                     <Search className="absolute left-0 top-2.5 h-4 w-4 text-gray-500" />
                     <Input
-                      placeholder="Search brands"
+                      placeholder={`Search ${brands.length} brands`}
                       value={brandSearch}
                       onChange={(e) => setBrandSearch(e.target.value)}
                       className="pl-6 border-0 border-b border-gray-300 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
                   <div className="max-h-52 overflow-y-auto pr-2">
-                    <div className="space-y-3">
-                      {filteredBrands.map((b) => (
-                        <label key={b} className="flex items-center gap-3 text-sm">
-                          <Checkbox
-                            checked={selectedBrands.includes(b)}
-                            onCheckedChange={() =>
-                              toggle(setSelectedBrands, selectedBrands, b)
-                            }
-                          />
-                          <span>{_.startCase(_.toLower(b))}</span>
-                        </label>
+                    <div className="space-y-4">
+                      {groupedBrands.map((group) => (
+                        <div key={group.key}>
+                          <div className="text-xs font-semibold text-gray-600 mb-2">
+                            {group.key}
+                          </div>
+                          <div className="space-y-3">
+                            {group.items.map((item) => (
+                              <label
+                                key={item.value}
+                                className="flex items-center gap-3 text-sm"
+                              >
+                                <Checkbox
+                                  checked={selectedBrands.includes(item.value)}
+                                  onCheckedChange={() =>
+                                    toggle(setSelectedBrands, selectedBrands, item.value)
+                                  }
+                                />
+                                <span>{item.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -392,7 +427,7 @@ export default function SidebarFilters({
                         setPrice((p) => ({
                           ...p,
                           min: Math.max(
-                            priceRange.min,
+                            0,
                             Math.min(Number(e.target.value), p.max)
                           ),
                         }));
@@ -417,7 +452,7 @@ export default function SidebarFilters({
                   </div>
 
                   <Slider
-                    min={priceRange.min}
+                    min={0}
                     max={priceRange.max}
                     step={1}
                     value={[price.min, price.max]}

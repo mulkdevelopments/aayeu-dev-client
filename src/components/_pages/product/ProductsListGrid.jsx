@@ -541,6 +541,7 @@ export default function ProductsListGrid({
           const query = buildQuery(filters, sort);
           isSyncing.current = true;
           router.replace(`${pathname}?${query}`);
+          setSelectedFilters(filters);
           setPage(1);
           setProducts([]);
           fetchAllProducts(1, filters, sort, false);
