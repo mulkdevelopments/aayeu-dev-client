@@ -76,8 +76,11 @@ export default function HeroVideoSection() {
       <div className="max-w-[1600px] mx-auto">
 
         {/* Hero Banner Section */}
-        <div className="px-4 md:px-12 lg:px-16 py-8 md:py-12 lg:py-16 text-center">
-          <h1 className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-gray-900 leading-tight tracking-tight">
+        <div className="px-4 md:px-12 lg:px-16 py-8 md:py-12 lg:py-16">
+          <h1
+            className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-gray-900 leading-tight tracking-tight text-left"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+          >
             {topBanner?.title || "Aayeu Sale: Up to 70% Off Selected Styles"}
           </h1>
         </div>

@@ -67,7 +67,10 @@ export default function NewArrivals() {
         {/* Section Header */}
         <div className="mb-8 md:mb-12 text-start">
           <div className="inline-block">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl  tracking-tight text-black" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <h2
+              className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-light tracking-tight text-black leading-tight"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
               New in: Latest Arrivals
             </h2>
             {/* <div className="mt-2 md:mt-3 h-1 w-20 md:w-24 mx-auto bg-black rounded-full animate-pulse"></div> */}

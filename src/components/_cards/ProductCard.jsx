@@ -138,9 +138,9 @@ export default function ProductCard({
           {/* Product Info Section - Clean & Minimal */}
           <div className="flex flex-col pt-3 pb-2">
             {/* Category Label */}
-            <span className="text-xs text-gray-500 mb-1">
+            {/* <span className="text-xs text-gray-500 mb-1">
               {category}
-            </span>
+            </span> */}
 
             {/* Brand Name */}
             <h3 className="text-sm font-semibold text-black mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>

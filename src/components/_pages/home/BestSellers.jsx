@@ -93,10 +93,13 @@ export default function BestSellers() {
       <div className="max-w-[1440px] mx-auto">
         {/* Header */}
         <div className="mb-8 px-4 md:px-8">
-          <h2 className="text-3xl md:text-4xl text-black mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <h2
+            className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-black mb-2 text-left leading-tight tracking-tight"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+          >
             Trending: Most Loved Pieces
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 text-left" style={{ fontFamily: "'Inter', sans-serif" }}>
 
           </p>
         </div>
