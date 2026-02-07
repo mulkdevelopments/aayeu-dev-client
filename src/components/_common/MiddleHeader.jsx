@@ -102,6 +102,27 @@ export default function MiddleHeader() {
   const safeCap = (val) =>
     startCase(toLower(String(val || "").replace(/[-_/]+/g, " ")));
 
+  const normalizeBrandParam = (value = "") => {
+    if (value === undefined || value === null) return "";
+    const superscripts = "¹²³⁴⁵⁶⁷⁸⁹⁰";
+    const digits = "1234567890";
+    const replaced = String(value)
+      .split("")
+      .map((ch) => {
+        const idx = superscripts.indexOf(ch);
+        return idx === -1 ? ch : digits[idx];
+      })
+      .join("");
+
+    return replaced
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  };
+
   const handleCategoryHover = (category) => {
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
@@ -379,8 +400,10 @@ export default function MiddleHeader() {
                               <ul className="space-y-2">
                                 {(group.brands || []).map((brand) => (
                                   <li key={brand.id || brand.brand_name}>
-                                    <Link
-                                      href={`/shop?brand=${encodeURIComponent(toLower(brand.brand_name))}`}
+                            <Link
+                              href={`/shop?brand=${encodeURIComponent(
+                                normalizeBrandParam(brand.brand_name)
+                              )}`}
                                       className="block text-sm text-gray-800 hover:text-black transition-colors"
                                       onClick={() => setHoveredCategory(null)}
                                     >

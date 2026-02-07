@@ -6,6 +6,27 @@ import useAxios from "@/hooks/useAxios";
 
 const LETTERS = ["0-9", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
 
+const normalizeBrandParam = (value = "") => {
+  if (value === undefined || value === null) return "";
+  const superscripts = "¹²³⁴⁵⁶⁷⁸⁹⁰";
+  const digits = "1234567890";
+  const replaced = String(value)
+    .split("")
+    .map((ch) => {
+      const idx = superscripts.indexOf(ch);
+      return idx === -1 ? ch : digits[idx];
+    })
+    .join("");
+
+  return replaced
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+};
+
 const splitIntoColumns = (items = [], columns = 3) => {
   const per = Math.ceil(items.length / columns);
   return Array.from({ length: columns }, (_, i) =>
@@ -70,7 +91,8 @@ export default function BrandsPage() {
   };
 
   const handleBrandClick = (brand) => {
-    router.push(`/shop?brand=${encodeURIComponent(brand.toLowerCase())}`);
+    const normalized = normalizeBrandParam(brand);
+    router.push(`/shop?brand=${encodeURIComponent(normalized)}`);
   };
 
   return (
