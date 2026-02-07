@@ -27,7 +27,7 @@ const RatingRow = ({ star, count, total }) => {
     <div className="flex items-center gap-3">
       <div className="flex items-center gap-1 w-10">
         <span className="text-sm">{star}</span>
-        <Star size={14} className="text-yellow-400 fill-yellow-400" />
+        <Star size={14} className="text-black fill-black" />
       </div>
 
       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">

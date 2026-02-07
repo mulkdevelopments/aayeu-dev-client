@@ -11,12 +11,9 @@ function ProductDetailsPage() {
   return (
     <div className="font-[poppins]">
       <ProductInfoSection />
-
       <BenefitsSection />
-
-      <SimilarProductsSection />
-
       <ProductReviewsSection />
+      <SimilarProductsSection />
  <NewArrivals title="New Arrivals" />
       {/* Tiny utilities to match original CSS where Tailwind lacks a utility */}
       <style>{`

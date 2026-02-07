@@ -306,7 +306,7 @@ const ProductInfoDetailsSection = forwardRef(
 
     return (
       <div
-        className="w-full lg:w-[40%] p-4 lg:p-6 pb-24 lg:pb-8"
+        className="w-full lg:w-[40%] p-4 lg:p-6 pb-4 lg:pb-8"
         ref={ref}
       >
         {productLoading ? (
