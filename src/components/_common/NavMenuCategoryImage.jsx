@@ -1,6 +1,5 @@
 "use client";
 
-import STATIC from "@/utils/constants";
 import { useEffect, useState } from "react";
 
 // 🔥 GLOBAL MEMORY CACHE (persists across component renders)
@@ -126,20 +125,12 @@ export default function NavMenuCategoryImage({ activeCategory, fallbackCategory 
     <div className="relative w-full h-full flex items-center justify-center p-4">
       {!loaded && <div className="absolute inset-0 bg-transparent" />}
 
-      {failed ? (
+      {imgSrc && (
         <img
-          src={STATIC.IMAGES.IMAGE_NOT_AVAILABLE}
-          alt="Not Available"
-          className="max-w-full max-h-full object-contain"
+          src={imgSrc}
+          alt={usingFallback ? fallbackCategory?.name : activeCategory.name}
+          className="max-w-full max-h-full object-contain transition-opacity duration-300"
         />
-      ) : (
-        imgSrc && (
-          <img
-            src={imgSrc}
-            alt={usingFallback ? fallbackCategory?.name : activeCategory.name}
-            className="max-w-full max-h-full object-contain transition-opacity duration-300"
-          />
-        )
       )}
     </div>
   );

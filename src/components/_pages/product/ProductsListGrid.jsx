@@ -431,12 +431,7 @@ export default function ProductsListGrid({
               )}
             </button>
 
-            {totalProducts > 0 && (
-              <span className="hidden md:inline-flex text-sm text-gray-600">
-                <span className="font-semibold text-gray-900">{totalProducts}</span>
-                <span className="ml-1">Products</span>
-              </span>
-            )}
+            {/* Product count hidden as requested */}
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
@@ -469,19 +464,19 @@ export default function ProductsListGrid({
           }
         `}</style>
 
-        {totalProducts > 0 && (
-          <div className="md:hidden mb-4 text-center text-sm text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{products.length}</span> of{" "}
-            <span className="font-semibold text-gray-900">{totalProducts}</span>
-          </div>
-        )}
+        {/* Mobile product count hidden as requested */}
 
         {/* Product Grid */}
         <section className="min-h-[60vh]">
           {loading && products.length === 0 ? (
-            <div className="flex flex-col justify-center items-center py-20">
-              {/* <Loader2 className="animate-spin h-10 w-10 text-black mb-4" /> */}
-              <p className="text-gray-600 font-medium">Loading products...</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 mb-8">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="w-full aspect-[3/4] rounded-lg" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ))}
             </div>
           ) : products.length === 0 ? (
             <div className="flex flex-col justify-center items-center py-20">
@@ -505,16 +500,19 @@ export default function ProductsListGrid({
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
+                {loadingMore &&
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={`loading-more-${i}`} className="space-y-3">
+                      <Skeleton className="w-full aspect-[3/4] rounded-lg" />
+                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ))}
               </div>
 
               {/* Intersection Observer Target */}
               <div ref={observerTarget} className="w-full py-8">
-                {loadingMore && (
-                  <div className="flex flex-col justify-center items-center">
-                    <Loader2 className="animate-spin h-8 w-8 text-black mb-3" />
-                    <p className="text-sm text-gray-600 font-medium">Loading more products...</p>
-                  </div>
-                )}
+                {loadingMore && <div className="h-2" />}
                 {!hasMore && products.length > 0 && (
                   <div className="text-center">
                     <div className="inline-flex items-center gap-2 px-6 py-3 bg-white">

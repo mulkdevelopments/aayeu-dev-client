@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart as HeartIcon } from "lucide-react";
@@ -10,6 +10,7 @@ import useWishlist from "@/hooks/useWishlist";
 import { useSelector } from "react-redux";
 import { showToast } from "@/providers/ToastProvider";
 import useCurrency from "@/hooks/useCurrency";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductCard({
   product,
@@ -20,6 +21,9 @@ export default function ProductCard({
   const { format } = useCurrency();
 
   const [hovered, setHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const { toggleWishlist, isWishlisted } = useWishlist();
 
@@ -68,6 +72,24 @@ export default function ProductCard({
     toggleWishlist(id);
   };
 
+  const MAX_RETRIES = 2;
+  const withRetryParam = (src) => {
+    if (!src) return src;
+    const separator = src.includes("?") ? "&" : "?";
+    return `${src}${separator}retry=${retryCount}`;
+  };
+
+  useEffect(() => {
+    if (!imageError || retryCount >= MAX_RETRIES) return;
+    setIsRetrying(true);
+    const timeout = setTimeout(() => {
+      setRetryCount((prev) => prev + 1);
+      setImageError(false);
+      setIsRetrying(false);
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [imageError, retryCount]);
+
   return (
     <Link href={link}>
       <div
@@ -106,29 +128,37 @@ export default function ProductCard({
 
             {/* Product Images */}
             <div className="relative w-full h-full">
+              {(imageError || isRetrying) && (
+                <div className="absolute inset-0 z-10">
+                  <Skeleton className="w-full h-full" />
+                </div>
+              )}
               {[primaryImage, hoverImage].map((src, index) => {
                 const isHoverImage = index === 1;
                 const showImage = hovered ? isHoverImage : !isHoverImage;
+                const resolvedSrc = withRetryParam(src);
 
                 return useNextImage ? (
                   <Image
                     key={index}
-                    src={src}
+                    src={resolvedSrc}
                     alt={title}
                     fill
                     className={`object-cover transition-opacity duration-300 ${
                       showImage ? "opacity-100" : "opacity-0"
                     }`}
                     unoptimized
+                    onError={() => setImageError(true)}
                   />
                 ) : (
                   <img
                     key={index}
-                    src={src}
+                    src={resolvedSrc}
                     alt={title}
                     className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
                       showImage ? "opacity-100" : "opacity-0"
                     }`}
+                    onError={() => setImageError(true)}
                   />
                 );
               })}

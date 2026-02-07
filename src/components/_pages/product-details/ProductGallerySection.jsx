@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Navigation, Thumbs } from "swiper/modules";
 import "swiper/css";
@@ -8,6 +8,7 @@ import "swiper/css/free-mode";
 import "swiper/css/navigation";
 import "swiper/css/thumbs";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductGallerySection({
   images = [],
@@ -22,6 +23,8 @@ export default function ProductGallerySection({
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
   const touchStartRef = useRef({ x: 0, y: 0 });
   const touchEndRef = useRef({ x: 0, y: 0 });
+  const retryTimersRef = useRef({});
+  const [imageStates, setImageStates] = useState({});
 
   const openFullscreen = (index) => {
     setFullscreenIndex(index);
@@ -74,6 +77,55 @@ export default function ProductGallerySection({
     if (deltaX < -40) goPrev();
   };
 
+  const MAX_RETRIES = 2;
+  const getImageState = (index) =>
+    imageStates[index] || { status: "loading", retry: 0 };
+
+  const updateImageState = (index, patch) => {
+    setImageStates((prev) => ({
+      ...prev,
+      [index]: { ...getImageState(index), ...patch },
+    }));
+  };
+
+  const withRetryParam = (src, index) => {
+    if (!src) return src;
+    const { retry } = getImageState(index);
+    const separator = src.includes("?") ? "&" : "?";
+    return `${src}${separator}retry=${retry}`;
+  };
+
+  const scheduleRetry = (index) => {
+    const { retry } = getImageState(index);
+    if (retry >= MAX_RETRIES) return;
+    updateImageState(index, { status: "retrying" });
+    if (retryTimersRef.current[index]) {
+      clearTimeout(retryTimersRef.current[index]);
+    }
+    retryTimersRef.current[index] = setTimeout(() => {
+      updateImageState(index, { retry: retry + 1, status: "loading" });
+    }, 800);
+  };
+
+  const handleImageError = (index) => {
+    const { retry } = getImageState(index);
+    if (retry < MAX_RETRIES) {
+      scheduleRetry(index);
+    } else {
+      updateImageState(index, { status: "error" });
+    }
+  };
+
+  const handleImageLoaded = (index) => {
+    updateImageState(index, { status: "ok" });
+  };
+
+  useEffect(() => {
+    return () => {
+      Object.values(retryTimersRef.current).forEach((t) => clearTimeout(t));
+    };
+  }, []);
+
   const mediaItems = [...images];
   if (productVideo) mediaItems.push({ type: "video", src: productVideo });
   if (!mediaItems.length) return null;
@@ -113,23 +165,32 @@ export default function ProductGallerySection({
                     />
                   ) : (
                     <>
+                      {getImageState(index).status !== "ok" && (
+                        <div className="absolute inset-0 z-10">
+                          <Skeleton className="w-full h-full" />
+                        </div>
+                      )}
                       <div className="relative w-full h-full hidden md:block">
                         <img
-                          src={item}
+                          src={withRetryParam(item, index)}
                           alt={`${product?.name || "Product"} ${
                             index + 1
                           }`}
                           className="w-full h-full object-contain"
                           draggable={false}
+                          onLoad={() => handleImageLoaded(index)}
+                          onError={() => handleImageError(index)}
                         />
 
                       </div>
 
                       {/* MOBILE */}
                       <img
-                        src={item}
+                        src={withRetryParam(item, index)}
                         alt=""
                         className="w-full h-full object-contain md:hidden"
+                        onLoad={() => handleImageLoaded(index)}
+                        onError={() => handleImageError(index)}
                       />
                     </>
                   )}
@@ -164,14 +225,21 @@ export default function ProductGallerySection({
           >
             {mediaItems.map((item, i) => (
               <SwiperSlide key={i}>
-               <div className="w-full h-full bg-gray-50 flex items-center justify-center rounded-lg">
-  <img
-    src={item.src || item}
-    alt={`Thumbnail ${i + 1}`}
-    className="max-w-full max-h-full object-contain p-2"
-    draggable={false}
-  />
-</div>
+                <div className="w-full h-full bg-gray-50 flex items-center justify-center rounded-lg relative">
+                  {getImageState(i).status !== "ok" && (
+                    <div className="absolute inset-0 z-10">
+                      <Skeleton className="w-full h-full rounded-lg" />
+                    </div>
+                  )}
+                  <img
+                    src={withRetryParam(item.src || item, i)}
+                    alt={`Thumbnail ${i + 1}`}
+                    className="max-w-full max-h-full object-contain p-2"
+                    draggable={false}
+                    onLoad={() => handleImageLoaded(i)}
+                    onError={() => handleImageError(i)}
+                  />
+                </div>
 
               </SwiperSlide>
             ))}
@@ -228,18 +296,27 @@ export default function ProductGallerySection({
                 className="max-w-full max-h-full object-contain"
               />
             ) : (
-              <img
-                src={mediaItems[fullscreenIndex]}
-                alt={`${product?.name || "Product"} ${fullscreenIndex + 1}`}
-                onClick={handleZoomClick}
-                className={`max-w-full max-h-full object-contain transition-transform duration-200 ${
-                  isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
-                }`}
-                style={{
-                  transformOrigin: zoomOrigin,
-                  transform: isZoomed ? "scale(2)" : "scale(1)",
-                }}
-              />
+              <div className="relative w-full h-full flex items-center justify-center">
+                {getImageState(fullscreenIndex).status !== "ok" && (
+                  <div className="absolute inset-0 z-10">
+                    <Skeleton className="w-full h-full" />
+                  </div>
+                )}
+                <img
+                  src={withRetryParam(mediaItems[fullscreenIndex], fullscreenIndex)}
+                  alt={`${product?.name || "Product"} ${fullscreenIndex + 1}`}
+                  onClick={handleZoomClick}
+                  onLoad={() => handleImageLoaded(fullscreenIndex)}
+                  onError={() => handleImageError(fullscreenIndex)}
+                  className={`max-w-full max-h-full object-contain transition-transform duration-200 ${
+                    isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
+                  }`}
+                  style={{
+                    transformOrigin: zoomOrigin,
+                    transform: isZoomed ? "scale(2)" : "scale(1)",
+                  }}
+                />
+              </div>
             )}
           </div>
         </div>
