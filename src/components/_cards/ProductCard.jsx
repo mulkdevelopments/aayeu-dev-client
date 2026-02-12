@@ -102,7 +102,7 @@ export default function ProductCard({
         <div className="flex-1 flex flex-col bg-white">
 
           {/* Image Section */}
-          <div className="relative w-full overflow-hidden bg-gray-50 aspect-[3/4]">
+          <div className="relative w-full overflow-hidden bg-white aspect-[3/4]">
             {/* Wishlist Button - Top Right */}
             <button
               className="absolute top-3 right-3 z-30 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
@@ -144,7 +144,7 @@ export default function ProductCard({
                     src={resolvedSrc}
                     alt={title}
                     fill
-                    className={`object-cover transition-opacity duration-300 ${
+                    className={`object-contain transition-opacity duration-300 ${
                       showImage ? "opacity-100" : "opacity-0"
                     }`}
                     unoptimized
@@ -155,7 +155,7 @@ export default function ProductCard({
                     key={index}
                     src={resolvedSrc}
                     alt={title}
-                    className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
+                    className={`absolute top-0 left-0 w-full h-full object-contain transition-opacity duration-300 ${
                       showImage ? "opacity-100" : "opacity-0"
                     }`}
                     onError={() => setImageError(true)}

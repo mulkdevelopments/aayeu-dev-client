@@ -69,6 +69,13 @@ export default function AuthForm() {
   const dispatch = useDispatch();
 
   const { request, loading } = useAxios();
+  const allowedDomains = ["mulkholdings.com", "aayeu.com"];
+  const isAllowedEmail = (value) => {
+    if (!value) return false;
+    const email = String(value).trim().toLowerCase();
+    const domain = email.split("@")[1] || "";
+    return allowedDomains.includes(domain);
+  };
 
   const handleOAuth = (provider) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -101,6 +108,14 @@ export default function AuthForm() {
   });
 
   const onSubmit = async (payload) => {
+    if ((type === "signin" || type === "signup") && !isAllowedEmail(payload.email)) {
+      showToast(
+        "error",
+        "Members access only. Please use your @mulkholdings.com or @aayeu.com email."
+      );
+      return;
+    }
+
     const { data, error } = await request({
       url:
         type === "signup"
@@ -141,6 +156,11 @@ export default function AuthForm() {
                 ? "Sign in to your account"
                 : "We'll send you a reset link"}
           </p>
+          {(type === "signin" || type === "signup") && (
+            <p className="text-xs text-gray-500 mt-2">
+              Members access only. Use your @mulkholdings.com or @aayeu.com email.
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -337,13 +357,7 @@ export default function AuthForm() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                <SocialButton
-                  icon={<FaApple />}
-                  label="Apple"
-                  onClick={() => handleOAuth("apple")}
-                />
-              </div>
+              {/* Apple sign-in disabled for temporary members-only access */}
             </>
           )}
         </form>
