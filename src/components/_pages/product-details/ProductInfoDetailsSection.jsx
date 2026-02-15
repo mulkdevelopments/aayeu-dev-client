@@ -128,9 +128,15 @@ const ProductInfoDetailsSection = forwardRef(
     // Helper function to get live stock for a variant
     const getLiveStock = (variantSize) => {
       if (!liveStockData || !liveStockData.stockBySize) return null;
-      const stockItem = liveStockData.stockBySize.find(
-        (s) => s.size?.toLowerCase() === variantSize?.toLowerCase()
-      );
+      const normalizedSize = variantSize?.toLowerCase();
+      const stockItem = normalizedSize
+        ? liveStockData.stockBySize.find(
+            (s) => s.size?.toLowerCase() === normalizedSize
+          )
+        : liveStockData.stockBySize.find((s) => {
+            const size = s.size?.toLowerCase();
+            return size === "n/a" || size === "na";
+          });
       return stockItem?.quantity ?? 0;
     };
 
@@ -268,13 +274,13 @@ const ProductInfoDetailsSection = forwardRef(
 
       // Only use live stock for vendors that support live stock checks
       if (canLiveStock) {
-        // If live stock data is available, use it
-        if (liveStockData) {
+        const dbStock = Number(variant.stock || 0);
+        if (liveStockData && !liveStockData.error) {
           const liveStock = getLiveStock(variant.variant_size);
           setIsOutOfStock(liveStock <= 0);
         } else {
-          // No live data available (loading or failed) - show out of stock
-          setIsOutOfStock(true);
+          // Live data missing/failed - fall back to DB stock
+          setIsOutOfStock(dbStock <= 0);
         }
       } else {
         // Vendor doesn't support individual syncing - show out of stock
@@ -422,16 +428,16 @@ const ProductInfoDetailsSection = forwardRef(
                           (!selectedColor || v.variant_color === selectedColor)
                       );
 
-                      // Check stock - NO fallback to DB
+                      // Check stock - fallback to DB if live fails
                       let outOfStock;
                       if (canLiveStock) {
-                        // Only use live stock data
-                        if (liveStockData) {
+                        const dbStock = Number(variant?.stock || 0);
+                        if (liveStockData && !liveStockData.error) {
                           const liveStock = getLiveStock(s);
                           outOfStock = !variant || liveStock <= 0;
                         } else {
-                          // No live data - show out of stock
-                          outOfStock = true;
+                          // Live data missing/failed - fall back to DB stock
+                          outOfStock = !variant || dbStock <= 0;
                         }
                       } else {
                         // Vendor doesn't support individual syncing - show out of stock

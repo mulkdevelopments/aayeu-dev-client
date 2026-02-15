@@ -56,19 +56,26 @@ export default function CartItemCard({ product, liveStockData, stockCheckLoading
   // Get live stock for this variant
   const getLiveStock = () => {
     if (!liveStockData || !liveStockData.stockBySize) return null;
-    const stockItem = liveStockData.stockBySize.find(
-      (s) => s.size?.toLowerCase() === size?.toLowerCase()
-    );
+    const normalizedSize = size?.toLowerCase();
+    const stockItem = normalizedSize
+      ? liveStockData.stockBySize.find(
+          (s) => s.size?.toLowerCase() === normalizedSize
+        )
+      : liveStockData.stockBySize.find((s) => {
+          const entrySize = s.size?.toLowerCase();
+          return entrySize === "n/a" || entrySize === "na";
+        });
     return stockItem?.quantity ?? 0;
   };
 
   // Determine actual available stock
   const liveStockValue = getLiveStock();
+  const dbStock = parseInt(stock, 10) || 0;
   const availableStock = canLiveStock
     ? liveStockData?.error || liveStockValue === null
-      ? 0
+      ? dbStock
       : liveStockValue
-    : parseInt(stock, 10) || 0;
+    : dbStock;
 
   const isOutOfStock = availableStock === 0;
   const hasLowStock = availableStock > 0 && availableStock < qty;
