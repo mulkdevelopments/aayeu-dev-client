@@ -361,68 +361,99 @@ export default function ProductsListGrid({
               </p>
             )}
           </div> */}
-      {/* Category Filters - Horizontal Scroll on All Screens */}
-        {showCategoryFilters && (
+      {/* Category Filters + Actions Row */}
+        {showCategoryFilters ? (
           <div className="mb-6 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0">
-            {loadingChildren ? (
-              <div className="flex gap-2 md:gap-3 overflow-x-auto category-scroll pb-3">
-                <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
-                <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
-                <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
-                <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
-                <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
-              </div>
-            ) : (
-              childCategories.length > 0 && (
-                <div className="relative mb-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      categoryScrollRef.current?.scrollBy({
-                        left: -320,
-                        behavior: "smooth",
-                      })
-                    }
-                    className="hidden lg:flex items-center justify-center absolute left-0 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
-                    aria-label="Scroll categories left"
-                  >
-                    <ChevronRight className="h-4 w-4 rotate-180" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      categoryScrollRef.current?.scrollBy({
-                        left: 320,
-                        behavior: "smooth",
-                      })
-                    }
-                    className="hidden lg:flex items-center justify-center absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
-                    aria-label="Scroll categories right"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                  <div
-                    ref={categoryScrollRef}
-                    className="overflow-x-auto category-scroll lg:px-12"
-                  >
-                    <div className="flex gap-2 md:gap-3 lg:justify-center">
-                    {childCategories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => router.push(`/shop/${cat.path}/${cat.id}`)}
-                        className="flex-shrink-0 px-4 py-2.5 md:px-5 md:py-3 bg-white border-2 border-gray-200   hover:border-black  hover:shadow-md transition-all duration-200 text-sm font-medium whitespace-nowrap"
-                      >
-                        {startCase(toLower(cat.name))}
-                      </button>
-                    ))}
-                    </div>
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        )}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 font-medium text-sm"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span>Filters</span>
+                {activeFiltersCount > 0 && (
+                  <span className="ml-1 bg-black text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
 
+              <div className="flex-1 min-w-0 relative">
+                {loadingChildren ? (
+                  <div className="flex gap-2 md:gap-3 overflow-x-auto category-scroll">
+                    <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
+                    <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
+                    <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
+                    <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
+                    <Skeleton className="h-10 w-32 flex-shrink-0 rounded-lg" />
+                  </div>
+                ) : (
+                  childCategories.length > 0 && (
+                    <div className="flex items-center gap-2 w-full">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          categoryScrollRef.current?.scrollBy({
+                            left: -320,
+                            behavior: "smooth",
+                          })
+                        }
+                        className="flex items-center justify-center h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
+                        aria-label="Scroll categories left"
+                      >
+                        <ChevronRight className="h-4 w-4 rotate-180" />
+                      </button>
+                      <div
+                        ref={categoryScrollRef}
+                        className="overflow-x-auto category-scroll flex-1"
+                      >
+                        <div className="flex gap-2 md:gap-3">
+                          {childCategories.map((cat) => (
+                            <button
+                              key={cat.id}
+                              onClick={() => router.push(`/shop/${cat.path}/${cat.id}`)}
+                              className="flex-shrink-0 px-4 py-2.5 md:px-5 md:py-3 bg-white border-2 border-gray-200 hover:border-black hover:shadow-md transition-all duration-200 text-sm font-medium whitespace-nowrap"
+                            >
+                              {startCase(toLower(cat.name))}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          categoryScrollRef.current?.scrollBy({
+                            left: 320,
+                            behavior: "smooth",
+                          })
+                        }
+                        className="flex items-center justify-center h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
+                        aria-label="Scroll categories right"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
+                <Select value={sort} onValueChange={handleSortChange}>
+                  <SelectTrigger className="w-[140px] sm:w-48 border-2 border-gray-200 transition-colors">
+                    <SelectValue placeholder="Our Picks" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="is_our_picks">Our Picks</SelectItem>
+                    <SelectItem value="is_newest">Newest Arrivals</SelectItem>
+                    <SelectItem value="price_low_to_high">Price: Low to High</SelectItem>
+                    <SelectItem value="price_high_to_low">Price: High to Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        ) : (
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -436,8 +467,6 @@ export default function ProductsListGrid({
                 </span>
               )}
             </button>
-
-            {/* Product count hidden as requested */}
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
@@ -454,6 +483,7 @@ export default function ProductsListGrid({
               </Select>
             </div>
           </div>
+        )}
         </div>
 
   
@@ -540,6 +570,7 @@ export default function ProductsListGrid({
         open={isSidebarOpen}
         initialFilters={selectedFilters}
         categories={categoryId ? childCategories : []}
+        totalCount={totalProducts}
         onClose={() => setSidebarOpen(false)}
         onApply={(filters) => {
           const query = buildQuery(filters, sort);

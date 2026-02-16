@@ -20,6 +20,7 @@ export default function SidebarFilters({
   onReset,
   initialFilters = {}, // parent passes filters parsed from URL
   categories = [],
+  totalCount = null,
 }) {
   const { request, loading } = useAxios();
   const { selectedCurrency, exchangeRates, format } = useCurrency();
@@ -31,10 +32,19 @@ export default function SidebarFilters({
     searchParams.get("query") || searchParams.get("q") || null;
 
   const [brands, setBrands] = useState([]);
+  const [allBrands, setAllBrands] = useState([]);
+  const [brandCounts, setBrandCounts] = useState([]);
   const [colors, setColors] = useState([]);
+  const [allColors, setAllColors] = useState([]);
+  const [colorCounts, setColorCounts] = useState([]);
   const [sizes, setSizes] = useState([]);
+  const [allSizes, setAllSizes] = useState([]);
+  const [sizeCounts, setSizeCounts] = useState([]);
   const [genders, setGenders] = useState([]);
+  const [allGenders, setAllGenders] = useState([]);
+  const [genderCounts, setGenderCounts] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100000 });
+  const [liveTotal, setLiveTotal] = useState(null);
 
   // ✅ Local states
   const [price, setPrice] = useState({ min: 0, max: 100000 });
@@ -80,13 +90,11 @@ export default function SidebarFilters({
           params.set("category_id", categoryId);
         }
 
-        // Use applied filters from parent (URL) so sidebar changes
-        // don't refetch until Show Results is pressed.
-        const appliedBrands = initialFilters.brands || [];
-        const appliedColors = initialFilters.colors || [];
-        const appliedSizes = initialFilters.sizes || [];
-        const appliedPrice = initialFilters.price || null;
-        const appliedGenders = initialFilters.genders || [];
+        const appliedBrands = selectedBrands || [];
+        const appliedColors = selectedColors || [];
+        const appliedSizes = selectedSizes || [];
+        const appliedPrice = price || null;
+        const appliedGenders = selectedGenders || [];
 
         appliedBrands.forEach((b) => params.append("brand", b));
         appliedColors.forEach((c) => params.append("color", c));
@@ -105,11 +113,39 @@ export default function SidebarFilters({
         });
 
         if (data?.status === 200 && data.data) {
-          const { brands, colors, sizes, genders, price } = data.data;
+          const {
+            brands,
+            colors,
+            sizes,
+            genders,
+            price,
+            brand_counts,
+            color_counts,
+            size_counts,
+            gender_counts,
+            total,
+          } = data.data;
           setBrands(brands?.filter(Boolean) || []);
           setColors(colors?.filter(Boolean) || []);
           setSizes(sizes?.filter(Boolean) || []);
+          setAllSizes((prev) =>
+            prev.length > 0 ? prev : sizes?.filter(Boolean) || []
+          );
           setGenders(genders?.filter(Boolean) || []);
+          setAllBrands((prev) =>
+            prev.length > 0 ? prev : brands?.filter(Boolean) || []
+          );
+          setAllColors((prev) =>
+            prev.length > 0 ? prev : colors?.filter(Boolean) || []
+          );
+          setAllGenders((prev) =>
+            prev.length > 0 ? prev : genders?.filter(Boolean) || []
+          );
+          setBrandCounts(Array.isArray(brand_counts) ? brand_counts : []);
+          setColorCounts(Array.isArray(color_counts) ? color_counts : []);
+          setSizeCounts(Array.isArray(size_counts) ? size_counts : []);
+          setGenderCounts(Array.isArray(gender_counts) ? gender_counts : []);
+          setLiveTotal(typeof total === "number" ? total : null);
           setPriceRange({
             min: price?.min ?? 0,
             max: price?.max ?? 100000,
@@ -120,7 +156,22 @@ export default function SidebarFilters({
       }
     };
     fetchFilters();
-  }, [categoryId, searchQuery, initialFilters]);
+  }, [
+    categoryId,
+    searchQuery,
+    selectedBrands,
+    selectedColors,
+    selectedSizes,
+    selectedGenders,
+    price,
+  ]);
+
+  useEffect(() => {
+    setAllSizes([]);
+    setAllBrands([]);
+    setAllColors([]);
+    setAllGenders([]);
+  }, [categoryId, searchQuery]);
 
   // ✅ Sync local filter state when parent updates (e.g. after refresh)
   useEffect(() => {
@@ -168,13 +219,51 @@ export default function SidebarFilters({
     onClose?.();
   };
 
-  const filteredBrands = useMemo(
-    () =>
-      brands.filter((b) =>
-        b.toLowerCase().includes(brandSearch.trim().toLowerCase())
-      ),
-    [brands, brandSearch]
-  );
+  const brandCountMap = useMemo(() => {
+    const map = new Map();
+    brandCounts.forEach((b) => {
+      const key = String(b.value || "").trim().toLowerCase();
+      if (!key) return;
+      map.set(key, { label: b.label, count: Number(b.count) || 0 });
+    });
+    return map;
+  }, [brandCounts]);
+
+  const colorCountMap = useMemo(() => {
+    const map = new Map();
+    colorCounts.forEach((c) => {
+      const key = String(c.value || "").trim().toLowerCase();
+      if (!key) return;
+      map.set(key, Number(c.count) || 0);
+    });
+    return map;
+  }, [colorCounts]);
+
+  const sizeCountMap = useMemo(() => {
+    const map = new Map();
+    sizeCounts.forEach((s) => {
+      const key = String(s.value || "").trim().toLowerCase();
+      if (!key) return;
+      map.set(key, Number(s.count) || 0);
+    });
+    return map;
+  }, [sizeCounts]);
+
+  const genderCountMap = useMemo(() => {
+    const map = new Map();
+    genderCounts.forEach((g) => {
+      const key = String(g.value || "").trim().toLowerCase();
+      if (!key) return;
+      map.set(key, Number(g.count) || 0);
+    });
+    return map;
+  }, [genderCounts]);
+
+  const filteredBrands = useMemo(() => {
+    const list = allBrands.length > 0 ? allBrands : brands;
+    const term = brandSearch.trim().toLowerCase();
+    return list.filter((b) => b.toLowerCase().includes(term));
+  }, [allBrands, brands, brandSearch]);
 
   const groupedBrands = useMemo(() => {
     const groups = new Map();
@@ -183,7 +272,10 @@ export default function SidebarFilters({
       let key = (label[0] || "#").toUpperCase();
       if (!/^[A-Z]$/.test(key)) key = "#";
       if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push({ value: brand, label });
+      const countKey = String(brand || "").trim().toLowerCase();
+      const countInfo = brandCountMap.get(countKey);
+      const count = countInfo?.count ?? 0;
+      groups.get(key).push({ value: brand, label, count });
     });
     const entries = Array.from(groups.entries()).map(([key, items]) => {
       items.sort((a, b) => a.label.localeCompare(b.label));
@@ -195,11 +287,12 @@ export default function SidebarFilters({
       return a.key.localeCompare(b.key);
     });
     return entries;
-  }, [filteredBrands]);
+  }, [filteredBrands, brandCountMap]);
 
   const sizeGroups = useMemo(() => {
     const map = new Map();
-    sizes.forEach((s) => {
+    const source = allSizes.length > 0 ? allSizes : sizes;
+    source.forEach((s) => {
       const raw = String(s || "").trim();
       if (!raw) return;
       const normalized = raw.replace(/\s+/g, " ").toLowerCase();
@@ -260,18 +353,36 @@ export default function SidebarFilters({
     });
 
     return groups;
+  }, [allSizes, sizes]);
+
+  const availableSizeKeys = useMemo(() => {
+    return new Set(
+      sizes.map((s) => String(s || "").trim().replace(/\s+/g, " ").toLowerCase())
+    );
   }, [sizes]);
 
   const availableSections = useMemo(() => {
     const list = [];
     if (categories.length > 0) list.push("category");
-    if (brands.length > 0) list.push("brand");
-    if (genders.length > 0) list.push("gender");
-    if (colors.length > 0) list.push("color");
-    if (sizes.length > 0) list.push("size");
+    if (allBrands.length > 0 || brands.length > 0) list.push("brand");
+    if (allGenders.length > 0 || genders.length > 0) list.push("gender");
+    if (allColors.length > 0 || colors.length > 0) list.push("color");
+    if (allSizes.length > 0 || sizes.length > 0) list.push("size");
     if (priceRange.min < priceRange.max) list.push("price");
     return list;
-  }, [categories.length, brands.length, genders.length, colors.length, sizes.length, priceRange.min, priceRange.max]);
+  }, [
+    categories.length,
+    brands.length,
+    allBrands.length,
+    genders.length,
+    allGenders.length,
+    colors.length,
+    allColors.length,
+    sizes.length,
+    allSizes.length,
+    priceRange.min,
+    priceRange.max,
+  ]);
 
   const hasInitializedSection = useRef(false);
 
@@ -357,7 +468,7 @@ export default function SidebarFilters({
           )}
 
           {/* --- Brand Filter --- */}
-          {brands.length > 0 && (
+          {(allBrands.length > 0 || brands.length > 0) && (
             <>
               <button
                 type="button"
@@ -378,7 +489,7 @@ export default function SidebarFilters({
                   <div className="relative mb-4">
                     <Search className="absolute left-0 top-2.5 h-4 w-4 text-gray-500" />
                     <Input
-                      placeholder={`Search ${brands.length} brands`}
+                      placeholder={`Search ${allBrands.length || brands.length} brands`}
                       value={brandSearch}
                       onChange={(e) => setBrandSearch(e.target.value)}
                       className="pl-6 border-0 border-b border-gray-300 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -392,20 +503,30 @@ export default function SidebarFilters({
                             {group.key}
                           </div>
                           <div className="space-y-3">
-                            {group.items.map((item) => (
-                              <label
-                                key={item.value}
-                                className="flex items-center gap-3 text-sm"
-                              >
-                                <Checkbox
-                                  checked={selectedBrands.includes(item.value)}
-                                  onCheckedChange={() =>
-                                    toggle(setSelectedBrands, selectedBrands, item.value)
-                                  }
-                                />
-                                <span>{item.label}</span>
-                              </label>
-                            ))}
+                            {group.items.map((item) => {
+                              const isSelected = selectedBrands.includes(item.value);
+                              const isDisabled = item.count === 0 && !isSelected;
+                              return (
+                                <label
+                                  key={item.value}
+                                  className={`flex items-center justify-between gap-3 text-sm ${
+                                    isDisabled ? "text-gray-400" : "text-gray-700"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      onCheckedChange={() =>
+                                        toggle(setSelectedBrands, selectedBrands, item.value)
+                                      }
+                                      disabled={isDisabled}
+                                    />
+                                    <span>{item.label}</span>
+                                  </div>
+                                  <span className="text-xs text-gray-500"></span>
+                                </label>
+                              );
+                            })}
                           </div>
                         </div>
                       ))}
@@ -418,7 +539,7 @@ export default function SidebarFilters({
           )}
 
           {/* --- Gender Filter --- */}
-          {genders.length > 0 && (
+          {(allGenders.length > 0 || genders.length > 0) && (
             <>
               <button
                 type="button"
@@ -437,17 +558,32 @@ export default function SidebarFilters({
               {openSection === "gender" && (
                 <div className="pb-5">
                   <div className="space-y-3">
-                    {genders.map((g) => (
-                      <label key={g} className="flex items-center gap-3 text-sm">
-                        <Checkbox
-                          checked={selectedGenders.includes(g)}
-                          onCheckedChange={() =>
-                            toggle(setSelectedGenders, selectedGenders, g)
-                          }
-                        />
-                        <span>{_.startCase(_.toLower(g))}</span>
-                      </label>
-                    ))}
+                    {(allGenders.length > 0 ? allGenders : genders).map((g) => {
+                      const key = String(g || "").trim().toLowerCase();
+                      const count = genderCountMap.get(key) ?? 0;
+                      const isSelected = selectedGenders.includes(g);
+                      const isDisabled = count === 0 && !isSelected;
+                      return (
+                        <label
+                          key={g}
+                          className={`flex items-center justify-between gap-3 text-sm ${
+                            isDisabled ? "text-gray-400" : "text-gray-700"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() =>
+                                toggle(setSelectedGenders, selectedGenders, g)
+                              }
+                              disabled={isDisabled}
+                            />
+                            <span>{_.startCase(_.toLower(g))}</span>
+                          </div>
+                          <span className="text-xs text-gray-500"></span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -456,7 +592,7 @@ export default function SidebarFilters({
           )}
 
           {/* --- Color Filter --- */}
-          {colors.length > 0 && (
+          {(allColors.length > 0 || colors.length > 0) && (
             <>
               <button
                 type="button"
@@ -475,17 +611,32 @@ export default function SidebarFilters({
               {openSection === "color" && (
                 <div className="pb-5">
                   <div className="space-y-3">
-                    {colors.map((c) => (
-                      <label key={c} className="flex items-center gap-3 text-sm">
-                        <Checkbox
-                          checked={selectedColors.includes(c)}
-                          onCheckedChange={() =>
-                            toggle(setSelectedColors, selectedColors, c)
-                          }
-                        />
-                        <span>{c}</span>
-                      </label>
-                    ))}
+                    {(allColors.length > 0 ? allColors : colors).map((c) => {
+                      const key = String(c || "").trim().toLowerCase();
+                      const count = colorCountMap.get(key) ?? 0;
+                      const isSelected = selectedColors.includes(c);
+                      const isDisabled = count === 0 && !isSelected;
+                      return (
+                        <label
+                          key={c}
+                          className={`flex items-center justify-between gap-3 text-sm ${
+                            isDisabled ? "text-gray-400" : "text-gray-700"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() =>
+                                toggle(setSelectedColors, selectedColors, c)
+                              }
+                              disabled={isDisabled}
+                            />
+                            <span>{c}</span>
+                          </div>
+                          <span className="text-xs text-gray-500"></span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -517,6 +668,16 @@ export default function SidebarFilters({
                       const isSelected = group.values.some((v) =>
                         selectedSizes.includes(v)
                       );
+                      const isAvailable = group.values.some((v) =>
+                        availableSizeKeys.has(
+                          String(v || "").trim().replace(/\s+/g, " ").toLowerCase()
+                        )
+                      );
+                      const isDisabled = !isAvailable && !isSelected;
+                      const count = group.values.reduce((sum, v) => {
+                        const key = String(v || "").trim().toLowerCase();
+                        return sum + (sizeCountMap.get(key) || 0);
+                      }, 0);
                       return (
                         <button
                           key={group.key}
@@ -528,6 +689,7 @@ export default function SidebarFilters({
                                 prev.filter((v) => !group.values.includes(v))
                               );
                             } else {
+                              if (isDisabled) return;
                               setSelectedSizes((prev) => [
                                 ...prev,
                                 ...group.values.filter((v) => !prev.includes(v)),
@@ -537,10 +699,13 @@ export default function SidebarFilters({
                           className={`h-10 text-sm border transition-colors ${
                             isSelected
                               ? "border-black text-black"
+                              : isDisabled
+                              ? "border-gray-200 text-gray-400 cursor-not-allowed"
                               : "border-gray-300 text-gray-700"
                           }`}
                         >
-                          {group.label}
+                          <span>{group.label}</span>
+                          <span className="ml-1 text-[10px] text-gray-500"></span>
                         </button>
                       );
                     })}
@@ -645,7 +810,16 @@ export default function SidebarFilters({
             onClick={handleShowResults}
             className="flex-1 bg-black text-white font-medium"
           >
-            Show Results
+            Show {(() => {
+              const count =
+                typeof liveTotal === "number"
+                  ? liveTotal
+                  : typeof totalCount === "number"
+                  ? totalCount
+                  : null;
+              if (count === null) return "results";
+              return `${count > 10000 ? "10000+" : count} results`;
+            })()}
           </Button>
         </div>
       </aside>

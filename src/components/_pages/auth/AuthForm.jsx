@@ -113,7 +113,7 @@ export default function AuthForm() {
   });
 
   const onSubmit = async (payload) => {
-    if ((type === "signin" || type === "signup") && !isAllowedEmail(payload.email)) {
+    if (type === "signup" && !isAllowedEmail(payload.email)) {
       showToast(
         "error",
         "Members access only. Please use your @mulkholdings.com or @aayeu.com email."
@@ -141,7 +141,7 @@ export default function AuthForm() {
   };
 
   const handleRequestAccessSubmit = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     const full_name = requestAccessName.trim();
     const email = (requestAccessEmail || "").trim().toLowerCase();
     if (!full_name || !email) {
@@ -191,7 +191,7 @@ export default function AuthForm() {
           </p>
           {(type === "signin" || type === "signup") && (
             <p className="text-xs text-gray-500 mt-2">
-              Members access only. Use your @mulkholdings.com or @aayeu.com email.
+              Members only access
             </p>
           )}
         </div>
@@ -346,7 +346,7 @@ export default function AuthForm() {
 
             {type === "signin" && (
               <>
-                <p className="text-sm text-gray-600 mb-2">
+                {/* <p className="text-sm text-gray-600 mb-2">
                   Don't have an account?{" "}
                   <Link
                     href="/auth?type=signup"
@@ -354,7 +354,7 @@ export default function AuthForm() {
                   >
                     Create Account
                   </Link>
-                </p>
+                </p> */}
                 {/* <Link
                   href="/auth?type=forgot-password"
                   className="text-sm text-gray-500 hover:text-gray-700 underline"
@@ -394,7 +394,7 @@ export default function AuthForm() {
               <div className="pt-2 border-t border-gray-100">
                 {!showRequestAccess ? (
                   <p className="text-center text-sm text-gray-600">
-                    Don&apos;t have an @aayeu.com or @mulkholdings.com email?{" "}
+                    Want to try explore our platform?{" "}
                     <button
                       type="button"
                       onClick={() => setShowRequestAccess(true)}
@@ -406,7 +406,7 @@ export default function AuthForm() {
                 ) : (
                   <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm font-medium text-gray-700">Request access</p>
-                    <form onSubmit={handleRequestAccessSubmit} className="space-y-3">
+                    <div className="space-y-3">
                       <input
                         type="text"
                         placeholder="Full name"
@@ -430,8 +430,9 @@ export default function AuthForm() {
                           Cancel
                         </button>
                         <button
-                          type="submit"
+                          type="button"
                           disabled={requestAccessLoading}
+                          onClick={handleRequestAccessSubmit}
                           className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-black text-white text-sm font-semibold rounded-md disabled:opacity-60"
                         >
                           {requestAccessLoading ? (
@@ -442,7 +443,7 @@ export default function AuthForm() {
                           Submit request
                         </button>
                       </div>
-                    </form>
+                    </div>
                   </div>
                 )}
               </div>
