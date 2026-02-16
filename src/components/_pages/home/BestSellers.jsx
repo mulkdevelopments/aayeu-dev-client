@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { slugifyProductName } from "@/utils/seoHelpers";
@@ -21,11 +21,30 @@ export default function BestSellers() {
 
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const sectionRef = useRef(null);
+  const hasRequestedRef = useRef(false);
 
   useEffect(() => {
-    setIsLoading(true);
-    fetchBestSellers().finally(() => setIsLoading(false));
-  }, []);
+    if (bestSellers.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (!sectionRef.current || hasRequestedRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting || hasRequestedRef.current) return;
+        hasRequestedRef.current = true;
+        setIsLoading(true);
+        fetchBestSellers().finally(() => setIsLoading(false));
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, [bestSellers.length, fetchBestSellers]);
 
   const goToProduct = (product) => {
     const id =
@@ -44,7 +63,7 @@ export default function BestSellers() {
   // Loading skeleton
   if (isLoading) {
     return (
-      <section className="w-full bg-white py-12 md:py-16">
+      <section ref={sectionRef} className="w-full bg-white py-12 md:py-16">
         <div className="max-w-[1440px] mx-auto">
           {/* Header Skeleton */}
           <div className="mb-8 px-4 md:px-8">
@@ -89,7 +108,7 @@ export default function BestSellers() {
   if (!bestSellers.length) return null;
 
   return (
-    <section className="w-full bg-white py-12 md:py-16">
+    <section ref={sectionRef} className="w-full bg-white py-12 md:py-16">
       <div className="max-w-[1440px] mx-auto">
         {/* Header */}
         <div className="mb-8 px-4 md:px-8">
@@ -179,6 +198,8 @@ export default function BestSellers() {
                     <img
                       src={primaryImage}
                       alt={name}
+                      loading="lazy"
+                      decoding="async"
                       className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
                         isHovered ? "opacity-0" : "opacity-100"
                       }`}
@@ -186,6 +207,8 @@ export default function BestSellers() {
                     <img
                       src={hoverImage}
                       alt={name}
+                      loading="lazy"
+                      decoding="async"
                       className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
                         isHovered ? "opacity-100" : "opacity-0"
                       }`}
@@ -310,6 +333,8 @@ export default function BestSellers() {
                       <img
                         src={primaryImage}
                         alt={name}
+                      loading="lazy"
+                      decoding="async"
                         className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
                           isHovered ? "opacity-0" : "opacity-100"
                         }`}
@@ -317,6 +342,8 @@ export default function BestSellers() {
                       <img
                         src={hoverImage}
                         alt={name}
+                      loading="lazy"
+                      decoding="async"
                         className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
                           isHovered ? "opacity-100" : "opacity-0"
                         }`}

@@ -60,10 +60,10 @@ export default function HeroVideoSection() {
 
           {/* Category Cards Skeleton */}
           <div className="px-4 md:px-12 lg:px-16 pb-8 md:pb-12">
-            <div className="flex gap-4 md:gap-6">
-              <Skeleton className="flex-shrink-0 w-56 h-28 md:w-96 md:h-40 lg:w-[480px] lg:h-48 rounded-md" />
-              <Skeleton className="flex-shrink-0 w-56 h-28 md:w-96 md:h-40 lg:w-[480px] lg:h-48 rounded-md" />
-              <Skeleton className="flex-shrink-0 w-56 h-28 md:w-96 md:h-40 lg:w-[480px] lg:h-48 rounded-md" />
+            <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
+              <Skeleton className="w-full aspect-[16/9] rounded-md" />
+              <Skeleton className="w-full aspect-[16/9] rounded-md" />
+              <Skeleton className="w-full aspect-[16/9] rounded-md sm:col-span-2" />
             </div>
           </div>
         </div>
@@ -86,20 +86,13 @@ export default function HeroVideoSection() {
         </div>
 
         {/* Category Cards - Horizontal Scrollable Row (All Screens) */}
-        <div
-          className="overflow-x-auto scrollbar-hide px-4 md:px-12 lg:px-16 pb-8 md:pb-12"
-          style={{
-            msOverflowStyle: 'none',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          <div className="flex gap-4 md:gap-6">
+        <div className="px-4 md:px-12 lg:px-16 pb-8 md:pb-12">
+          <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
             {overlayItems.map((item, index) => (
               <Link
                 key={index}
                 href={item?.product_redirect_url || item?.url || "#"}
-                className="group relative flex-shrink-0 w-56 h-28 md:w-96 md:h-40 lg:w-[680px] lg:h-68 overflow-hidden  transition-transform duration-300 hover:scale-105"
+                className="group relative w-full aspect-[16/9] overflow-hidden transition-transform duration-300 hover:scale-[1.02]"
               >
                 {/* Background Image */}
                 <div className="absolute inset-0">

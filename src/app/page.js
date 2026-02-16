@@ -13,10 +13,10 @@ export default function Home() {
   return (
     <>
       <Categories />
-         <BestSellers />
+      <NewArrivals title="New Arrivals" />
       <HeroVideoSection />
       {/* <BrandsSection /> */}
-      <NewArrivals title="New Arrivals" />
+      <BestSellers />
          {/* <ShopTheLook /> */}
       {/* <SaleSection /> */}
 

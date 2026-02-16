@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { XIcon, Search, ChevronDown } from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
+import useCurrency from "@/hooks/useCurrency";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,6 +22,7 @@ export default function SidebarFilters({
   categories = [],
 }) {
   const { request, loading } = useAxios();
+  const { selectedCurrency, exchangeRates, format } = useCurrency();
   const router = useRouter();
   const params = useParams();
   const categoryId = params?.category?.[params.category.length - 1];
@@ -42,6 +44,27 @@ export default function SidebarFilters({
   const [selectedGenders, setSelectedGenders] = useState([]);
   const [brandSearch, setBrandSearch] = useState("");
   const [openSection, setOpenSection] = useState(null);
+
+  const currencyRate = useMemo(() => {
+    const rate = exchangeRates?.[selectedCurrency];
+    return rate && Number(rate) > 0 ? Number(rate) : 1;
+  }, [exchangeRates, selectedCurrency]);
+
+  const displayPriceRange = useMemo(
+    () => ({
+      min: Math.round(priceRange.min * currencyRate),
+      max: Math.round(priceRange.max * currencyRate),
+    }),
+    [priceRange, currencyRate]
+  );
+
+  const displayPrice = useMemo(
+    () => ({
+      min: Math.round(price.min * currencyRate),
+      max: Math.round(price.max * currencyRate),
+    }),
+    [price, currencyRate]
+  );
 
   const hasInteracted = useRef(false); // ensures no URL update on mount
 
@@ -468,30 +491,30 @@ export default function SidebarFilters({
                   <div className="flex items-center gap-3 text-sm">
                     <Input
                       type="number"
-                      value={price.min}
+                      value={displayPrice.min}
                       onChange={(e) => {
                         hasInteracted.current = true;
+                        const raw = Number(e.target.value);
+                        const displayValue = Number.isFinite(raw) ? raw : 0;
+                        const baseValue = displayValue / currencyRate;
                         setPrice((p) => ({
                           ...p,
-                          min: Math.max(
-                            0,
-                            Math.min(Number(e.target.value), p.max)
-                          ),
+                          min: Math.max(0, Math.min(baseValue, p.max)),
                         }));
                       }}
                       className="w-1/2 rounded-none border-gray-300"
                     />
                     <Input
                       type="number"
-                      value={price.max}
+                      value={displayPrice.max}
                       onChange={(e) => {
                         hasInteracted.current = true;
+                        const raw = Number(e.target.value);
+                        const displayValue = Number.isFinite(raw) ? raw : 0;
+                        const baseValue = displayValue / currencyRate;
                         setPrice((p) => ({
                           ...p,
-                          max: Math.min(
-                            priceRange.max,
-                            Math.max(Number(e.target.value), p.min)
-                          ),
+                          max: Math.min(priceRange.max, Math.max(baseValue, p.min)),
                         }));
                       }}
                       className="w-1/2 rounded-none border-gray-300"
@@ -500,18 +523,26 @@ export default function SidebarFilters({
 
                   <Slider
                     min={0}
-                    max={priceRange.max}
+                    max={Math.max(displayPriceRange.max, 0)}
                     step={1}
-                    value={[price.min, price.max]}
+                    value={[displayPrice.min, displayPrice.max]}
                     onValueChange={([min, max]) => {
                       hasInteracted.current = true;
-                      setPrice({ min, max });
+                      const baseMin = min / currencyRate;
+                      const baseMax = max / currencyRate;
+                      setPrice({
+                        min: Math.max(0, Math.min(baseMin, priceRange.max)),
+                        max: Math.min(
+                          priceRange.max,
+                          Math.max(baseMax, Math.max(baseMin, 0))
+                        ),
+                      });
                     }}
                     className="mt-4"
                   />
 
                   <div className="text-xs text-gray-500 mt-2">
-                    AED {price.min.toFixed(2)} – AED {price.max.toFixed(2)}
+                    {format(price.min)} – {format(price.max)}
                   </div>
                 </div>
               )}
