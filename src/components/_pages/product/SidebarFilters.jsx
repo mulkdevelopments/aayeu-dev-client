@@ -213,7 +213,53 @@ export default function SidebarFilters({
         map.get(normalized).values.push(raw);
       }
     });
-    return Array.from(map.values());
+    const alphaOrder = [
+      "xxxs",
+      "xxs",
+      "xs",
+      "s",
+      "m",
+      "l",
+      "xl",
+      "xxl",
+      "xxxl",
+      "4xl",
+      "5xl",
+      "6xl",
+    ];
+    const alphaIndex = new Map(alphaOrder.map((v, i) => [v, i]));
+
+    const parseNumeric = (value) => {
+      const normalized = value.replace(",", ".").replace(/\s+/g, "");
+      const match = normalized.match(/^\d+(\.\d+)?$/);
+      return match ? Number(match[0]) : null;
+    };
+
+    const groups = Array.from(map.values());
+    groups.sort((a, b) => {
+      const aKey = a.key.replace(/[^a-z0-9]/g, "");
+      const bKey = b.key.replace(/[^a-z0-9]/g, "");
+
+      const aAlpha = alphaIndex.has(aKey) ? alphaIndex.get(aKey) : null;
+      const bAlpha = alphaIndex.has(bKey) ? alphaIndex.get(bKey) : null;
+      if (aAlpha !== null || bAlpha !== null) {
+        if (aAlpha === null) return 1;
+        if (bAlpha === null) return -1;
+        return aAlpha - bAlpha;
+      }
+
+      const aNum = parseNumeric(a.key);
+      const bNum = parseNumeric(b.key);
+      if (aNum !== null || bNum !== null) {
+        if (aNum === null) return 1;
+        if (bNum === null) return -1;
+        return aNum - bNum;
+      }
+
+      return a.label.localeCompare(b.label);
+    });
+
+    return groups;
   }, [sizes]);
 
   const availableSections = useMemo(() => {
