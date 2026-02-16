@@ -73,46 +73,42 @@ export default function MiddleHeader() {
 
   const lastBrandCategoryRef = useRef("");
 
-
-  useEffect(() => {
-    const nextSlug = activeCategorySlug || "";
-    if (lastBrandCategoryRef.current === nextSlug) return;
+  const ensureBrandGroups = async (slug) => {
+    const nextSlug = slug || "";
+    if (lastBrandCategoryRef.current === nextSlug && brandGroups.length > 0) return;
     lastBrandCategoryRef.current = nextSlug;
 
-    const fetchBrandData = async () => {
-      try {
-        const query = nextSlug
-          ? `?category_slug=${encodeURIComponent(nextSlug)}`
-          : "";
-        const cacheKey = nextSlug || "__all__";
-        if (brandGroupsCache.has(cacheKey)) {
-          setBrandGroups(brandGroupsCache.get(cacheKey));
-          return;
-        }
-        if (brandGroupsInflight.has(cacheKey)) {
-          const pending = await brandGroupsInflight.get(cacheKey);
-          setBrandGroups(pending);
-          return;
-        }
-
-        const pendingPromise = request({
-          method: "GET",
-          url: `/users/get-brand-groups${query}`,
-        }).then((groupsRes) => groupsRes?.data?.data?.items || []);
-
-        brandGroupsInflight.set(cacheKey, pendingPromise);
-        const groups = await pendingPromise;
-        brandGroupsCache.set(cacheKey, groups);
-        brandGroupsInflight.delete(cacheKey);
-        setBrandGroups(groups);
-      } catch (err) {
-        const cacheKey = nextSlug || "__all__";
-        brandGroupsInflight.delete(cacheKey);
-        console.error("Failed to fetch brand data:", err);
+    try {
+      const query = nextSlug
+        ? `?category_slug=${encodeURIComponent(nextSlug)}`
+        : "";
+      const cacheKey = nextSlug || "__all__";
+      if (brandGroupsCache.has(cacheKey)) {
+        setBrandGroups(brandGroupsCache.get(cacheKey));
+        return;
       }
-    };
-    fetchBrandData();
-  }, [activeCategorySlug]);
+      if (brandGroupsInflight.has(cacheKey)) {
+        const pending = await brandGroupsInflight.get(cacheKey);
+        setBrandGroups(pending);
+        return;
+      }
+
+      const pendingPromise = request({
+        method: "GET",
+        url: `/users/get-brand-groups${query}`,
+      }).then((groupsRes) => groupsRes?.data?.data?.items || []);
+
+      brandGroupsInflight.set(cacheKey, pendingPromise);
+      const groups = await pendingPromise;
+      brandGroupsCache.set(cacheKey, groups);
+      brandGroupsInflight.delete(cacheKey);
+      setBrandGroups(groups);
+    } catch (err) {
+      const cacheKey = nextSlug || "__all__";
+      brandGroupsInflight.delete(cacheKey);
+      console.error("Failed to fetch brand data:", err);
+    }
+  };
 
   useEffect(() => {
     if (!menu?.length) return;
@@ -383,7 +379,10 @@ export default function MiddleHeader() {
             ))}
             <div
               className="relative"
-              onMouseEnter={() => setHoveredCategory({ name: "Brands", children: [] })}
+              onMouseEnter={() => {
+                ensureBrandGroups(activeCategorySlug);
+                setHoveredCategory({ name: "Brands", children: [] });
+              }}
               onMouseLeave={handleCategoryLeave}
             >
               <Link
