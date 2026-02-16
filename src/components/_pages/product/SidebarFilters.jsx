@@ -197,6 +197,25 @@ export default function SidebarFilters({
     return entries;
   }, [filteredBrands]);
 
+  const sizeGroups = useMemo(() => {
+    const map = new Map();
+    sizes.forEach((s) => {
+      const raw = String(s || "").trim();
+      if (!raw) return;
+      const normalized = raw.replace(/\s+/g, " ").toLowerCase();
+      if (!map.has(normalized)) {
+        map.set(normalized, {
+          key: normalized,
+          label: raw.replace(/\s+/g, " ").toUpperCase(),
+          values: [raw],
+        });
+      } else {
+        map.get(normalized).values.push(raw);
+      }
+    });
+    return Array.from(map.values());
+  }, [sizes]);
+
   const availableSections = useMemo(() => {
     const list = [];
     if (categories.length > 0) list.push("category");
@@ -448,20 +467,37 @@ export default function SidebarFilters({
               {openSection === "size" && (
                 <div className="pb-5">
                   <div className="grid grid-cols-3 gap-3">
-                    {sizes.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => toggle(setSelectedSizes, selectedSizes, s)}
-                        className={`h-10 text-sm border transition-colors ${
-                          selectedSizes.includes(s)
-                            ? "border-black text-black"
-                            : "border-gray-300 text-gray-700"
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                    {sizeGroups.map((group) => {
+                      const isSelected = group.values.some((v) =>
+                        selectedSizes.includes(v)
+                      );
+                      return (
+                        <button
+                          key={group.key}
+                          type="button"
+                          onClick={() => {
+                            hasInteracted.current = true;
+                            if (isSelected) {
+                              setSelectedSizes((prev) =>
+                                prev.filter((v) => !group.values.includes(v))
+                              );
+                            } else {
+                              setSelectedSizes((prev) => [
+                                ...prev,
+                                ...group.values.filter((v) => !prev.includes(v)),
+                              ]);
+                            }
+                          }}
+                          className={`h-10 text-sm border transition-colors ${
+                            isSelected
+                              ? "border-black text-black"
+                              : "border-gray-300 text-gray-700"
+                          }`}
+                        >
+                          {group.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}

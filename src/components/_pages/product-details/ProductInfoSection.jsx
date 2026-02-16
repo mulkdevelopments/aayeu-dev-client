@@ -5,7 +5,6 @@ import useAxios from "@/hooks/useAxios";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { showToast } from "@/providers/ToastProvider";
-import AppAlertDialog from "./AppAlertDialog";
 import CTAButton from "@/components/_common/CTAButton";
 import ProductGallerySection from "./ProductGallerySection";
 import ProductInfoDetailsSection from "./ProductInfoDetailsSection";
@@ -20,8 +19,7 @@ export default function ProductInfoSection() {
   const [product, setProduct] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [dialogMessage, setDialogMessage] = useState("");
+  const [addSuccess, setAddSuccess] = useState(false);
   const [liveStockData, setLiveStockData] = useState(null);
   const [stockLoading, setStockLoading] = useState(false);
 
@@ -133,13 +131,13 @@ const images = useMemo(() => {
     });
 
     if (!res.error) {
-      setDialogMessage("Product added to cart successfully!");
-      setShowSuccessDialog(true);
+      setAddSuccess(true);
+      setTimeout(() => setAddSuccess(false), 2000);
     }
   };
 
   return (
-    <section className="bg-white pb-20 md:pb-8">
+    <section className="bg-white pb-8 md:pb-8">
       <div className="max-w-[1600px] mx-auto">
         <div className="flex flex-col lg:flex-row gap-0">
           {productLoading ? (
@@ -185,6 +183,7 @@ const images = useMemo(() => {
                 selectedSize={selectedSize}
                 setSelectedSize={setSelectedSize}
                 handleAddToCart={handleAddToCart}
+                addSuccess={addSuccess}
                 router={router}
                 liveStockData={liveStockData}
                 stockLoading={stockLoading}
@@ -194,38 +193,6 @@ const images = useMemo(() => {
         </div>
       </div>
 
-      {/* Success Dialog */}
-      <AppAlertDialog
-        visible={showSuccessDialog}
-        onClose={() => setShowSuccessDialog(false)}
-        customHeader={
-          <div className="text-2xl text-center font-semibold">{dialogMessage}</div>
-        }
-        customFooter={
-          <div className="flex flex-col sm:flex-row justify-center gap-3 mt-6">
-            <CTAButton
-              variant="outline"
-              onClick={() => {
-                router.back();
-                setShowSuccessDialog(false);
-              }}
-              className="min-w-[180px]"
-            >
-              Continue Shopping
-            </CTAButton>
-            <CTAButton
-              color="black"
-              onClick={() => {
-                setShowSuccessDialog(false);
-                router.push("/cart");
-              }}
-              className="min-w-[180px]"
-            >
-              Go to Cart
-            </CTAButton>
-          </div>
-        }
-      />
     </section>
   );
 }

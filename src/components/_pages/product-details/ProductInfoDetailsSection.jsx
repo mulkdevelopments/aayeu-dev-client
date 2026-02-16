@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useEffect, useMemo, useState } from "react";
 import CTAButton from "@/components/_common/CTAButton";
-import { Heart, Truck, Shield, RefreshCcw } from "lucide-react";
+import { Check, ChevronDown, Heart, Truck, Shield, RefreshCcw } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import useWishlist from "@/hooks/useWishlist";
+import useAxios from "@/hooks/useAxios";
 import { showToast } from "@/providers/ToastProvider";
 import useCurrency from "@/hooks/useCurrency";
 
@@ -115,6 +116,7 @@ const ProductInfoDetailsSection = forwardRef(
       selectedSize,
       setSelectedSize,
       handleAddToCart,
+      addSuccess = false,
       addingToCart,
       router,
       liveStockData,
@@ -123,10 +125,17 @@ const ProductInfoDetailsSection = forwardRef(
     ref
   ) => {
     const [isOutOfStock, setIsOutOfStock] = useState(false);
+    const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
+    const [isNotifyOpen, setIsNotifyOpen] = useState(false);
+    const [notifySize, setNotifySize] = useState("");
+    const [notifyEmail, setNotifyEmail] = useState("");
+    const [notifyOptIn, setNotifyOptIn] = useState(false);
+    const [notifyLoading, setNotifyLoading] = useState(false);
     const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
     const [sizeGuideTab, setSizeGuideTab] = useState("conversion");
     const { toggleWishlist, isWishlisted } = useWishlist();
     const { format } = useCurrency();
+    const { request } = useAxios();
     const canLiveStock =
       product?.vendor_capabilities?.has_stock_check_api ||
       product?.vendor_capabilities?.has_individual_syncing;
@@ -260,6 +269,13 @@ const ProductInfoDetailsSection = forwardRef(
       return `${formatDate(start)} - ${formatDate(end)}`;
     }, []);
 
+    const notifyImage = useMemo(() => {
+      if (!product) return "";
+      const variantImage =
+        product?.variants?.flatMap((v) => v.images || []).find(Boolean) || "";
+      return product.product_img || variantImage || "";
+    }, [product]);
+
     const renderSectionContent = (value, fallback) => {
       if (!value) {
         return <p className="text-sm text-gray-600">{fallback}</p>;
@@ -346,6 +362,13 @@ const ProductInfoDetailsSection = forwardRef(
       }
     }, [product, selectedColor, selectedSize, liveStockData, stockLoading]);
 
+    const getVariantForSize = (size) =>
+      product?.variants?.find(
+        (v) =>
+          v.variant_size === size &&
+          (!selectedColor || v.variant_color === selectedColor)
+      );
+
     // ✅ Price
     const displayPrice = useMemo(() => {
       if (!product) return { price: null, mrp: null, discountPct: null };
@@ -368,6 +391,51 @@ const ProductInfoDetailsSection = forwardRef(
       }
     };
 
+    const handleOpenNotify = () => {
+      setNotifySize(selectedSize || "");
+      setNotifyEmail("");
+      setNotifyOptIn(false);
+      setIsNotifyOpen(true);
+    };
+
+    const handleNotifySubmit = async (e) => {
+      e.preventDefault();
+      if (!notifyEmail) {
+        showToast("error", "Email is required.");
+        return;
+      }
+      if (!notifySize) {
+        showToast("error", "Please select a size.");
+        return;
+      }
+      try {
+        setNotifyLoading(true);
+        const { data, error } = await request({
+          method: "POST",
+          url: "/users/notify-stock",
+          payload: {
+            product_id: product?.id,
+            product_name: product?.name,
+            brand_name: product?.brand_name,
+            product_image: notifyImage,
+            requested_size: notifySize,
+            email: notifyEmail,
+            wants_marketing: notifyOptIn,
+          },
+        });
+        if (error || data?.success === false) {
+          showToast("error", data?.message || error || "Failed to submit request.");
+          return;
+        }
+        showToast("success", "Thanks! We will notify you when it is available.");
+        setIsNotifyOpen(false);
+      } catch (err) {
+        showToast("error", err?.message || "Failed to submit request.");
+      } finally {
+        setNotifyLoading(false);
+      }
+    };
+
     return (
       <div
         className="w-full lg:w-[40%] p-4 lg:p-6 pb-4 lg:pb-8"
@@ -383,34 +451,32 @@ const ProductInfoDetailsSection = forwardRef(
           <div className="space-y-6">
             {/* Brand */}
             {product.brand_name && (
-              <div className="text-gray-500 text-sm font-bold uppercase tracking-widest">
+              <div className="text-sm font-medium text-black">
                 {product.brand_name}
               </div>
             )}
 
             {/* Title */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black leading-tight">
+            <h1 className="text-base md:text-lg font-normal text-black leading-snug">
               {product.name}
             </h1>
 
             {/* Price Section */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl md:text-4xl font-bold text-black">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap text-sm">
+                {displayPrice.mrp && displayPrice.mrp > displayPrice.price && (
+                  <span className="text-gray-400 line-through">
+                    {format(displayPrice.mrp)}
+                  </span>
+                )}
+                <span className="text-red-600 font-semibold">
                   {displayPrice.price ? format(displayPrice.price) : "—"}
                 </span>
               </div>
-              {displayPrice.mrp && displayPrice.mrp > displayPrice.price && (
-                <>
-                  <span className="text-lg text-gray-400 line-through font-normal">
-                    {format(displayPrice.mrp)}
-                  </span>
-                  {displayPrice.discountPct && (
-                    <span className="bg-black text-white text-sm font-bold px-3 py-1 rounded">
-                      {displayPrice.discountPct}% OFF
-                    </span>
-                  )}
-                </>
+              {displayPrice.discountPct && (
+                <div className="text-xs text-red-600 font-medium">
+                  -{displayPrice.discountPct}%
+                </div>
               )}
             </div>
 
@@ -446,7 +512,7 @@ const ProductInfoDetailsSection = forwardRef(
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-black uppercase tracking-widest">
-                    Size{selectedSize && `: ${selectedSize}`}
+                    Size
                   </h3>
                   {sizeGuideTables && (
                     <button
@@ -457,60 +523,76 @@ const ProductInfoDetailsSection = forwardRef(
                     </button>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-3">
-                  {stockLoading && canLiveStock ? (
-                    // Show skeleton loaders for size buttons while loading
-                    sizes.map((s) => (
-                      <div
-                        key={s}
-                        className="min-w-[60px] px-4 py-3 rounded border-2 border-gray-200 bg-gray-100 animate-pulse"
-                      >
-                        <div className="h-4 w-8 bg-gray-200 rounded mx-auto"></div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsSizeDropdownOpen((prev) => !prev)}
+                    className="w-full h-12 border border-gray-400 px-4 text-sm flex items-center justify-between bg-white"
+                  >
+                    <span className={selectedSize ? "text-black" : "text-gray-500"}>
+                      {selectedSize || "Select size"}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${
+                        isSizeDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isSizeDropdownOpen && (
+                    <div className="absolute z-20 mt-2 w-full border border-gray-200 bg-white shadow-sm">
+                      <div className="max-h-64 overflow-y-auto">
+                        {sizes.map((s) => {
+                          const variant = getVariantForSize(s);
+                          const price = variant?.price ?? displayPrice.price;
+                          let outOfStock = false;
+                          if (canLiveStock) {
+                            const dbStock = Number(variant?.stock || 0);
+                            if (liveStockData && !liveStockData.error) {
+                              const liveStock = getLiveStock(s);
+                              outOfStock = !variant || liveStock <= 0;
+                            } else {
+                              outOfStock = !variant || dbStock <= 0;
+                            }
+                          } else {
+                            outOfStock = true;
+                          }
+
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => {
+                                if (outOfStock) return;
+                                setSelectedSize(s);
+                                setIsSizeDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-3 text-sm border-b border-gray-100 ${
+                                outOfStock
+                                  ? "text-gray-400 cursor-not-allowed"
+                                  : "text-gray-900 hover:bg-gray-50"
+                              }`}
+                            >
+                              <span className="font-medium">{s}</span>
+                              <span className="text-gray-700">
+                                {price !== null && price !== undefined ? format(price) : ""}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
-                    ))
-                  ) : (
-                    sizes.map((s) => {
-                      const variant = product.variants.find(
-                        (v) =>
-                          v.variant_size === s &&
-                          (!selectedColor || v.variant_color === selectedColor)
-                      );
-
-                      // Check stock - fallback to DB if live fails
-                      let outOfStock;
-                      if (canLiveStock) {
-                        const dbStock = Number(variant?.stock || 0);
-                        if (liveStockData && !liveStockData.error) {
-                          const liveStock = getLiveStock(s);
-                          outOfStock = !variant || liveStock <= 0;
-                        } else {
-                          // Live data missing/failed - fall back to DB stock
-                          outOfStock = !variant || dbStock <= 0;
-                        }
-                      } else {
-                        // Vendor doesn't support individual syncing - show out of stock
-                        outOfStock = true;
-                      }
-
-                      return (
-                        <button
-                          key={s}
-                          onClick={() => !outOfStock && setSelectedSize(s)}
-                          disabled={outOfStock}
-                          className={`min-w-[60px] px-4 py-3 rounded border-2 text-sm font-semibold transition-all duration-200 ${
-                            outOfStock
-                              ? "border-gray-200 bg-gray-100 text-gray-400 line-through cursor-not-allowed"
-                              : selectedSize === s
-                              ? "border-black bg-black text-white"
-                              : "border-gray-300 bg-white text-gray-700 hover:border-gray-500"
-                          }`}
-                        >
-                          {s}
-                        </button>
-                      );
-                    })
+                      <button
+                        type="button"
+                        onClick={handleOpenNotify}
+                        className="w-full px-4 py-3 text-left text-xs text-gray-700 underline"
+                      >
+                        Size missing?
+                      </button>
+                    </div>
                   )}
                 </div>
+
                 {/* Stock Status */}
                 <div className="flex items-center gap-2">
                   {stockLoading && canLiveStock ? (
@@ -525,7 +607,11 @@ const ProductInfoDetailsSection = forwardRef(
                           isOutOfStock ? "bg-gray-400" : "bg-black"
                         }`}
                       ></div>
-                      <span className={`text-sm font-medium ${isOutOfStock ? "text-gray-500" : "text-black"}`}>
+                      <span
+                        className={`text-sm font-medium ${
+                          isOutOfStock ? "text-gray-500" : "text-black"
+                        }`}
+                      >
                         {isOutOfStock ? "Out of Stock" : "In Stock"}
                       </span>
                     </>
@@ -545,12 +631,27 @@ const ProductInfoDetailsSection = forwardRef(
               ) : (
                 <CTAButton
                   color="black"
-                  onClick={handleAddToCart}
+                  onClick={() => {
+                    if (sizes.length > 0 && !selectedSize) {
+                      setIsSizeDropdownOpen(true);
+                      return;
+                    }
+                    handleAddToCart();
+                  }}
                   loading={addingToCart}
                   disabled={isOutOfStock}
                   className="flex-1 h-14 text-base font-semibold bg-black hover:bg-gray-800 text-white disabled:bg-gray-300 disabled:text-gray-500"
                 >
-                  {isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}
+                  {addSuccess ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Check className="w-4 h-4" />
+                      Added
+                    </span>
+                  ) : isOutOfStock ? (
+                    "OUT OF STOCK"
+                  ) : (
+                    "ADD TO CART"
+                  )}
                 </CTAButton>
               )}
               <button
@@ -652,6 +753,90 @@ const ProductInfoDetailsSection = forwardRef(
                 </div>
               </div>
             </div> */}
+          </div>
+        )}
+
+        {isNotifyOpen && (
+          <div className="fixed inset-0 z-[999] bg-black/50 flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-3xl border border-gray-200 shadow-xl relative">
+              <button
+                type="button"
+                onClick={() => setIsNotifyOpen(false)}
+                className="absolute top-4 right-4 text-gray-600 hover:text-black"
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6 p-6">
+                <div className="flex items-center justify-center">
+                  {notifyImage ? (
+                    <img
+                      src={notifyImage}
+                      alt={product?.name || "Product"}
+                      className="w-full max-w-[200px] object-contain"
+                    />
+                  ) : (
+                    <div className="w-full max-w-[200px] aspect-square bg-gray-100" />
+                  )}
+                </div>
+                <div className="space-y-4">
+                  <div className="text-lg font-medium text-gray-900">
+                    Notify Me
+                  </div>
+                  <form onSubmit={handleNotifySubmit} className="space-y-3">
+                    <div className="relative">
+                      <select
+                        value={notifySize}
+                        onChange={(e) => setNotifySize(e.target.value)}
+                        className="w-full h-11 border border-gray-300 px-3 text-sm bg-white"
+                      >
+                        <option value="">Select size</option>
+                        {sizes.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <input
+                      type="email"
+                      required
+                      value={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.value)}
+                      placeholder="Your email address"
+                      className="w-full h-11 border border-gray-300 px-3 text-sm"
+                    />
+                    <label className="flex items-start gap-2 text-xs text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={notifyOptIn}
+                        onChange={(e) => setNotifyOptIn(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        Want more AAYEU in your inbox? Sign up for promotions,
+                        tailored new arrivals and stock updates.
+                      </span>
+                    </label>
+                    <div className="text-[11px] text-gray-500 leading-relaxed">
+                      By signing up, you consent to receiving marketing by email
+                      and/or SMS and acknowledge you have read our Privacy Policy.
+                      Unsubscribe anytime at the bottom of our emails or by replying
+                      STOP to any of our SMS.
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={notifyLoading}
+                        className="h-10 px-5 bg-black text-white text-sm font-medium disabled:opacity-60"
+                      >
+                        {notifyLoading ? "Sending..." : "Email Me"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

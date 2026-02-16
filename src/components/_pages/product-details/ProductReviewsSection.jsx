@@ -13,7 +13,7 @@ const Stars = ({ count = 0, size = 18 }) => (
         key={i}
         size={size}
         className={
-          i <= count ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+          i <= count ? "text-gray-900 fill-gray-900" : "text-gray-300"
         }
       />
     ))}
@@ -25,19 +25,19 @@ const RatingRow = ({ star, count, total }) => {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex items-center gap-1 w-10">
-        <span className="text-sm">{star}</span>
-        <Star size={14} className="text-black fill-black" />
+      <div className="flex items-center gap-1 w-12">
+        <span className="text-xs text-gray-700">{star}</span>
+        <Star size={12} className="text-gray-900 fill-gray-900" />
       </div>
 
-      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className="h-full bg-green-500 rounded-full"
+          className="h-full bg-black rounded-full"
           style={{ width: `${percentage}%` }}
         />
       </div>
 
-      <span className="text-sm w-8 text-right">{count}</span>
+      <span className="text-xs w-8 text-right text-gray-600">{count}</span>
     </div>
   );
 };
@@ -71,14 +71,14 @@ export default function ProductReviewsSection() {
   }, [productId]);
 
   return (
-    <section className="relative w-full bg-gray-50 border-t border-gray-200 py-12">
-      <div className="mx-auto max-w-[1250px] px-4 grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <section className="relative w-full bg-white border-t border-gray-200 py-8 md:py-8">
+      <div className="mx-auto max-w-[1400px] px-4 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="space-y-4">
-          <h2 className="text-2xl tracking-wide text-gray-800">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-gray-600">
             Customer Ratings
-          </h2>
+          </div>
 
-          <div className="bg-white border p-5">
+          <div className="bg-white border border-gray-200 p-6">
             {/* Average Rating */}
             <div className="text-center mb-6">
               <p className="text-4xl font-semibold text-gray-900">
@@ -89,7 +89,7 @@ export default function ProductReviewsSection() {
                 <Stars count={Math.round(meta?.avg_rating || 0)} />
               </div>
 
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 text-sm mt-2">
                 Based on {meta?.total || 0} reviews
               </p>
             </div>
@@ -109,9 +109,9 @@ export default function ProductReviewsSection() {
         </div>
 
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-2xl tracking-wide text-gray-800">
+          <div className="mb-4 text-[11px] uppercase tracking-[0.2em] text-gray-600">
             Customer Reviews
-          </h2>
+          </div>
 
           {/* Loading State */}
           {loading && (
