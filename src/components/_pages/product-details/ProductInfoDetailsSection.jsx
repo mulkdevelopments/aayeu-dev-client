@@ -3,6 +3,12 @@
 import React, { forwardRef, useEffect, useMemo, useState } from "react";
 import CTAButton from "@/components/_common/CTAButton";
 import { Heart, Truck, Shield, RefreshCcw } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import useWishlist from "@/hooks/useWishlist";
 import { showToast } from "@/providers/ToastProvider";
 import useCurrency from "@/hooks/useCurrency";
@@ -240,6 +246,58 @@ const ProductInfoDetailsSection = forwardRef(
       }
     }, [sizeGuideTables, sizeGuideTab]);
 
+    const deliveryRangeText = useMemo(() => {
+      const formatDate = (date) =>
+        date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+        });
+      const now = new Date();
+      const start = new Date(now);
+      start.setDate(start.getDate() + 7);
+      const end = new Date(now);
+      end.setDate(end.getDate() + 14);
+      return `${formatDate(start)} - ${formatDate(end)}`;
+    }, []);
+
+    const renderSectionContent = (value, fallback) => {
+      if (!value) {
+        return <p className="text-sm text-gray-600">{fallback}</p>;
+      }
+      if (typeof value === "string") {
+        return (
+          <div
+            className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: value }}
+          />
+        );
+      }
+      if (Array.isArray(value)) {
+        return (
+          <ul className="list-disc pl-4 text-sm text-gray-700 space-y-1">
+            {value.map((item, idx) => (
+              <li key={idx}>{String(item)}</li>
+            ))}
+          </ul>
+        );
+      }
+      if (typeof value === "object") {
+        return (
+          <div className="space-y-2 text-sm text-gray-700">
+            {Object.entries(value).map(([key, val]) => (
+              <div key={key} className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide text-gray-500">
+                  {key.replace(/_/g, " ")}
+                </span>
+                <span>{String(val)}</span>
+              </div>
+            ))}
+          </div>
+        );
+      }
+      return <p className="text-sm text-gray-600">{String(value)}</p>;
+    };
+
     // ✅ Auto-select first available variant
     useEffect(() => {
       if (!product?.variants?.length) return;
@@ -355,16 +413,6 @@ const ProductInfoDetailsSection = forwardRef(
                 </>
               )}
             </div>
-
-            {/* Description */}
-            {product.description && (
-              <div
-                className="text-gray-700 leading-relaxed text-sm md:text-base prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{
-                  __html: product.description ?? product.short_description ?? "",
-                }}
-              />
-            )}
 
             {/* Divider */}
             <div className="border-t border-gray-200"></div>
@@ -518,6 +566,54 @@ const ProductInfoDetailsSection = forwardRef(
                   fill={isWishlisted(product.id) ? "currentColor" : "none"}
                 />
               </button>
+            </div>
+
+            <div className="text-xs text-gray-600 leading-tight">
+              <div className="uppercase tracking-[0.2em] text-[10px] text-gray-500">
+                Estimated delivery
+              </div>
+              <div className="text-sm text-gray-700">{deliveryRangeText}</div>
+            </div>
+
+            {/* Details Dropdowns */}
+            <div className="border-t border-gray-200 pt-2">
+              <Accordion type="multiple" defaultValue={["details"]} className="w-full">
+                <AccordionItem value="details">
+                  <AccordionTrigger className="text-[11px] uppercase tracking-[0.2em] text-gray-700 hover:no-underline">
+                    The Details
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {renderSectionContent(
+                      product.description || product.short_description,
+                      "No product details available."
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="shipping">
+                  <AccordionTrigger className="text-[11px] uppercase tracking-[0.2em] text-gray-700 hover:no-underline">
+                    Delivery, Returns & Payments
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {renderSectionContent(
+                      product.shipping_returns_payments,
+                      "Shipping, returns, and payment details will be shared during checkout."
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="environment">
+                  <AccordionTrigger className="text-[11px] uppercase tracking-[0.2em] text-gray-700 hover:no-underline">
+                    Environmental Impact
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    {renderSectionContent(
+                      product.environmental_impact,
+                      "We use sustainable packaging and shipping methods. Our products are crafted with eco-friendly materials. Every purchase supports global green initiatives."
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
 
             {/* Features */}

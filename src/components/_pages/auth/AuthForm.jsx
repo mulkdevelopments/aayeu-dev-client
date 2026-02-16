@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaApple } from "react-icons/fa";
-import { Mail, User, Phone, Lock, ShoppingBag, Loader2, ArrowRight } from "lucide-react";
+import { Mail, User, Phone, Lock, ShoppingBag, Loader2, ArrowRight, Send } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import PhoneInput from "react-phone-number-input";
@@ -69,6 +70,10 @@ export default function AuthForm() {
   const dispatch = useDispatch();
 
   const { request, loading } = useAxios();
+  const [showRequestAccess, setShowRequestAccess] = useState(false);
+  const [requestAccessLoading, setRequestAccessLoading] = useState(false);
+  const [requestAccessName, setRequestAccessName] = useState("");
+  const [requestAccessEmail, setRequestAccessEmail] = useState("");
   const allowedDomains = ["mulkholdings.com", "aayeu.com"];
   const isAllowedEmail = (value) => {
     if (!value) return false;
@@ -132,6 +137,34 @@ export default function AuthForm() {
     if (data.status === 201 || data.status === 200) {
       dispatch(login(data.data));
       showToast("success", data?.message || "Operation successful");
+    }
+  };
+
+  const handleRequestAccessSubmit = async (e) => {
+    e.preventDefault();
+    const full_name = requestAccessName.trim();
+    const email = (requestAccessEmail || "").trim().toLowerCase();
+    if (!full_name || !email) {
+      showToast("error", "Please enter your name and email.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast("error", "Please enter a valid email.");
+      return;
+    }
+    setRequestAccessLoading(true);
+    const { data, error } = await request({
+      url: "/users/request-access",
+      method: "POST",
+      payload: { full_name, email },
+    });
+    setRequestAccessLoading(false);
+    if (error) return showToast("error", error);
+    if (data?.status === 201 || data?.status === 200) {
+      showToast("success", data?.message || "Request submitted. We'll be in touch.");
+      setRequestAccessName("");
+      setRequestAccessEmail("");
+      setShowRequestAccess(false);
     }
   };
 
@@ -357,7 +390,62 @@ export default function AuthForm() {
                 </div>
               </div>
 
-              {/* Apple sign-in disabled for temporary members-only access */}
+              {/* Request Access for non-allowed domains */}
+              <div className="pt-2 border-t border-gray-100">
+                {!showRequestAccess ? (
+                  <p className="text-center text-sm text-gray-600">
+                    Don&apos;t have an @aayeu.com or @mulkholdings.com email?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setShowRequestAccess(true)}
+                      className="font-semibold text-black underline hover:no-underline"
+                    >
+                      Request access
+                    </button>
+                  </p>
+                ) : (
+                  <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm font-medium text-gray-700">Request access</p>
+                    <form onSubmit={handleRequestAccessSubmit} className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Full name"
+                        value={requestAccessName}
+                        onChange={(e) => setRequestAccessName(e.target.value)}
+                        className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email address"
+                        value={requestAccessEmail}
+                        onChange={(e) => setRequestAccessEmail(e.target.value)}
+                        className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowRequestAccess(false)}
+                          className="flex-1 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={requestAccessLoading}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-black text-white text-sm font-semibold rounded-md disabled:opacity-60"
+                        >
+                          {requestAccessLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4" />
+                          )}
+                          Submit request
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </form>

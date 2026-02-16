@@ -11,7 +11,7 @@ function ProductDetailsPage() {
   return (
     <div className="font-[poppins]">
       <ProductInfoSection />
-      <BenefitsSection />
+      {/* <BenefitsSection /> */}
       <ProductReviewsSection />
       <SimilarProductsSection />
  <NewArrivals title="New Arrivals" />

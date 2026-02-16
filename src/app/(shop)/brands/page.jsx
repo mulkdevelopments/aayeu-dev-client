@@ -39,6 +39,7 @@ export default function BrandsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialLetter = searchParams.get("letter") || "A";
+  const categoryParam = searchParams.get("category") || "";
 
   const [allBrands, setAllBrands] = useState([]);
   const [search, setSearch] = useState("");
@@ -47,8 +48,11 @@ export default function BrandsPage() {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
+        const categoryQuery = categoryParam
+          ? `?category_slug=${encodeURIComponent(categoryParam)}`
+          : "";
         const { data, error } = await request({
-          url: "/users/get-all-brands",
+          url: `/users/get-all-brands${categoryQuery}`,
           method: "GET",
         });
         if (!error && data?.success) {
@@ -59,7 +63,7 @@ export default function BrandsPage() {
       }
     };
     fetchBrands();
-  }, []);
+  }, [categoryParam, request]);
 
   useEffect(() => {
     if (initialLetter !== activeLetter) setActiveLetter(initialLetter);
@@ -87,11 +91,22 @@ export default function BrandsPage() {
 
   const handleLetterClick = (letter) => {
     setActiveLetter(letter);
-    router.replace(`/brands?letter=${letter}`);
+    const categoryQuery = categoryParam
+      ? `&category=${encodeURIComponent(categoryParam)}`
+      : "";
+    router.replace(`/brands?letter=${letter}${categoryQuery}`);
   };
 
   const handleBrandClick = (brand) => {
     const normalized = normalizeBrandParam(brand);
+    if (categoryParam) {
+      router.push(
+        `/shop/${encodeURIComponent(categoryParam)}?brand=${encodeURIComponent(
+          normalized
+        )}`
+      );
+      return;
+    }
     router.push(`/shop?brand=${encodeURIComponent(normalized)}`);
   };
 

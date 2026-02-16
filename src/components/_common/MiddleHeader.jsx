@@ -63,11 +63,19 @@ export default function MiddleHeader() {
     });
   }, []);
 
+  const activeCategorySlug = useMemo(() => {
+    if (!activeCategory?.name) return "";
+    return toLower(activeCategory.name);
+  }, [activeCategory]);
+
   useEffect(() => {
     const fetchBrandData = async () => {
       try {
+        const query = activeCategorySlug
+          ? `?category_slug=${encodeURIComponent(activeCategorySlug)}`
+          : "";
         const [groupsRes] = await Promise.all([
-          request({ method: "GET", url: "/users/get-brand-groups" }),
+          request({ method: "GET", url: `/users/get-brand-groups${query}` }),
         ]);
         const groups = groupsRes?.data?.data?.items || [];
         setBrandGroups(groups);
@@ -76,7 +84,7 @@ export default function MiddleHeader() {
       }
     };
     fetchBrandData();
-  }, []);
+  }, [activeCategorySlug, request]);
 
   useEffect(() => {
     if (!menu?.length) return;
@@ -351,7 +359,7 @@ export default function MiddleHeader() {
               onMouseLeave={handleCategoryLeave}
             >
               <Link
-                href="/brands"
+                href={activeCategorySlug ? `/brands?category=${encodeURIComponent(activeCategorySlug)}` : "/brands"}
                 className="text-sm transition-colors whitespace-nowrap text-gray-700 hover:text-black"
                 onClick={() => setHoveredCategory(null)}
               >
@@ -400,10 +408,18 @@ export default function MiddleHeader() {
                               <ul className="space-y-2">
                                 {(group.brands || []).map((brand) => (
                                   <li key={brand.id || brand.brand_name}>
-                            <Link
-                              href={`/shop?brand=${encodeURIComponent(
-                                normalizeBrandParam(brand.brand_name)
-                              )}`}
+                                    <Link
+                                      href={
+                                        activeCategorySlug
+                                          ? `/shop/${encodeURIComponent(
+                                              activeCategorySlug
+                                            )}?brand=${encodeURIComponent(
+                                              normalizeBrandParam(brand.brand_name)
+                                            )}`
+                                          : `/shop?brand=${encodeURIComponent(
+                                              normalizeBrandParam(brand.brand_name)
+                                            )}`
+                                      }
                                       className="block text-sm text-gray-800 hover:text-black transition-colors"
                                       onClick={() => setHoveredCategory(null)}
                                     >
@@ -421,7 +437,11 @@ export default function MiddleHeader() {
                               {brandLetters.map((letter) => (
                                 <Link
                                   key={letter}
-                                  href={`/brands?letter=${letter}`}
+                                  href={`/brands?letter=${letter}${
+                                    activeCategorySlug
+                                      ? `&category=${encodeURIComponent(activeCategorySlug)}`
+                                      : ""
+                                  }`}
                                   onClick={() => setHoveredCategory(null)}
                                   className="text-left hover:text-black"
                                 >
@@ -430,7 +450,11 @@ export default function MiddleHeader() {
                               ))}
                             </div>
                             <Link
-                              href="/brands"
+                              href={
+                                activeCategorySlug
+                                  ? `/brands?category=${encodeURIComponent(activeCategorySlug)}`
+                                  : "/brands"
+                              }
                               className="inline-block mt-4 text-sm text-gray-800 hover:text-black underline"
                               onClick={() => setHoveredCategory(null)}
                             >
@@ -623,7 +647,14 @@ export default function MiddleHeader() {
                           </button>
                         ))}
                         <button
-                          onClick={() => handleNavigation("/brands", { requireAuth: false })}
+                          onClick={() =>
+                            handleNavigation(
+                              activeCategorySlug
+                                ? `/brands?category=${encodeURIComponent(activeCategorySlug)}`
+                                : "/brands",
+                              { requireAuth: false }
+                            )
+                          }
                           className="w-full flex items-center justify-between px-4 py-3 text-left text-sm text-gray-900 hover:bg-gray-50 transition-colors"
                         >
                           <span className="font-medium">Brands</span>
