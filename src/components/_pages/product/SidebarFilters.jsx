@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { XIcon, Search, ChevronDown } from "lucide-react";
+import { Loader2, XIcon, Search, ChevronDown } from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import useCurrency from "@/hooks/useCurrency";
@@ -54,6 +54,38 @@ export default function SidebarFilters({
   const [selectedGenders, setSelectedGenders] = useState([]);
   const [brandSearch, setBrandSearch] = useState("");
   const [openSection, setOpenSection] = useState(null);
+
+  const normalizeSizeKey = (value) => {
+    const raw = String(value || "").trim().toLowerCase();
+    if (!raw) return "";
+    const cleaned = raw.replace(/\s+/g, " ");
+    const compact = cleaned.replace(/\s+/g, "");
+    if (/^x+l$/.test(compact)) {
+      const xCount = compact.replace(/[^x]/g, "").length;
+      if (xCount <= 1) return "xl";
+      if (xCount === 2) return "2xl";
+      if (xCount === 3) return "3xl";
+      if (xCount === 4) return "4xl";
+      if (xCount === 5) return "5xl";
+      if (xCount === 6) return "6xl";
+      return `${xCount}xl`;
+    }
+    if (/^\d+xl$/.test(compact)) {
+      const num = parseInt(compact.replace("xl", ""), 10);
+      if (!Number.isNaN(num) && num >= 2) {
+        return `${num}xl`;
+      }
+      return "xl";
+    }
+    return compact;
+  };
+
+  const formatSizeLabel = (key) => {
+    if (!key) return "";
+    if (key === "xl") return "XL";
+    if (/^\d+xl$/.test(key)) return `${key.replace("xl", "")}XL`;
+    return key.toUpperCase();
+  };
 
   const currencyRate = useMemo(() => {
     const rate = exchangeRates?.[selectedCurrency];
@@ -242,7 +274,7 @@ export default function SidebarFilters({
   const sizeCountMap = useMemo(() => {
     const map = new Map();
     sizeCounts.forEach((s) => {
-      const key = String(s.value || "").trim().toLowerCase();
+      const key = normalizeSizeKey(String(s.value || ""));
       if (!key) return;
       map.set(key, Number(s.count) || 0);
     });
@@ -295,11 +327,11 @@ export default function SidebarFilters({
     source.forEach((s) => {
       const raw = String(s || "").trim();
       if (!raw) return;
-      const normalized = raw.replace(/\s+/g, " ").toLowerCase();
+      const normalized = normalizeSizeKey(raw);
       if (!map.has(normalized)) {
         map.set(normalized, {
           key: normalized,
-          label: raw.replace(/\s+/g, " ").toUpperCase(),
+          label: formatSizeLabel(normalized),
           values: [raw],
         });
       } else {
@@ -314,11 +346,12 @@ export default function SidebarFilters({
       "m",
       "l",
       "xl",
-      "xxl",
-      "xxxl",
+      "2xl",
+      "3xl",
       "4xl",
       "5xl",
       "6xl",
+      "nosize",
     ];
     const alphaIndex = new Map(alphaOrder.map((v, i) => [v, i]));
 
@@ -357,7 +390,7 @@ export default function SidebarFilters({
 
   const availableSizeKeys = useMemo(() => {
     return new Set(
-      sizes.map((s) => String(s || "").trim().replace(/\s+/g, " ").toLowerCase())
+      sizes.map((s) => normalizeSizeKey(String(s || "")))
     );
   }, [sizes]);
 
@@ -668,14 +701,10 @@ export default function SidebarFilters({
                       const isSelected = group.values.some((v) =>
                         selectedSizes.includes(v)
                       );
-                      const isAvailable = group.values.some((v) =>
-                        availableSizeKeys.has(
-                          String(v || "").trim().replace(/\s+/g, " ").toLowerCase()
-                        )
-                      );
+                      const isAvailable = availableSizeKeys.has(group.key);
                       const isDisabled = !isAvailable && !isSelected;
                       const count = group.values.reduce((sum, v) => {
-                        const key = String(v || "").trim().toLowerCase();
+                        const key = normalizeSizeKey(String(v || ""));
                         return sum + (sizeCountMap.get(key) || 0);
                       }, 0);
                       return (
@@ -810,16 +839,20 @@ export default function SidebarFilters({
             onClick={handleShowResults}
             className="flex-1 bg-black text-white font-medium"
           >
-            Show {(() => {
-              const count =
-                typeof liveTotal === "number"
-                  ? liveTotal
-                  : typeof totalCount === "number"
-                  ? totalCount
-                  : null;
-              if (count === null) return "results";
-              return `${count > 10000 ? "10000+" : count} results`;
-            })()}
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              `Show ${(() => {
+                const count =
+                  typeof liveTotal === "number"
+                    ? liveTotal
+                    : typeof totalCount === "number"
+                    ? totalCount
+                    : null;
+                if (count === null) return "results";
+                return `${count > 10000 ? "10000+" : count} results`;
+              })()}`
+            )}
           </Button>
         </div>
       </aside>

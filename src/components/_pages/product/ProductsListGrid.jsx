@@ -398,14 +398,14 @@ export default function ProductsListGrid({
                             behavior: "smooth",
                           })
                         }
-                        className="flex items-center justify-center h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
+                        className="hidden md:flex items-center justify-center h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
                         aria-label="Scroll categories left"
                       >
                         <ChevronRight className="h-4 w-4 rotate-180" />
                       </button>
                       <div
                         ref={categoryScrollRef}
-                        className="overflow-x-auto category-scroll flex-1"
+                        className="hidden md:block overflow-x-auto category-scroll flex-1"
                       >
                         <div className="flex gap-2 md:gap-3">
                           {childCategories.map((cat) => (
@@ -427,7 +427,7 @@ export default function ProductsListGrid({
                             behavior: "smooth",
                           })
                         }
-                        className="flex items-center justify-center h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
+                        className="hidden md:flex items-center justify-center h-9 w-9 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-black hover:border-black shadow-sm transition-colors"
                         aria-label="Scroll categories right"
                       >
                         <ChevronRight className="h-4 w-4" />

@@ -763,20 +763,20 @@ export default function MiddleHeader() {
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 space-y-6">
+                  <div className="p-5 space-y-5">
                     <Link
                       href={`/shop/${toLower(mobileRootTab?.name || "shop")}/${toLower(
                         mobileActiveCategory.name
                       )}/${mobileActiveCategory.id}`}
-                      className="block text-sm font-medium text-gray-900"
+                      className="block text-xs tracking-[0.2em] uppercase text-gray-700"
                       onClick={() => setIsSheetOpen(false)}
                     >
                       All {safeCap(mobileActiveCategory.name)}
                     </Link>
 
                     {(mobileActiveCategory.children || []).map((subCat) => (
-                      <div key={subCat.id} className="space-y-3">
-                        <div className="text-xs tracking-[0.2em] text-gray-500 uppercase">
+                      <div key={subCat.id} className="space-y-3 border-b border-gray-100 pb-4">
+                        <div className="text-[11px] tracking-[0.2em] text-gray-600 uppercase">
                           {safeCap(subCat.name)}
                         </div>
                         {subCat.children?.length > 0 ? (
@@ -789,7 +789,7 @@ export default function MiddleHeader() {
                                 )}/${toLower(subCat.name)}/${toLower(grandchild.name)}/${
                                   grandchild.id
                                 }`}
-                                className="block text-sm text-gray-900"
+                                className="block text-sm text-gray-700 hover:text-black transition-colors"
                                 onClick={() => setIsSheetOpen(false)}
                               >
                                   {safeCap(grandchild.name)}
@@ -802,7 +802,7 @@ export default function MiddleHeader() {
                             href={`/shop/${toLower(mobileRootTab?.name || "shop")}/${toLower(
                               mobileActiveCategory.name
                             )}/${toLower(subCat.name)}/${subCat.id}`}
-                            className="block text-sm text-gray-900"
+                            className="block text-sm text-gray-700 hover:text-black transition-colors"
                             onClick={() => setIsSheetOpen(false)}
                           >
                             {safeCap(subCat.name)}
