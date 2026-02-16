@@ -68,11 +68,17 @@ export default function MiddleHeader() {
     return toLower(activeCategory.name);
   }, [activeCategory]);
 
+  const lastBrandCategoryRef = useRef("");
+
   useEffect(() => {
+    const nextSlug = activeCategorySlug || "";
+    if (lastBrandCategoryRef.current === nextSlug) return;
+    lastBrandCategoryRef.current = nextSlug;
+
     const fetchBrandData = async () => {
       try {
-        const query = activeCategorySlug
-          ? `?category_slug=${encodeURIComponent(activeCategorySlug)}`
+        const query = nextSlug
+          ? `?category_slug=${encodeURIComponent(nextSlug)}`
           : "";
         const [groupsRes] = await Promise.all([
           request({ method: "GET", url: `/users/get-brand-groups${query}` }),
@@ -84,7 +90,7 @@ export default function MiddleHeader() {
       }
     };
     fetchBrandData();
-  }, [activeCategorySlug, request]);
+  }, [activeCategorySlug]);
 
   useEffect(() => {
     if (!menu?.length) return;

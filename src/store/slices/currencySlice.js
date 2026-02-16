@@ -62,6 +62,7 @@ export const selectSelectedCurrency = (state) => state.currency.selectedCurrency
 export const selectExchangeRates = (state) => state.currency.exchangeRates;
 export const selectCurrencyInfo = (state) => CURRENCIES[state.currency.selectedCurrency];
 export const selectCurrencyLoading = (state) => state.currency.loading;
+export const selectCurrencyLastUpdated = (state) => state.currency.lastUpdated;
 
 // Helper function to convert EUR price to selected currency
 export const convertPrice = (eurPrice, selectedCurrency, exchangeRates) => {

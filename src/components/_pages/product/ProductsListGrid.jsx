@@ -68,6 +68,8 @@ export default function ProductsListGrid({
       filters.colors.forEach((c) => c?.trim() && params.append("color", c));
     if (filters.sizes?.length)
       filters.sizes.forEach((s) => s?.trim() && params.append("size", s));
+    if (filters.genders?.length)
+      filters.genders.forEach((g) => g?.trim() && params.append("gender", g));
 
     if (
       filters.price &&
@@ -113,6 +115,8 @@ export default function ProductsListGrid({
         filters.colors.forEach((c) => params.append("color", c));
       if (filters.sizes?.length)
         filters.sizes.forEach((s) => params.append("size", s));
+    if (filters.genders?.length)
+      filters.genders.forEach((g) => params.append("gender", g));
 
       if (
         filters.price &&
@@ -170,6 +174,7 @@ export default function ProductsListGrid({
       brands: urlParams.getAll("brand"),
       colors: urlParams.getAll("color"),
       sizes: urlParams.getAll("size"),
+      genders: urlParams.getAll("gender"),
     };
 
     const min_price = urlParams.get("min_price");
@@ -306,6 +311,7 @@ export default function ProductsListGrid({
     (selectedFilters.brands?.length || 0) +
     (selectedFilters.colors?.length || 0) +
     (selectedFilters.sizes?.length || 0) +
+    (selectedFilters.genders?.length || 0) +
     (selectedFilters.price ? 1 : 0);
 
   return (

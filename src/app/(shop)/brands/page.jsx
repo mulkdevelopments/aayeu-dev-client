@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 
@@ -44,6 +44,7 @@ export default function BrandsPage() {
   const [allBrands, setAllBrands] = useState([]);
   const [search, setSearch] = useState("");
   const [activeLetter, setActiveLetter] = useState(initialLetter);
+  const lastCategoryRef = useRef("");
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -62,8 +63,11 @@ export default function BrandsPage() {
         console.error("Failed to load brands:", err);
       }
     };
+    const nextCategory = categoryParam || "";
+    if (lastCategoryRef.current === nextCategory) return;
+    lastCategoryRef.current = nextCategory;
     fetchBrands();
-  }, [categoryParam, request]);
+  }, [categoryParam]);
 
   useEffect(() => {
     if (initialLetter !== activeLetter) setActiveLetter(initialLetter);

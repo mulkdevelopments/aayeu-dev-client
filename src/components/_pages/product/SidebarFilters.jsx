@@ -31,6 +31,7 @@ export default function SidebarFilters({
   const [brands, setBrands] = useState([]);
   const [colors, setColors] = useState([]);
   const [sizes, setSizes] = useState([]);
+  const [genders, setGenders] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100000 });
 
   // ✅ Local states
@@ -38,6 +39,7 @@ export default function SidebarFilters({
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
+  const [selectedGenders, setSelectedGenders] = useState([]);
   const [brandSearch, setBrandSearch] = useState("");
   const [openSection, setOpenSection] = useState(null);
 
@@ -61,10 +63,12 @@ export default function SidebarFilters({
         const appliedColors = initialFilters.colors || [];
         const appliedSizes = initialFilters.sizes || [];
         const appliedPrice = initialFilters.price || null;
+        const appliedGenders = initialFilters.genders || [];
 
         appliedBrands.forEach((b) => params.append("brand", b));
         appliedColors.forEach((c) => params.append("color", c));
         appliedSizes.forEach((s) => params.append("size", s));
+        appliedGenders.forEach((g) => params.append("gender", g));
 
         if (appliedPrice?.min) params.set("min_price", String(appliedPrice.min));
         if (appliedPrice?.max) params.set("max_price", String(appliedPrice.max));
@@ -78,10 +82,11 @@ export default function SidebarFilters({
         });
 
         if (data?.status === 200 && data.data) {
-          const { brands, colors, sizes, price } = data.data;
+          const { brands, colors, sizes, genders, price } = data.data;
           setBrands(brands?.filter(Boolean) || []);
           setColors(colors?.filter(Boolean) || []);
           setSizes(sizes?.filter(Boolean) || []);
+          setGenders(genders?.filter(Boolean) || []);
           setPriceRange({
             min: price?.min ?? 0,
             max: price?.max ?? 100000,
@@ -99,6 +104,7 @@ export default function SidebarFilters({
     setSelectedBrands(initialFilters.brands || []);
     setSelectedColors(initialFilters.colors || []);
     setSelectedSizes(initialFilters.sizes || []);
+    setSelectedGenders(initialFilters.genders || []);
     setPrice(initialFilters.price || { min: 0, max: 100000 });
   }, [initialFilters]);
 
@@ -107,6 +113,7 @@ export default function SidebarFilters({
     brands: selectedBrands,
     colors: selectedColors,
     sizes: selectedSizes,
+    genders: selectedGenders,
     price,
   });
 
@@ -126,6 +133,7 @@ export default function SidebarFilters({
     setSelectedBrands([]);
     setSelectedColors([]);
     setSelectedSizes([]);
+    setSelectedGenders([]);
     setPrice(priceRange);
     onReset?.();
   };
@@ -170,11 +178,12 @@ export default function SidebarFilters({
     const list = [];
     if (categories.length > 0) list.push("category");
     if (brands.length > 0) list.push("brand");
+    if (genders.length > 0) list.push("gender");
     if (colors.length > 0) list.push("color");
     if (sizes.length > 0) list.push("size");
     if (priceRange.min < priceRange.max) list.push("price");
     return list;
-  }, [categories.length, brands.length, colors.length, sizes.length, priceRange.min, priceRange.max]);
+  }, [categories.length, brands.length, genders.length, colors.length, sizes.length, priceRange.min, priceRange.max]);
 
   const hasInitializedSection = useRef(false);
 
@@ -313,6 +322,44 @@ export default function SidebarFilters({
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+              )}
+              <Separator className="my-1" />
+            </>
+          )}
+
+          {/* --- Gender Filter --- */}
+          {genders.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenSection(openSection === "gender" ? null : "gender")
+                }
+                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
+              >
+                Gender
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    openSection === "gender" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {openSection === "gender" && (
+                <div className="pb-5">
+                  <div className="space-y-3">
+                    {genders.map((g) => (
+                      <label key={g} className="flex items-center gap-3 text-sm">
+                        <Checkbox
+                          checked={selectedGenders.includes(g)}
+                          onCheckedChange={() =>
+                            toggle(setSelectedGenders, selectedGenders, g)
+                          }
+                        />
+                        <span>{_.startCase(_.toLower(g))}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               )}

@@ -11,10 +11,13 @@ import {
   selectExchangeRates,
   selectCurrencyInfo,
   selectCurrencyLoading,
+  selectCurrencyLastUpdated,
   convertPrice,
   formatPrice,
 } from "@/store/slices/currencySlice";
 import useAxios from "@/hooks/useAxios";
+
+let ratesFetchInFlight = false;
 
 export default function useCurrency() {
   const dispatch = useDispatch();
@@ -23,13 +26,17 @@ export default function useCurrency() {
   const exchangeRates = useSelector(selectExchangeRates);
   const currencyInfo = useSelector(selectCurrencyInfo);
   const loading = useSelector(selectCurrencyLoading);
+  const lastUpdated = useSelector(selectCurrencyLastUpdated);
 
   // Fetch exchange rates on mount
   useEffect(() => {
+    if (loading || lastUpdated || ratesFetchInFlight) return;
     fetchExchangeRates();
-  }, []);
+  }, [loading, lastUpdated]);
   
   const fetchExchangeRates = async () => {
+    if (ratesFetchInFlight) return;
+    ratesFetchInFlight = true;
     try {
       dispatch(setLoading(true));
       const response = await request({
@@ -51,6 +58,8 @@ export default function useCurrency() {
       dispatch(setError(error.message));
       // Note: Default rates (EUR:1, AED:4.3, INR:105, PKR:328) are already set in Redux
       // So even if API fails, prices will still display correctly with fallback rates
+    } finally {
+      ratesFetchInFlight = false;
     }
   };
 
