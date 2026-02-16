@@ -21,6 +21,7 @@ export default function ProductGallerySection({
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
+  const [zoomLevel, setZoomLevel] = useState(1);
   const touchStartRef = useRef({ x: 0, y: 0 });
   const touchEndRef = useRef({ x: 0, y: 0 });
   const retryTimersRef = useRef({});
@@ -28,12 +29,16 @@ export default function ProductGallerySection({
 
   const openFullscreen = (index) => {
     setFullscreenIndex(index);
+    setIsZoomed(false);
+    setZoomOrigin("50% 50%");
+    setZoomLevel(1);
     setIsFullscreenOpen(true);
   };
 
   const closeFullscreen = () => {
     setIsZoomed(false);
     setZoomOrigin("50% 50%");
+    setZoomLevel(1);
     setIsFullscreenOpen(false);
   };
 
@@ -56,6 +61,46 @@ export default function ProductGallerySection({
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setZoomOrigin(`${x}% ${y}%`);
     setIsZoomed((prev) => !prev);
+    setZoomLevel((prev) => (prev > 1 ? 1 : 2));
+  };
+
+  const clampZoom = (value) => Math.min(3, Math.max(1, value));
+
+  const handleWheelZoom = (e) => {
+    if (mediaItems[fullscreenIndex]?.type === "video") return;
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomOrigin(`${x}% ${y}%`);
+    const direction = e.deltaY > 0 ? -0.2 : 0.2;
+    setZoomLevel((prev) => {
+      const next = clampZoom(prev + direction);
+      setIsZoomed(next > 1);
+      return next;
+    });
+  };
+
+  const handleZoomIn = () => {
+    setZoomLevel((prev) => {
+      const next = clampZoom(prev + 0.5);
+      setIsZoomed(next > 1);
+      return next;
+    });
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel((prev) => {
+      const next = clampZoom(prev - 0.5);
+      setIsZoomed(next > 1);
+      return next;
+    });
+  };
+
+  const handleZoomReset = () => {
+    setIsZoomed(false);
+    setZoomOrigin("50% 50%");
+    setZoomLevel(1);
   };
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
@@ -253,11 +298,14 @@ export default function ProductGallerySection({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeFullscreen();
+          }}
         >
           <button
             type="button"
             onClick={closeFullscreen}
-            className="absolute top-6 right-6 text-gray-700 hover:text-black transition-colors"
+            className="absolute top-6 right-6 z-30 text-gray-700 hover:text-black transition-colors"
             aria-label="Close"
           >
             <X className="w-7 h-7" />
@@ -308,17 +356,47 @@ export default function ProductGallerySection({
                   onClick={handleZoomClick}
                   onLoad={() => handleImageLoaded(fullscreenIndex)}
                   onError={() => handleImageError(fullscreenIndex)}
+                  onWheel={handleWheelZoom}
                   className={`max-w-full max-h-full object-contain transition-transform duration-200 ${
                     isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
                   }`}
                   style={{
                     transformOrigin: zoomOrigin,
-                    transform: isZoomed ? "scale(2)" : "scale(1)",
+                    transform: `scale(${zoomLevel})`,
                   }}
                 />
               </div>
             )}
           </div>
+
+          {!mediaItems[fullscreenIndex]?.type && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white/90 border border-gray-200 rounded-full px-3 py-2 shadow">
+              <button
+                type="button"
+                onClick={handleZoomOut}
+                className="px-2 text-sm text-gray-700 hover:text-black"
+                aria-label="Zoom out"
+              >
+                –
+              </button>
+              <button
+                type="button"
+                onClick={handleZoomReset}
+                className="px-2 text-xs text-gray-500 hover:text-black"
+                aria-label="Reset zoom"
+              >
+                100%
+              </button>
+              <button
+                type="button"
+                onClick={handleZoomIn}
+                className="px-2 text-sm text-gray-700 hover:text-black"
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

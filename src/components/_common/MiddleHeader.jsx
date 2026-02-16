@@ -638,7 +638,13 @@ export default function MiddleHeader() {
                         menu.slice(0, 3).map((cat) => (
                           <button
                             key={cat.id}
-                            onClick={() => setMobileRootTab(cat)}
+                            onClick={() => {
+                              setMobileRootTab(cat);
+                              handleNavigation(
+                                `/shop/${toLower(cat.name)}/${cat.id}`,
+                                { requireAuth: false }
+                              );
+                            }}
                             className={`pb-2 text-xs tracking-[0.16em] uppercase border-b-2 ${
                               mobileRootTab?.id === cat.id
                                 ? "text-gray-900 border-gray-900"
