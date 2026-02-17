@@ -6,7 +6,7 @@ import Script from "next/script";
 import { GA_TRACKING_ID } from "@/utils/constants";
 import ConditionalLayout from "@/components/ConditionalLayout";
 
-// ✅ Import Poppins with all weights you want
+//  Import Poppins with all weights you want
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
