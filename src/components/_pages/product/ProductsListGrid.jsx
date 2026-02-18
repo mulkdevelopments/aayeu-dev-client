@@ -169,10 +169,22 @@ export default function ProductsListGrid({
           }
         }
 
+        const dedupeById = (list) => {
+          const seen = new Set();
+          const result = [];
+          for (const item of list) {
+            const id = item?.id ?? item?._id;
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            result.push(item);
+          }
+          return result;
+        };
+
         if (append) {
-          setProducts((prev) => [...prev, ...prods]);
+          setProducts((prev) => dedupeById([...prev, ...prods]));
         } else {
-          setProducts(prods);
+          setProducts(dedupeById(prods));
         }
 
         setTotalProducts(data.data.total || data.data.products.length);
