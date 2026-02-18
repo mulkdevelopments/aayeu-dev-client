@@ -95,18 +95,29 @@ export default function ProductInfoSection() {
   }, [product]);
 
   // ✅ Images array
-const images = useMemo(() => {
-  if (!product) return [];
+  const images = useMemo(() => {
+    if (!product) return [];
 
-  const variantImages =
-    product.variants?.flatMap((v) => v.images || []).filter(Boolean) || [];
+    const isThumbnailUrl = (url) =>
+      typeof url === "string" && url.includes("-150x150-");
 
-  if (variantImages.length) return variantImages.slice(0, 6);
+    const variantImages =
+      product.variants?.flatMap((v) => v.images || []).filter(Boolean) || [];
+    const filteredVariantImages = variantImages.filter(
+      (url) => !isThumbnailUrl(url)
+    );
 
-  if (product.product_img) return [product.product_img].slice(0, 6);
+    if (variantImages.length) {
+      const picked = filteredVariantImages.length
+        ? filteredVariantImages
+        : variantImages;
+      return picked.slice(0, 6);
+    }
 
-  return [];
-}, [product]);
+    if (product.product_img) return [product.product_img].slice(0, 6);
+
+    return [];
+  }, [product]);
 
 
   // ✅ Handle Add to Cart

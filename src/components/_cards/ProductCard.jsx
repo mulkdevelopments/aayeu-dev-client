@@ -42,16 +42,23 @@ export default function ProductCard({
       ? product.variants[0]
       : null;
 
+  const isThumbnailUrl = (url) =>
+    typeof url === "string" && url.includes("-150x150-");
+
   const imagesFromVariant = Array.isArray(firstVariant?.images)
     ? firstVariant.images
     : [];
+  const filteredVariantImages = imagesFromVariant.filter(
+    (url) => !isThumbnailUrl(url)
+  );
 
   const primaryImage =
-    imagesFromVariant[0] ??
+    (filteredVariantImages[0] ?? imagesFromVariant[0]) ??
     product.product_img ??
     STATIC.IMAGES.IMAGE_NOT_AVAILABLE;
 
-  const hoverImage = imagesFromVariant[1] ?? primaryImage;
+  const hoverImage =
+    filteredVariantImages[1] ?? imagesFromVariant[1] ?? primaryImage;
 
   const mrp = firstVariant?.mrp ?? null;
   const price = firstVariant?.price ?? minPrice ?? null;
