@@ -54,6 +54,9 @@ export default function SidebarFilters({
   const [selectedGenders, setSelectedGenders] = useState([]);
   const [brandSearch, setBrandSearch] = useState("");
   const [openSection, setOpenSection] = useState(null);
+  const [priceInputMin, setPriceInputMin] = useState("");
+  const [priceInputMax, setPriceInputMax] = useState("");
+  const [priceApplyError, setPriceApplyError] = useState("");
 
   const normalizeSizeKey = (value) => {
     const raw = String(value || "").trim().toLowerCase();
@@ -108,6 +111,32 @@ export default function SidebarFilters({
     [price, currencyRate]
   );
 
+  const isPriceDirty = useMemo(() => {
+    const base = initialFilters.price || { min: 0, max: 100000 };
+    return (
+      priceInputMin !== String(Math.round(base.min * currencyRate)) ||
+      priceInputMax !== String(Math.round(base.max * currencyRate))
+    );
+  }, [priceInputMin, priceInputMax, initialFilters, currencyRate]);
+
+  const priceInputErrors = useMemo(() => {
+    const minVal = Number(priceInputMin);
+    const maxVal = Number(priceInputMax);
+    const minInvalid =
+      priceInputMin !== "" &&
+      (!Number.isFinite(minVal) || minVal < 0 || minVal > maxVal);
+    const maxInvalid =
+      priceInputMax !== "" &&
+      (!Number.isFinite(maxVal) || maxVal < 0 || maxVal < minVal);
+    return { minInvalid, maxInvalid };
+  }, [priceInputMin, priceInputMax]);
+
+  useEffect(() => {
+    setPriceInputMin(String(displayPrice.min));
+    setPriceInputMax(String(displayPrice.max));
+    setPriceApplyError("");
+  }, [displayPrice.min, displayPrice.max]);
+
   const hasInteracted = useRef(false); // ensures no URL update on mount
 
   // ✅ Fetch filter options (brands, colors, sizes, price range)
@@ -125,7 +154,7 @@ export default function SidebarFilters({
         const appliedBrands = selectedBrands || [];
         const appliedColors = selectedColors || [];
         const appliedSizes = selectedSizes || [];
-        const appliedPrice = price || null;
+        const appliedPrice = initialFilters.price || null;
         const appliedGenders = selectedGenders || [];
 
         appliedBrands.forEach((b) => params.append("brand", b));
@@ -195,7 +224,6 @@ export default function SidebarFilters({
     selectedColors,
     selectedSizes,
     selectedGenders,
-    price,
   ]);
 
   useEffect(() => {
@@ -247,7 +275,68 @@ export default function SidebarFilters({
   // ✅ Explicit apply button (for UX consistency)
   const handleShowResults = () => {
     hasInteracted.current = true;
+    if (isPriceDirty) {
+      const minVal = Number(priceInputMin);
+      const maxVal = Number(priceInputMax);
+      if (
+        !Number.isFinite(minVal) ||
+        !Number.isFinite(maxVal) ||
+        minVal < 0 ||
+        maxVal < 0 ||
+        minVal > maxVal
+      ) {
+        setPriceApplyError("Please enter a valid min and max price.");
+        return;
+      }
+      const nextPrice = {
+        min: Math.max(0, minVal / currencyRate),
+        max: Math.max(0, maxVal / currencyRate),
+      };
+      setPriceApplyError("");
+      setPrice(nextPrice);
+      onApply({
+        brands: selectedBrands,
+        colors: selectedColors,
+        sizes: selectedSizes,
+        genders: selectedGenders,
+        price: nextPrice,
+      });
+      onClose?.();
+      return;
+    }
     onApply(buildFilters());
+    onClose?.();
+  };
+
+  const handleApplyPrice = () => {
+    const minVal = Number(priceInputMin);
+    const maxVal = Number(priceInputMax);
+
+    if (
+      !Number.isFinite(minVal) ||
+      !Number.isFinite(maxVal) ||
+      minVal < 0 ||
+      maxVal < 0 ||
+      minVal > maxVal
+    ) {
+      setPriceApplyError("Please enter a valid min and max price.");
+      return;
+    }
+
+    const nextPrice = {
+      min: Math.max(0, minVal / currencyRate),
+      max: Math.max(0, maxVal / currencyRate),
+    };
+    setPriceApplyError("");
+    setPrice(nextPrice);
+    hasInteracted.current = true;
+    onApply({
+      brands: selectedBrands,
+      colors: selectedColors,
+      sizes: selectedSizes,
+      genders: selectedGenders,
+      price: nextPrice,
+    });
     onClose?.();
   };
 
@@ -767,31 +856,21 @@ export default function SidebarFilters({
                   <div className="flex items-center gap-3 text-sm">
                     <Input
                       type="number"
-                      value={displayPrice.min}
+                      value={priceInputMin}
                       onChange={(e) => {
                         hasInteracted.current = true;
-                        const raw = Number(e.target.value);
-                        const displayValue = Number.isFinite(raw) ? raw : 0;
-                        const baseValue = displayValue / currencyRate;
-                        setPrice((p) => ({
-                          ...p,
-                          min: Math.max(0, Math.min(baseValue, p.max)),
-                        }));
+                        setPriceInputMin(e.target.value);
+                        setPriceApplyError("");
                       }}
                       className="w-1/2 rounded-none border-gray-300"
                     />
                     <Input
                       type="number"
-                      value={displayPrice.max}
+                      value={priceInputMax}
                       onChange={(e) => {
                         hasInteracted.current = true;
-                        const raw = Number(e.target.value);
-                        const displayValue = Number.isFinite(raw) ? raw : 0;
-                        const baseValue = displayValue / currencyRate;
-                        setPrice((p) => ({
-                          ...p,
-                          max: Math.min(priceRange.max, Math.max(baseValue, p.min)),
-                        }));
+                        setPriceInputMax(e.target.value);
+                        setPriceApplyError("");
                       }}
                       className="w-1/2 rounded-none border-gray-300"
                     />
@@ -820,6 +899,20 @@ export default function SidebarFilters({
                   <div className="text-xs text-gray-500 mt-2">
                     {format(price.min)} – {format(price.max)}
                   </div>
+                  {isPriceDirty && (
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={handleApplyPrice}
+                        className="w-full h-9 border border-gray-300 text-sm font-medium hover:border-black"
+                      >
+                        Apply
+                      </button>
+                      {priceApplyError && (
+                        <p className="mt-2 text-xs text-red-600">{priceApplyError}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </>

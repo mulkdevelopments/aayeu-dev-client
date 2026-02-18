@@ -137,14 +137,36 @@ export default function ProductsListGrid({
         let prods = data.data.products;
 
         if (!data.data.sorted) {
-          if (sortValue === "price_low_to_high")
-            prods = [...prods].sort((a, b) => a.price - b.price);
-          else if (sortValue === "price_high_to_low")
-            prods = [...prods].sort((a, b) => b.price - a.price);
-          else if (sortValue === "is_newest")
+          const getSortPrice = (product) => {
+            const variantPrice = product?.variants?.[0]?.price ?? null;
+            const minPrice = product?.min_price ?? product?.price ?? null;
+            const value = variantPrice ?? minPrice;
+            return Number.isFinite(Number(value)) ? Number(value) : null;
+          };
+
+          if (sortValue === "price_low_to_high") {
+            prods = [...prods].sort((a, b) => {
+              const aPrice = getSortPrice(a);
+              const bPrice = getSortPrice(b);
+              if (aPrice == null && bPrice == null) return 0;
+              if (aPrice == null) return 1;
+              if (bPrice == null) return -1;
+              return aPrice - bPrice;
+            });
+          } else if (sortValue === "price_high_to_low") {
+            prods = [...prods].sort((a, b) => {
+              const aPrice = getSortPrice(a);
+              const bPrice = getSortPrice(b);
+              if (aPrice == null && bPrice == null) return 0;
+              if (aPrice == null) return 1;
+              if (bPrice == null) return -1;
+              return bPrice - aPrice;
+            });
+          } else if (sortValue === "is_newest") {
             prods = [...prods].sort(
               (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
             );
+          }
         }
 
         if (append) {
