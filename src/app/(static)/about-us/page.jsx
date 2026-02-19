@@ -139,7 +139,7 @@ export default function AboutUsPage() {
       )}
 
       {/* 📰 News Section (static but preserved — can be API-driven later) */}
-      <section className="max-w-6xl mx-auto px-4 py-12">
+      {/* <section className="max-w-6xl mx-auto px-4 py-12">
         <h2 className="text-4xl font-extralight text-center mb-8">News</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -199,7 +199,7 @@ export default function AboutUsPage() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }

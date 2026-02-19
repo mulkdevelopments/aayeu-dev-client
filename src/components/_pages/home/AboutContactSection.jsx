@@ -57,7 +57,7 @@ export default function AboutContactSection() {
                 {bottomLeftBanner.button_text}
               </CTAButton>
             ) : (
-              <CTAButton color="black" className="mb-4">
+              <CTAButton color="black" className="mb-4" href="/shop">
                 DISCOVER THE CLUB
               </CTAButton>
             )}
@@ -68,7 +68,7 @@ export default function AboutContactSection() {
         <div className="relative flex flex-col justify-center text-center text-white min-h-[500px] lg:min-h-[695px] flex-1 bg-[url('/assets/images/footer-2.jpg')] bg-cover bg-center p-8">
           <div className="relative z-10 max-w-xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-              Sign up to our newsletter and get a 10% discount
+              Sign up to get our welcome offer of 10% discount on your first order
             </h2>
           </div>
 
