@@ -680,14 +680,17 @@ export default function MiddleHeader() {
                           </button>
                         ))}
                         <button
-                          onClick={() =>
+                          onClick={() => {
+                            const slug = mobileRootTab?.name
+                              ? toLower(mobileRootTab.name)
+                              : activeCategorySlug;
                             handleNavigation(
-                              activeCategorySlug
-                                ? `/brands?category=${encodeURIComponent(activeCategorySlug)}`
+                              slug
+                                ? `/brands?category=${encodeURIComponent(slug)}`
                                 : "/brands",
                               { requireAuth: false }
-                            )
-                          }
+                            );
+                          }}
                           className="w-full flex items-center justify-between px-4 py-3 text-left text-sm text-gray-900 hover:bg-gray-50 transition-colors"
                         >
                           <span className="font-medium">Brands</span>
