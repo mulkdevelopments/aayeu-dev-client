@@ -92,7 +92,7 @@
             <div className="fade-down   flex flex-col items-center">
               <div className="flex items-center gap-3 ">
                 <Image
-                  src="/assets/images/aayeu_w.png"
+                  src="/assets/images/aayeu-f-white.png"
                   alt="AAYEU"
                   width={280}
                   height={100}
