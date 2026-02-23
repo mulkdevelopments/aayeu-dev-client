@@ -1,15 +1,15 @@
 export const defaultSEO = {
-  siteName: "Aayeu Ecommerce",
+  siteName: "AAYEU powered by FashionTV",
   baseUrl: "https://aayeu.com",
 
   // Title formatting
-  titleTemplate: "%s | Aayeu",
-  title: "Aayeu Ecommerce",
-  description: "Aayeu - Best Ecommerce Shopping Experience",
+  titleTemplate: "%s | AAYEU powered by FashionTV",
+  title: "AAYEU powered by FashionTV | Defining Luxury and Quality",
+  description: "AAYEU powered by FashionTV — Defining luxury and quality. Designer fashion and lifestyle ecommerce for men and women.",
 
   // Defaults
   defaultImage: "/seo/default-og.png",
-  keywords: "Aayeu, Ecommerce, Online Shopping, Buy Products Online",
+  keywords: "AAYEU, FashionTV, Luxury, Quality, Designer Fashion, Ecommerce, Online Shopping",
   type: "website",
   robots: "index, follow",
 
@@ -17,65 +17,65 @@ export const defaultSEO = {
   jsonLd: {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Aayeu Ecommerce",
+    name: "AAYEU powered by FashionTV | Defining Luxury and Quality",
     url: "https://aayeu.com",
   },
 };
 
 export const routeSEO = {
   "/": {
-    title: "Online Shopping Made Easy",
-    description: "Shop the latest products with fast delivery on Aayeu.",
+    title: "AAYEU powered by FashionTV | Defining Luxury and Quality",
+    description: "AAYEU powered by FashionTV — Defining luxury and quality. Shop designer fashion and lifestyle with fast delivery.",
     type: "website",
   },
 
   "/categories": {
     title: "All Categories",
-    description: "Browse all shopping categories on Aayeu.",
+    description: "Browse all shopping categories on AAYEU powered by FashionTV.",
     type: "collection",
   },
 
   "/contact": {
     title: "Contact Us",
-    description: "Get in touch with Aayeu customer support.",
+    description: "Get in touch with AAYEU powered by FashionTV customer support.",
     type: "website",
     robots: "index, follow",
   },
 
   "/terms-and-conditions": {
     title: "Terms and Conditions",
-    description: "Read the terms and conditions of using Aayeu.",
+    description: "Read the terms and conditions of using AAYEU powered by FashionTV.",
     type: "legal",
   },
 
   "/privacy-policy": {
     title: "Privacy Policy",
-    description: "Learn about how Aayeu protects your privacy.",
+    description: "Learn about how AAYEU protects your privacy.",
     type: "legal",
   },
 
   "/shipping-policy": {
     title: "Shipping Policy",
-    description: "Understand Aayeu's shipping policies and procedures.",
+    description: "Understand AAYEU's shipping policies and procedures.",
     type: "legal",
   },
 
   "/payment-policy": {
     title: "Payment Policy",
-    description: "Know more about payment options and policies at Aayeu.",
+    description: "Know more about payment options and policies at AAYEU.",
     type: "legal",
   },
 
   "/refund-policy": {
     title: "Refund Policy",
-    description: "Learn about Aayeu's refund and cancellation policies.",
+    description: "Learn about AAYEU's refund and cancellation policies.",
     type: "legal",
   },
 
   // Example for future scalability
   "/blog": {
-    title: "Aayeu Blog",
-    description: "Read guides, tips, and ecommerce insights.",
+    title: "Blog",
+    description: "Read guides, tips, and ecommerce insights from AAYEU powered by FashionTV.",
     type: "article-list",
   },
 };

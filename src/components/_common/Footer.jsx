@@ -27,7 +27,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-sm text-gray-700 leading-relaxed mb-6 max-w-xs">
-             AAYEU - Defining Luxury & Quality
+              AAYEU powered by FashionTV | Defining Luxury and Quality
             </p>
             <div className="space-y-2 text-sm">
               <Link

@@ -685,7 +685,7 @@ const ProductInfoDetailsSection = forwardRef(
                   </AccordionTrigger>
                   <AccordionContent>
                     {renderSectionContent(
-                      product.description || product.short_description,
+                      product.our_description || product.description || product.short_description,
                       "No product details available."
                     )}
                   </AccordionContent>

@@ -21,8 +21,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Aayeu Designer Fashion  ",
-  description: "Aayeu is a designer fashion and lifestyle ecommerce website that offers a wide range of products for men, women.",
+  title: "AAYEU powered by FashionTV | Defining Luxury and Quality",
+  description: "AAYEU powered by FashionTV — Defining luxury and quality. Designer fashion and lifestyle ecommerce for men and women.",
   icons: {
     icon: "/assets/images/favicon.png",
     shortcut: "/assets/images/favicon.png",
