@@ -55,6 +55,28 @@ export default function ProductsListGrid({
   const { request: getChildCategories, loading: loadingChildren } = useAxios();
   const childCategoriesCache = useRef(new Map());
 
+  const handleOpenFilters = () => {
+    setSidebarOpen(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("filters", "1");
+    router.replace(`${pathname}?${params.toString()}`);
+  };
+
+  const handleCloseFilters = () => {
+    setSidebarOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("filters");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  useEffect(() => {
+    const isFiltersOpen = searchParams.get("filters") === "1";
+    if (isFiltersOpen && !isSidebarOpen) {
+      setSidebarOpen(true);
+    }
+  }, [searchParams, isSidebarOpen]);
+
   // ✅ Build query string for URL
   const buildQuery = (filters, newSort = sort) => {
     const params = new URLSearchParams();
@@ -385,40 +407,48 @@ export default function ProductsListGrid({
         </nav> */}
 
         {/* Header Section */}
-        <div className="mb-6 md:mb-8">
-          {categoryData?.breadcrumbs && (
+        {categoryData?.breadcrumbs?.length ? (
+          <div className="mb-6 md:mb-8">
             <p className="text-xs md:text-sm text-gray-500 mb-2 capitalize">
               {categoryData.breadcrumbs.join(" / ")}
             </p>
-          )}
 
-          {/* <div className="mb-4">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 capitalize tracking-tight">
-              {categoryData?.name || categorySlug}
-            </h1>
+            {/* <div className="mb-4">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 capitalize tracking-tight">
+                {categoryData?.name || categorySlug}
+              </h1>
 
-            {searchQuery && (
-              <p className="mt-2 text-base md:text-lg text-gray-600">
-                Results for <span className="font-semibold text-gray-900">"{searchQuery}"</span>
-              </p>
-            )}
-          </div> */}
+              {searchQuery && (
+                <p className="mt-2 text-base md:text-lg text-gray-600">
+                  Results for <span className="font-semibold text-gray-900">"{searchQuery}"</span>
+                </p>
+              )}
+            </div> */}
+          </div>
+        ) : null}
+
+      </div>
+
       {/* Category Filters + Actions Row */}
-        {showCategoryFilters ? (
-          <div className="mb-6 -mx-4 px-4 md:-mx-6 md:px-6 lg:mx-0 lg:px-0">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 font-medium text-sm"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                <span>Filters</span>
-                {activeFiltersCount > 0 && (
-                  <span className="ml-1 bg-black text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </button>
+      <div className="sticky top-[var(--sticky-header-offset)] z-40 bg-white/90 backdrop-blur">
+        <div className="max-w-[1600px] mx-auto px-4 md:px-6 lg:px-8">
+          {showCategoryFilters ? (
+            <div className="py-2 mb-6">
+              <div className="flex items-center gap-3">
+              <div className="sticky top-4 z-30 self-start">
+                <button
+                  onClick={handleOpenFilters}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 font-medium text-sm"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span>Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="ml-1 bg-black text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+              </div>
 
               <div className="flex-1 min-w-0 relative">
                 {loadingChildren ? (
@@ -479,6 +509,39 @@ export default function ProductsListGrid({
                 )}
               </div>
 
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
+                  <Select value={sort} onValueChange={handleSortChange}>
+                    <SelectTrigger className="w-[140px] sm:w-48 border-2 border-gray-200 transition-colors">
+                      <SelectValue placeholder="Our Picks" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="is_our_picks">Our Picks</SelectItem>
+                      <SelectItem value="is_newest">Newest Arrivals</SelectItem>
+                      <SelectItem value="price_low_to_high">Price: Low to High</SelectItem>
+                      <SelectItem value="price_high_to_low">Price: High to Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 py-2 mb-6">
+              <div className="sticky top-4 z-30 self-start">
+                <button
+                  onClick={handleOpenFilters}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 font-medium text-sm"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span>Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="ml-1 bg-black text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
                 <Select value={sort} onValueChange={handleSortChange}>
@@ -494,39 +557,11 @@ export default function ProductsListGrid({
                 </Select>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 font-medium text-sm"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              <span>Filters</span>
-              {activeFiltersCount > 0 && (
-                <span className="ml-1 bg-black text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </button>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
-              <Select value={sort} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-[140px] sm:w-48 border-2 border-gray-200 transition-colors">
-                  <SelectValue placeholder="Our Picks" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="is_our_picks">Our Picks</SelectItem>
-                  <SelectItem value="is_newest">Newest Arrivals</SelectItem>
-                  <SelectItem value="price_low_to_high">Price: Low to High</SelectItem>
-                  <SelectItem value="price_high_to_low">Price: High to Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
+          )}
         </div>
+      </div>
+
+      <div className="max-w-[1600px] mx-auto px-4 md:px-6 lg:px-8">
 
   
         <style jsx>{`
@@ -613,7 +648,7 @@ export default function ProductsListGrid({
         initialFilters={selectedFilters}
         categories={categoryId ? childCategories : []}
         totalCount={totalProducts}
-        onClose={() => setSidebarOpen(false)}
+        onClose={handleCloseFilters}
         onApply={(filters) => {
           const query = buildQuery(filters, sort);
           isSyncing.current = true;
@@ -622,6 +657,7 @@ export default function ProductsListGrid({
           setPage(1);
           setProducts([]);
           fetchAllProducts(1, filters, sort, false);
+          setSidebarOpen(false);
         }}
         onReset={handleResetFilters}
       />

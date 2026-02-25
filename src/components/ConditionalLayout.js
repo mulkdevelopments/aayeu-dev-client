@@ -27,7 +27,7 @@ export default function ConditionalLayout({ children }) {
       <TopStrip />
       <MiddleHeader />  
 
-      <main className="pb-0 md:pb-0">
+      <main className="pb-0 md:pb-0">    
         {children}
       </main>
 

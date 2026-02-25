@@ -31,6 +31,12 @@ export default function SidebarFilters({
   const searchQuery =
     searchParams.get("query") || searchParams.get("q") || null;
 
+  const buildFiltersQuery = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("filters", "1");
+    return params.toString();
+  };
+
   const [brands, setBrands] = useState([]);
   const [allBrands, setAllBrands] = useState([]);
   const [brandCounts, setBrandCounts] = useState([]);
@@ -61,6 +67,8 @@ export default function SidebarFilters({
   const [categoryChildren, setCategoryChildren] = useState({});
   const [categoryStack, setCategoryStack] = useState([]);
   const [categoryMap, setCategoryMap] = useState(null);
+  const [isFiltersLoading, setIsFiltersLoading] = useState(false);
+  const [hasFetchedFilters, setHasFetchedFilters] = useState(false);
 
   const normalizeSizeKey = (value) => {
     const raw = String(value || "").trim().toLowerCase();
@@ -185,6 +193,7 @@ export default function SidebarFilters({
   // ✅ Fetch filter options (brands, colors, sizes, price range)
   useEffect(() => {
     const fetchFilters = async () => {
+      setIsFiltersLoading(true);
       try {
         const params = new URLSearchParams();
 
@@ -257,6 +266,9 @@ export default function SidebarFilters({
         }
       } catch (err) {
         console.error("Failed to fetch filters:", err);
+      } finally {
+        setHasFetchedFilters(true);
+        setIsFiltersLoading(false);
       }
     };
     fetchFilters();
@@ -563,6 +575,30 @@ export default function SidebarFilters({
     hasInitializedSection.current = true;
   }, [availableSections]);
 
+  const showSkeleton = isFiltersLoading || !hasFetchedFilters;
+  const missingSections = useMemo(() => {
+    const list = [];
+    if (categories.length === 0) list.push("category");
+    if (allBrands.length === 0 && brands.length === 0) list.push("brand");
+    if (allGenders.length === 0 && genders.length === 0) list.push("gender");
+    if (allColors.length === 0 && colors.length === 0) list.push("color");
+    if (allSizes.length === 0 && sizes.length === 0) list.push("size");
+    if (!(priceRange.min < priceRange.max)) list.push("price");
+    return list;
+  }, [
+    categories.length,
+    allBrands.length,
+    brands.length,
+    allGenders.length,
+    genders.length,
+    allColors.length,
+    colors.length,
+    allSizes.length,
+    sizes.length,
+    priceRange.min,
+    priceRange.max,
+  ]);
+
   if (!open) return null;
 
   return (
@@ -581,11 +617,10 @@ export default function SidebarFilters({
         aria-modal="true"
       >
         {/* Header */}
-        <div className="flex-shrink-0 px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-white z-10">
+        <div className="flex-shrink-0 px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-white z-10 relative">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
-              size="icon"
               onClick={() => {
                 if (categoryStack.length > 0) {
                   const nextStack = categoryStack.slice(0, -1);
@@ -593,25 +628,30 @@ export default function SidebarFilters({
                   setCategoryStack(nextStack);
                   setOpenSection("category");
                   if (parent?.id && parent?.path) {
-                    router.push(`/shop/${parent.path}/${parent.id}`);
-                    return;
+                    const query = buildFiltersQuery();
+                    router.push(`/shop/${parent.path}/${parent.id}?${query}`);
                   }
-                } else if (categoryId && categoryMap?.has(categoryId)) {
+                  return;
+                }
+                if (categoryId && categoryMap?.has(categoryId)) {
                   const parentId = categoryMap.get(categoryId)?.parent_id;
                   const parentNode = parentId ? categoryMap.get(parentId) : null;
                   if (parentNode?.id && parentNode?.path) {
-                    router.push(`/shop/${parentNode.path}/${parentNode.id}`);
-                    return;
+                    const query = buildFiltersQuery();
+                    router.push(`/shop/${parentNode.path}/${parentNode.id}?${query}`);
                   }
                 }
-                onClose?.();
               }}
-              aria-label="Back to previous"
+              className="h-9 px-2.5 text-sm"
+              aria-label="Back"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-4 w-4" />
+              <span>Back</span>
             </Button>
-            <h5 className="text-xl font-medium">All Filters</h5>
           </div>
+          <h5 className="text-xl font-medium absolute left-1/2 -translate-x-1/2">
+            All Filters
+          </h5>
           <Button
             variant="ghost"
             size="icon"
@@ -624,62 +664,95 @@ export default function SidebarFilters({
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4 scroll-smooth">
-          {!loading && availableSections.length === 0 && (
-            <div className="flex flex-col items-start gap-3 py-6">
-              <p className="text-sm text-gray-700">
-                No filters available for this selection.
-              </p>
-              <p className="text-xs text-gray-500">
-                Try a different category or clear filters to see more options.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (categoryStack.length > 0) {
-                    const nextStack = categoryStack.slice(0, -1);
-                    const parent = nextStack[nextStack.length - 1];
-                    setCategoryStack(nextStack);
-                    setOpenSection("category");
-                    if (parent?.id && parent?.path) {
-                      router.push(`/shop/${parent.path}/${parent.id}`);
-                      return;
-                    }
-                  } else if (categoryId && categoryMap?.has(categoryId)) {
-                    const parentId = categoryMap.get(categoryId)?.parent_id;
-                    const parentNode = parentId ? categoryMap.get(parentId) : null;
-                    if (parentNode?.id && parentNode?.path) {
-                      router.push(`/shop/${parentNode.path}/${parentNode.id}`);
-                      return;
-                    }
-                  }
-                  onClose?.();
-                }}
-                className="h-9 px-4 border border-gray-300 text-xs font-medium tracking-[0.2em] uppercase hover:border-black"
-              >
-                Back
-              </button>
-            </div>
-          )}
-
-          {loading && (
+          {showSkeleton ? (
             <div className="space-y-6 pb-3">
-              {Array.from({ length: 5 }).map((_, sectionIndex) => (
-                <div key={`filter-skel-${sectionIndex}`} className="space-y-3">
-                  <Skeleton className="h-4 w-24" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-3 w-1/2" />
-                    <Skeleton className="h-3 w-2/3" />
-                    <Skeleton className="h-3 w-1/3" />
+              {Array.from({ length: 4 }).map((_, sectionIndex) => (
+                <div key={`filter-skel-${sectionIndex}`} className="space-y-4">
+                  <Skeleton className="h-4 w-28" />
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((__, rowIndex) => (
+                      <div
+                        key={`filter-skel-row-${sectionIndex}-${rowIndex}`}
+                        className="flex items-center gap-3"
+                      >
+                        <Skeleton className="h-4 w-4 rounded-sm" />
+                        <Skeleton className="h-3 w-40" />
+                      </div>
+                    ))}
                   </div>
                   <Separator />
                 </div>
               ))}
-            </div>
-          )}
 
-          {/* --- Category Filter --- */}
-          {categories.length > 0 && (
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-24" />
+                <div className="grid grid-cols-3 gap-2">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <Skeleton key={`size-skel-${i}`} className="h-9" />
+                  ))}
+                </div>
+                <Separator />
+              </div>
+
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-20" />
+                <div className="grid grid-cols-2 gap-3">
+                  <Skeleton className="h-9" />
+                  <Skeleton className="h-9" />
+                </div>
+                <Skeleton className="h-9 w-28" />
+              </div>
+            </div>
+          ) : (
             <>
+              {availableSections.length === 0 && (
+                <div className="flex flex-col items-start gap-3 py-6">
+                  <p className="text-sm text-gray-700">
+                    No filters available for this selection.
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Try a different category or clear filters to see more options.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (categoryStack.length > 0) {
+                        const nextStack = categoryStack.slice(0, -1);
+                        const parent = nextStack[nextStack.length - 1];
+                        setCategoryStack(nextStack);
+                        setOpenSection("category");
+                        if (parent?.id && parent?.path) {
+                          const query = buildFiltersQuery();
+                          router.push(`/shop/${parent.path}/${parent.id}?${query}`);
+                          return;
+                        }
+                      } else if (categoryId && categoryMap?.has(categoryId)) {
+                        const parentId = categoryMap.get(categoryId)?.parent_id;
+                        const parentNode = parentId ? categoryMap.get(parentId) : null;
+                        if (parentNode?.id && parentNode?.path) {
+                          const query = buildFiltersQuery();
+                          router.push(`/shop/${parentNode.path}/${parentNode.id}?${query}`);
+                          return;
+                        }
+                      }
+                      onClose?.();
+                    }}
+                    className="h-9 px-4 border border-gray-300 text-xs font-medium tracking-[0.2em] uppercase hover:border-black"
+                  >
+                    Back
+                  </button>
+                </div>
+              )}
+
+              {availableSections.length > 0 && missingSections.length > 0 && (
+                <div className="mb-4 text-xs text-gray-500">
+                  Some filters are not available for this selection.
+                </div>
+              )}
+
+              {/* --- Category Filter --- */}
+              {categories.length > 0 && (
+                <>
               <button
                 type="button"
                 onClick={() =>
@@ -737,7 +810,8 @@ export default function SidebarFilters({
                                     return;
                                   }
                                   onClose?.();
-                                  router.push(`/shop/${cat.path}/${cat.id}`);
+                                  const query = buildFiltersQuery();
+                                  router.push(`/shop/${cat.path}/${cat.id}?${query}`);
                                 }}
                                 className="w-full text-left text-sm text-gray-800 hover:text-black transition-colors py-1"
                               >
@@ -751,13 +825,13 @@ export default function SidebarFilters({
                   })()}
                 </div>
               )}
-              <Separator />
-            </>
-          )}
+                  <Separator />
+                </>
+              )}
 
-          {/* --- Brand Filter --- */}
-          {(allBrands.length > 0 || brands.length > 0) && (
-            <>
+              {/* --- Brand Filter --- */}
+              {(allBrands.length > 0 || brands.length > 0) && (
+                <>
               <button
                 type="button"
                 onClick={() =>
@@ -822,13 +896,13 @@ export default function SidebarFilters({
                   </div>
                 </div>
               )}
-              <Separator className="my-1" />
-            </>
-          )}
+                  <Separator className="my-1" />
+                </>
+              )}
 
-          {/* --- Gender Filter --- */}
-          {(allGenders.length > 0 || genders.length > 0) && (
-            <>
+              {/* --- Gender Filter --- */}
+              {(allGenders.length > 0 || genders.length > 0) && (
+                <>
               <button
                 type="button"
                 onClick={() =>
@@ -875,13 +949,13 @@ export default function SidebarFilters({
                   </div>
                 </div>
               )}
-              <Separator className="my-1" />
-            </>
-          )}
+                  <Separator className="my-1" />
+                </>
+              )}
 
-          {/* --- Color Filter --- */}
-          {(allColors.length > 0 || colors.length > 0) && (
-            <>
+              {/* --- Color Filter --- */}
+              {(allColors.length > 0 || colors.length > 0) && (
+                <>
               <button
                 type="button"
                 onClick={() =>
@@ -928,13 +1002,13 @@ export default function SidebarFilters({
                   </div>
                 </div>
               )}
-              <Separator className="my-1" />
-            </>
-          )}
+                  <Separator className="my-1" />
+                </>
+              )}
 
-          {/* --- Size Filter --- */}
-          {sizes.length > 0 && (
-            <>
+              {/* --- Size Filter --- */}
+              {sizes.length > 0 && (
+                <>
               <button
                 type="button"
                 onClick={() =>
@@ -1005,13 +1079,13 @@ export default function SidebarFilters({
                   )}
                 </div>
               )}
-              <Separator className="my-1" />
-            </>
-          )}
+                  <Separator className="my-1" />
+                </>
+              )}
 
-          {/* --- Price Filter --- */}
-          {priceRange.min < priceRange.max && (
-            <>
+              {/* --- Price Filter --- */}
+              {priceRange.min < priceRange.max && (
+                <>
               <button
                 type="button"
                 onClick={() =>
@@ -1066,6 +1140,8 @@ export default function SidebarFilters({
                     </div>
                   )}
               </div>
+              )}
+                </>
               )}
             </>
           )}
