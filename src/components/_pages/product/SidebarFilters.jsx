@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import _ from "lodash";
 
 export default function SidebarFilters({
@@ -56,6 +57,7 @@ export default function SidebarFilters({
   const [priceInputMin, setPriceInputMin] = useState("");
   const [priceInputMax, setPriceInputMax] = useState("");
   const [priceApplyError, setPriceApplyError] = useState("");
+  const [showAllSizes, setShowAllSizes] = useState(false);
 
   const normalizeSizeKey = (value) => {
     const raw = String(value || "").trim().toLowerCase();
@@ -476,6 +478,11 @@ export default function SidebarFilters({
     return groups;
   }, [allSizes, sizes]);
 
+  const SIZE_VISIBLE_COUNT = 24;
+  const visibleSizeGroups = showAllSizes
+    ? sizeGroups
+    : sizeGroups.slice(0, SIZE_VISIBLE_COUNT);
+
   const availableSizeKeys = useMemo(() => {
     return new Set(
       sizes.map((s) => normalizeSizeKey(String(s || "")))
@@ -547,7 +554,19 @@ export default function SidebarFilters({
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4 scroll-smooth">
           {loading && (
-            <p className="text-sm text-gray-500 mb-3">Loading filters...</p>
+            <div className="space-y-6 pb-3">
+              {Array.from({ length: 5 }).map((_, sectionIndex) => (
+                <div key={`filter-skel-${sectionIndex}`} className="space-y-3">
+                  <Skeleton className="h-4 w-24" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-1/2" />
+                    <Skeleton className="h-3 w-2/3" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                  <Separator />
+                </div>
+              ))}
+            </div>
           )}
 
           {/* --- Category Filter --- */}
@@ -784,8 +803,8 @@ export default function SidebarFilters({
               </button>
               {openSection === "size" && (
                 <div className="pb-5">
-                  <div className="grid grid-cols-3 gap-3">
-                    {sizeGroups.map((group) => {
+                  <div className="grid grid-cols-3 gap-2">
+                    {visibleSizeGroups.map((group) => {
                       const isSelected = group.values.some((v) =>
                         selectedSizes.includes(v)
                       );
@@ -813,7 +832,7 @@ export default function SidebarFilters({
                               ]);
                             }
                           }}
-                          className={`h-10 text-sm border transition-colors ${
+                          className={`w-full min-h-10 px-2 py-2 text-[11px] leading-snug border transition-colors whitespace-normal break-words text-center ${
                             isSelected
                               ? "border-black text-black"
                               : isDisabled
@@ -827,6 +846,15 @@ export default function SidebarFilters({
                       );
                     })}
                   </div>
+                  {sizeGroups.length > SIZE_VISIBLE_COUNT && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllSizes((prev) => !prev)}
+                      className="mt-4 w-full h-9 border border-gray-300 text-xs font-medium tracking-[0.2em] uppercase hover:border-black"
+                    >
+                      {showAllSizes ? "Show Less" : "Show More"}
+                    </button>
+                  )}
                 </div>
               )}
               <Separator className="my-1" />
