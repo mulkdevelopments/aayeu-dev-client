@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import _ from "lodash";
 
@@ -876,29 +875,6 @@ export default function SidebarFilters({
                     />
                   </div>
 
-                  <Slider
-                    min={0}
-                    max={Math.max(displayPriceRange.max, 0)}
-                    step={1}
-                    value={[displayPrice.min, displayPrice.max]}
-                    onValueChange={([min, max]) => {
-                      hasInteracted.current = true;
-                      const baseMin = min / currencyRate;
-                      const baseMax = max / currencyRate;
-                      setPrice({
-                        min: Math.max(0, Math.min(baseMin, priceRange.max)),
-                        max: Math.min(
-                          priceRange.max,
-                          Math.max(baseMax, Math.max(baseMin, 0))
-                        ),
-                      });
-                    }}
-                    className="mt-4"
-                  />
-
-                  <div className="text-xs text-gray-500 mt-2">
-                    {format(price.min)} – {format(price.max)}
-                  </div>
                   {isPriceDirty && (
                     <div className="mt-3">
                       <button
