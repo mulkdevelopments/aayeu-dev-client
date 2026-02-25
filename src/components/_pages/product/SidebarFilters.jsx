@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, XIcon, Search, ChevronDown } from "lucide-react";
+import { Loader2, XIcon, Search, ChevronDown, ChevronLeft } from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import useCurrency from "@/hooks/useCurrency";
@@ -60,6 +60,7 @@ export default function SidebarFilters({
   const [showAllSizes, setShowAllSizes] = useState(false);
   const [categoryChildren, setCategoryChildren] = useState({});
   const [categoryStack, setCategoryStack] = useState([]);
+  const [categoryMap, setCategoryMap] = useState(null);
 
   const normalizeSizeKey = (value) => {
     const raw = String(value || "").trim().toLowerCase();
@@ -120,6 +121,30 @@ export default function SidebarFilters({
     setCategoryChildren((prev) => ({ ...prev, [categoryId]: [] }));
     return [];
   };
+
+  useEffect(() => {
+    if (!categoryId || categoryMap) return;
+    (async () => {
+      const { data } = await request({
+        method: "GET",
+        url: "/users/get-child-categories",
+      });
+      if (data?.status !== 200 || !Array.isArray(data.data)) return;
+      const map = new Map();
+      const walk = (nodes, parentId = null) => {
+        nodes.forEach((node) => {
+          map.set(node.id, {
+            id: node.id,
+            parent_id: parentId ?? node.parent_id ?? null,
+            path: node.path,
+          });
+          if (node.children?.length) walk(node.children, node.id);
+        });
+      };
+      walk(data.data);
+      setCategoryMap(map);
+    })();
+  }, [categoryId, categoryMap, request]);
 
   const displayPrice = useMemo(
     () => ({
@@ -557,7 +582,36 @@ export default function SidebarFilters({
       >
         {/* Header */}
         <div className="flex-shrink-0 px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-white z-10">
-          <h5 className="text-xl font-medium">All Filters</h5>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (categoryStack.length > 0) {
+                  const nextStack = categoryStack.slice(0, -1);
+                  const parent = nextStack[nextStack.length - 1];
+                  setCategoryStack(nextStack);
+                  setOpenSection("category");
+                  if (parent?.id && parent?.path) {
+                    router.push(`/shop/${parent.path}/${parent.id}`);
+                    return;
+                  }
+                } else if (categoryId && categoryMap?.has(categoryId)) {
+                  const parentId = categoryMap.get(categoryId)?.parent_id;
+                  const parentNode = parentId ? categoryMap.get(parentId) : null;
+                  if (parentNode?.id && parentNode?.path) {
+                    router.push(`/shop/${parentNode.path}/${parentNode.id}`);
+                    return;
+                  }
+                }
+                onClose?.();
+              }}
+              aria-label="Back to previous"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <h5 className="text-xl font-medium">All Filters</h5>
+          </div>
           <Button
             variant="ghost"
             size="icon"
@@ -570,6 +624,43 @@ export default function SidebarFilters({
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4 scroll-smooth">
+          {!loading && availableSections.length === 0 && (
+            <div className="flex flex-col items-start gap-3 py-6">
+              <p className="text-sm text-gray-700">
+                No filters available for this selection.
+              </p>
+              <p className="text-xs text-gray-500">
+                Try a different category or clear filters to see more options.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (categoryStack.length > 0) {
+                    const nextStack = categoryStack.slice(0, -1);
+                    const parent = nextStack[nextStack.length - 1];
+                    setCategoryStack(nextStack);
+                    setOpenSection("category");
+                    if (parent?.id && parent?.path) {
+                      router.push(`/shop/${parent.path}/${parent.id}`);
+                      return;
+                    }
+                  } else if (categoryId && categoryMap?.has(categoryId)) {
+                    const parentId = categoryMap.get(categoryId)?.parent_id;
+                    const parentNode = parentId ? categoryMap.get(parentId) : null;
+                    if (parentNode?.id && parentNode?.path) {
+                      router.push(`/shop/${parentNode.path}/${parentNode.id}`);
+                      return;
+                    }
+                  }
+                  onClose?.();
+                }}
+                className="h-9 px-4 border border-gray-300 text-xs font-medium tracking-[0.2em] uppercase hover:border-black"
+              >
+                Back
+              </button>
+            </div>
+          )}
+
           {loading && (
             <div className="space-y-6 pb-3">
               {Array.from({ length: 5 }).map((_, sectionIndex) => (
@@ -608,7 +699,7 @@ export default function SidebarFilters({
                   {(() => {
                     const currentCategoryId =
                       categoryStack.length > 0
-                        ? categoryStack[categoryStack.length - 1]
+                        ? categoryStack[categoryStack.length - 1].id
                         : null;
                     const list = currentCategoryId
                       ? categoryChildren[currentCategoryId] || []
@@ -641,7 +732,7 @@ export default function SidebarFilters({
                                   if (nextChildren.length > 0) {
                                     setCategoryStack((prev) => [
                                       ...prev,
-                                      cat.id,
+                                      { id: cat.id, path: cat.path },
                                     ]);
                                     return;
                                   }
@@ -685,10 +776,10 @@ export default function SidebarFilters({
                 <div className="pb-5">
                   <div className="relative mb-4">
                     <Search className="absolute left-0 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
+                <Input
                       placeholder={`Search ${allBrands.length || brands.length} brands`}
-                      value={brandSearch}
-                      onChange={(e) => setBrandSearch(e.target.value)}
+                  value={brandSearch}
+                  onChange={(e) => setBrandSearch(e.target.value)}
                       className="pl-6 border-0 border-b border-gray-300 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </div>
@@ -768,9 +859,9 @@ export default function SidebarFilters({
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <Checkbox
+                    <Checkbox
                               checked={isSelected}
-                              onCheckedChange={() =>
+                      onCheckedChange={() =>
                                 toggle(setSelectedGenders, selectedGenders, g)
                               }
                               disabled={isDisabled}
@@ -821,11 +912,11 @@ export default function SidebarFilters({
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <Checkbox
+                    <Checkbox
                               checked={isSelected}
-                              onCheckedChange={() =>
-                                toggle(setSelectedColors, selectedColors, c)
-                              }
+                      onCheckedChange={() =>
+                        toggle(setSelectedColors, selectedColors, c)
+                      }
                               disabled={isDisabled}
                             />
                             <span>{c}</span>
@@ -938,27 +1029,27 @@ export default function SidebarFilters({
               {openSection === "price" && (
                 <div className="pb-5">
                   <div className="flex items-center gap-3 text-sm">
-                    <Input
-                      type="number"
+                <Input
+                  type="number"
                       value={priceInputMin}
-                      onChange={(e) => {
-                        hasInteracted.current = true;
+                  onChange={(e) => {
+                    hasInteracted.current = true;
                         setPriceInputMin(e.target.value);
                         setPriceApplyError("");
                       }}
                       className="w-1/2 rounded-none border-gray-300"
-                    />
-                    <Input
-                      type="number"
+                />
+                <Input
+                  type="number"
                       value={priceInputMax}
-                      onChange={(e) => {
-                        hasInteracted.current = true;
+                  onChange={(e) => {
+                    hasInteracted.current = true;
                         setPriceInputMax(e.target.value);
                         setPriceApplyError("");
                       }}
                       className="w-1/2 rounded-none border-gray-300"
-                    />
-                  </div>
+                />
+              </div>
 
                   {isPriceDirty && (
                     <div className="mt-3">
@@ -974,7 +1065,7 @@ export default function SidebarFilters({
                       )}
                     </div>
                   )}
-                </div>
+              </div>
               )}
             </>
           )}
