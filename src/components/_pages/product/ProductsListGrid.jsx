@@ -49,6 +49,7 @@ export default function ProductsListGrid({
   const hasMounted = useRef(false);
   const observerTarget = useRef(null);
   const categoryScrollRef = useRef(null);
+  const isClosingFilters = useRef(false);
 
   const { request: getAllProducts } = useAxios();
   const { request: getCategory } = useAxios();
@@ -63,6 +64,7 @@ export default function ProductsListGrid({
   };
 
   const handleCloseFilters = () => {
+    isClosingFilters.current = true;
     setSidebarOpen(false);
     const params = new URLSearchParams(searchParams.toString());
     params.delete("filters");
@@ -72,6 +74,16 @@ export default function ProductsListGrid({
 
   useEffect(() => {
     const isFiltersOpen = searchParams.get("filters") === "1";
+    if (isFiltersOpen) {
+      if (isClosingFilters.current) return;
+      if (!isSidebarOpen) {
+        setSidebarOpen(true);
+      }
+      return;
+    }
+    if (isClosingFilters.current) {
+      isClosingFilters.current = false;
+    }
     if (isFiltersOpen && !isSidebarOpen) {
       setSidebarOpen(true);
     }
@@ -657,7 +669,6 @@ export default function ProductsListGrid({
           setPage(1);
           setProducts([]);
           fetchAllProducts(1, filters, sort, false);
-          setSidebarOpen(false);
         }}
         onReset={handleResetFilters}
       />
