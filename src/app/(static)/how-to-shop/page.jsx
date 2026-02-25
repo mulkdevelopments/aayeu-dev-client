@@ -5,10 +5,13 @@ import React, { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const DEFAULT_STEPS = [
-  { title: "1. Browse Collections", text: "Explore categories, use filters, and discover brands across our curated selection." },
-  { title: "2. Select Your Item", text: "Choose size, color, and quantity on the product page. Review product details and images before adding to cart." },
-  { title: "3. Checkout Securely", text: "Proceed to cart, confirm your order details, and complete payment using our secure checkout." },
-  { title: "4. Track Your Order", text: "After purchase, track your order status in your account and watch for delivery updates." },
+  { title: "1. Explore Our Curated Collections", text: "Browse our carefully selected range of luxury fashion and accessories." },
+  { title: "2. Select Your Item", text: "Click on any product to view details, images, sizes, and pricing. Use our Size Guide to find the best fit." },
+  { title: "3. Add to Cart", text: "Add the item to your cart and continue browsing or proceed to checkout." },
+  { title: "4. Secure Checkout", text: "Review your items, enter shipping details, and complete your purchase. All prices and charges are clearly displayed." },
+  { title: "5. Order Confirmation", text: "You'll receive a confirmation email with your purchase details." },
+  { title: "6. Delivery", text: "Your order will be packaged and shipped. Tracking details are shared following shipment." },
+  { title: "7. Need Help?", text: "Contact our support team at help@aayeu.com anytime." },
 ];
 
 export default function HowToShopPage() {
@@ -48,22 +51,26 @@ export default function HowToShopPage() {
     );
   }
 
-  const title = content?.title || "How to Shop";
-  const subtitle = content?.subtitle || "Discover curated luxury and shop with confidence. Follow these simple steps to find, select, and purchase your items.";
+  const title = content?.title || "How to Shop on AAYEU";
+  const subtitle = content?.subtitle || "A Simple, Seamless Luxury Shopping Experience";
+  const introText = content?.intro_text;
   const steps = Array.isArray(content?.steps) && content.steps.length
     ? content.steps.filter((s) => s.title?.trim() || s.text?.trim())
     : DEFAULT_STEPS;
 
   return (
     <div className="max-w-5xl mx-auto px-4 md:px-6 py-12" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-6">{title}</h1>
-      <p className="text-base md:text-lg text-gray-700 mb-8">{subtitle}</p>
+      <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-3">{title}</h1>
+      <p className="text-lg text-gray-700 mb-4">{subtitle}</p>
+      {introText && (
+        <p className="text-base text-gray-600 whitespace-pre-line mb-8">{introText}</p>
+      )}
 
       <div className="space-y-6">
         {steps.map((step, idx) => (
           <div key={idx} className="border border-gray-200 rounded-lg p-5">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">{step.title}</h2>
-            <p className="text-sm text-gray-600">{step.text}</p>
+            <div className="text-sm text-gray-600 whitespace-pre-line">{step.text}</div>
           </div>
         ))}
       </div>
