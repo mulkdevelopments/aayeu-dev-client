@@ -58,6 +58,8 @@ export default function SidebarFilters({
   const [priceInputMax, setPriceInputMax] = useState("");
   const [priceApplyError, setPriceApplyError] = useState("");
   const [showAllSizes, setShowAllSizes] = useState(false);
+  const [categoryChildren, setCategoryChildren] = useState({});
+  const [categoryStack, setCategoryStack] = useState([]);
 
   const normalizeSizeKey = (value) => {
     const raw = String(value || "").trim().toLowerCase();
@@ -103,6 +105,21 @@ export default function SidebarFilters({
     }),
     [priceRange, currencyRate]
   );
+
+  const fetchCategoryChildren = async (categoryId) => {
+    if (!categoryId) return [];
+    if (categoryChildren[categoryId]) return categoryChildren[categoryId];
+    const { data } = await request({
+      method: "GET",
+      url: `/users/get-child-categories?category_id=${categoryId}`,
+    });
+    if (data?.status === 200 && Array.isArray(data.data)) {
+      setCategoryChildren((prev) => ({ ...prev, [categoryId]: data.data }));
+      return data.data;
+    }
+    setCategoryChildren((prev) => ({ ...prev, [categoryId]: [] }));
+    return [];
+  };
 
   const displayPrice = useMemo(
     () => ({
@@ -588,19 +605,59 @@ export default function SidebarFilters({
               </button>
               {openSection === "category" && (
                 <div className="pb-5 space-y-2">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        onClose?.();
-                        router.push(`/shop/${cat.path}/${cat.id}`);
-                      }}
-                      className="w-full text-left text-sm text-gray-800 hover:text-black transition-colors py-1"
-                    >
-                      {_.startCase(_.toLower(cat.name))}
-                    </button>
-                  ))}
+                  {(() => {
+                    const currentCategoryId =
+                      categoryStack.length > 0
+                        ? categoryStack[categoryStack.length - 1]
+                        : null;
+                    const list = currentCategoryId
+                      ? categoryChildren[currentCategoryId] || []
+                      : categories;
+
+                    return (
+                      <>
+                        {currentCategoryId && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCategoryStack((prev) => prev.slice(0, -1))
+                            }
+                            className="w-full text-left text-xs tracking-[0.2em] uppercase text-gray-500 hover:text-gray-700 transition-colors py-1"
+                          >
+                            Back
+                          </button>
+                        )}
+                        {list.map((cat) => {
+                          const children = categoryChildren[cat.id] || [];
+                          return (
+                            <div key={cat.id} className="space-y-2">
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const nextChildren =
+                                    children.length > 0
+                                      ? children
+                                      : await fetchCategoryChildren(cat.id);
+                                  if (nextChildren.length > 0) {
+                                    setCategoryStack((prev) => [
+                                      ...prev,
+                                      cat.id,
+                                    ]);
+                                    return;
+                                  }
+                                  onClose?.();
+                                  router.push(`/shop/${cat.path}/${cat.id}`);
+                                }}
+                                className="w-full text-left text-sm text-gray-800 hover:text-black transition-colors py-1"
+                              >
+                                {_.startCase(_.toLower(cat.name))}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
               <Separator />

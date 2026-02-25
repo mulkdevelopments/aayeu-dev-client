@@ -53,6 +53,7 @@ export default function ProductsListGrid({
   const { request: getAllProducts } = useAxios();
   const { request: getCategory } = useAxios();
   const { request: getChildCategories, loading: loadingChildren } = useAxios();
+  const childCategoriesCache = useRef(new Map());
 
   // ✅ Build query string for URL
   const buildQuery = (filters, newSort = sort) => {
@@ -274,13 +275,20 @@ export default function ProductsListGrid({
         });
         if (data?.status === 200) setCategoryData(data.data);
 
-        const { data: childData } = await getChildCategories({
-          method: "GET",
-          url: `/users/get-child-categories?category_id=${categoryId}`,
-        });
-        if (childData?.status === 200 && Array.isArray(childData.data))
-          setChildCategories(childData.data);
-        else setChildCategories([]);
+        if (childCategoriesCache.current.has(categoryId)) {
+          setChildCategories(childCategoriesCache.current.get(categoryId));
+        } else {
+          const { data: childData } = await getChildCategories({
+            method: "GET",
+            url: `/users/get-child-categories?category_id=${categoryId}`,
+          });
+          if (childData?.status === 200 && Array.isArray(childData.data)) {
+            childCategoriesCache.current.set(categoryId, childData.data);
+            setChildCategories(childData.data);
+          } else {
+            setChildCategories([]);
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch category details:", err);
       }
