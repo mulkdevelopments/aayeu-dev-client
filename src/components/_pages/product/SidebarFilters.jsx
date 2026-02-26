@@ -62,6 +62,7 @@ export default function SidebarFilters({
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedGenders, setSelectedGenders] = useState([]);
   const [brandSearch, setBrandSearch] = useState("");
+  const [colorSearch, setColorSearch] = useState("");
   const [openSection, setOpenSection] = useState(null);
   const [priceInputMin, setPriceInputMin] = useState("");
   const [priceInputMax, setPriceInputMax] = useState("");
@@ -72,6 +73,9 @@ export default function SidebarFilters({
   const [categoryMap, setCategoryMap] = useState(null);
   const [isFiltersLoading, setIsFiltersLoading] = useState(false);
   const [hasFetchedFilters, setHasFetchedFilters] = useState(false);
+  const lastFiltersKeyRef = useRef("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileSection, setMobileSection] = useState(null);
 
   const normalizeSizeKey = (value) => {
     const raw = String(value || "").trim().toLowerCase();
@@ -195,6 +199,7 @@ export default function SidebarFilters({
 
   // ✅ Fetch filter options (brands, colors, sizes, price range)
   useEffect(() => {
+    if (!open) return;
     const fetchFilters = async () => {
       setIsFiltersLoading(true);
       try {
@@ -224,6 +229,11 @@ export default function SidebarFilters({
         if (appliedPrice?.max) params.set("max_price", String(appliedPrice.max));
 
         const queryString = params.toString();
+        if (lastFiltersKeyRef.current === queryString) {
+          setIsFiltersLoading(false);
+          return;
+        }
+        lastFiltersKeyRef.current = queryString;
         const { data } = await request({
           method: "GET",
           url: queryString
@@ -279,12 +289,15 @@ export default function SidebarFilters({
     };
     fetchFilters();
   }, [
+    open,
     categoryId,
     searchQuery,
     selectedBrands,
     selectedColors,
     selectedSizes,
     selectedGenders,
+    searchCategorySlug,
+    initialFilters.price,
   ]);
 
   useEffect(() => {
@@ -292,7 +305,17 @@ export default function SidebarFilters({
     setAllBrands([]);
     setAllColors([]);
     setAllGenders([]);
+    lastFiltersKeyRef.current = "";
   }, [categoryId, searchQuery]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const handler = (e) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   // ✅ Sync local filter state when parent updates (e.g. after refresh)
   useEffect(() => {
@@ -446,6 +469,13 @@ export default function SidebarFilters({
     const term = brandSearch.trim().toLowerCase();
     return list.filter((b) => b.toLowerCase().includes(term));
   }, [allBrands, brands, brandSearch]);
+
+  const filteredColors = useMemo(() => {
+    const list = allColors.length > 0 ? allColors : colors;
+    const term = colorSearch.trim().toLowerCase();
+    if (!term) return list;
+    return list.filter((c) => String(c || "").toLowerCase().includes(term));
+  }, [allColors, colors, colorSearch]);
 
   const groupedBrands = useMemo(() => {
     const groups = new Map();
@@ -605,8 +635,6 @@ export default function SidebarFilters({
     priceRange.max,
   ]);
 
-  if (!open) return null;
-
   const sortOptions = [
     { value: "is_our_picks", label: "Our Picks" },
     { value: "is_newest", label: "Newest first" },
@@ -614,8 +642,301 @@ export default function SidebarFilters({
     { value: "price_low_to_high", label: "Price: low to high" },
   ];
 
+  const handleSectionToggle = (section) => {
+    if (isMobile) {
+      setMobileSection(section);
+      return;
+    }
+    setOpenSection(openSection === section ? null : section);
+  };
+
+  const renderCategoryContent = () => (
+    <div className="pb-5 space-y-2">
+      {(() => {
+        const currentCategoryId =
+          categoryStack.length > 0
+            ? categoryStack[categoryStack.length - 1].id
+            : null;
+        const list = currentCategoryId
+          ? categoryChildren[currentCategoryId] || []
+          : categories;
+
+        return (
+          <>
+            {currentCategoryId && (
+              <button
+                type="button"
+                onClick={() => setCategoryStack((prev) => prev.slice(0, -1))}
+                className="w-full text-left text-xs tracking-[0.2em] uppercase text-gray-500 hover:text-gray-700 transition-colors py-1"
+              >
+                Back
+              </button>
+            )}
+            {list.map((cat) => {
+              const children = categoryChildren[cat.id] || [];
+              return (
+                <div key={cat.id} className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const nextChildren =
+                        children.length > 0
+                          ? children
+                          : await fetchCategoryChildren(cat.id);
+                      if (nextChildren.length > 0) {
+                        setCategoryStack((prev) => [
+                          ...prev,
+                          { id: cat.id, path: cat.path },
+                        ]);
+                        return;
+                      }
+                      onClose?.();
+                      const query = buildFiltersQuery();
+                      router.push(`/shop/${cat.path}/${cat.id}?${query}`);
+                    }}
+                    className="w-full text-left text-sm text-gray-800 hover:text-black transition-colors py-1"
+                  >
+                    {_.startCase(_.toLower(cat.name))}
+                  </button>
+                </div>
+              );
+            })}
+          </>
+        );
+      })()}
+    </div>
+  );
+
+  const renderBrandContent = () => (
+    <div className="pb-5">
+      <div className="relative mb-4">
+        <Search className="absolute left-0 top-2.5 h-4 w-4 text-gray-500" />
+        <Input
+          placeholder={`Search ${allBrands.length || brands.length} brands`}
+          value={brandSearch}
+          onChange={(e) => setBrandSearch(e.target.value)}
+          className="pl-6 border-0 border-b border-gray-300 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+      </div>
+      <div className="pr-2">
+        <div className="space-y-4">
+          {groupedBrands.map((group) => (
+            <div key={group.key}>
+              <div className="text-xs font-semibold text-gray-600 mb-2">
+                {group.key}
+              </div>
+              <div className="space-y-3">
+                {group.items.map((item) => {
+                  const isSelected = selectedBrands.includes(item.value);
+                  const isDisabled = item.count === 0 && !isSelected;
+                  return (
+                    <label
+                      key={item.value}
+                      className={`flex items-center justify-between gap-3 text-sm ${
+                        isDisabled ? "text-gray-400" : "text-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() =>
+                            toggle(setSelectedBrands, selectedBrands, item.value)
+                          }
+                          disabled={isDisabled}
+                        />
+                        <span>{item.label}</span>
+                      </div>
+                      <span className="text-xs text-gray-500"></span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderGenderContent = () => (
+    <div className="pb-5">
+      <div className="space-y-3">
+        {(allGenders.length > 0 ? allGenders : genders).map((g) => {
+          const key = String(g || "").trim().toLowerCase();
+          const count = genderCountMap.get(key) ?? 0;
+          const isSelected = selectedGenders.includes(g);
+          const isDisabled = count === 0 && !isSelected;
+          return (
+            <label
+              key={g}
+              className={`flex items-center justify-between gap-3 text-sm ${
+                isDisabled ? "text-gray-400" : "text-gray-700"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() =>
+                    toggle(setSelectedGenders, selectedGenders, g)
+                  }
+                  disabled={isDisabled}
+                />
+                <span>{_.startCase(_.toLower(g))}</span>
+              </div>
+              <span className="text-xs text-gray-500"></span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const renderColorContent = () => (
+    <div className="pb-5">
+      <div className="relative mb-4">
+        <Search className="absolute left-0 top-2.5 h-4 w-4 text-gray-500" />
+        <Input
+          placeholder={`Search ${allColors.length || colors.length} colours`}
+          value={colorSearch}
+          onChange={(e) => setColorSearch(e.target.value)}
+          className="pl-6 border-0 border-b border-gray-300 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+      </div>
+      <div className="space-y-3">
+        {filteredColors.map((c) => {
+          const key = String(c || "").trim().toLowerCase();
+          const count = colorCountMap.get(key) ?? 0;
+          const isSelected = selectedColors.includes(c);
+          const isDisabled = count === 0 && !isSelected;
+          return (
+            <label
+              key={c}
+              className={`flex items-center justify-between gap-3 text-sm ${
+                isDisabled ? "text-gray-400" : "text-gray-700"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() =>
+                    toggle(setSelectedColors, selectedColors, c)
+                  }
+                  disabled={isDisabled}
+                />
+                <span>{c}</span>
+              </div>
+              <span className="text-xs text-gray-500"></span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const renderSizeContent = () => (
+    <div className="pb-5">
+      <div className="grid grid-cols-3 gap-2">
+        {visibleSizeGroups.map((group) => {
+          const isSelected = group.values.some((v) =>
+            selectedSizes.includes(v)
+          );
+          const isAvailable = availableSizeKeys.has(group.key);
+          const isDisabled = !isAvailable && !isSelected;
+          const count = group.values.reduce((sum, v) => {
+            const key = normalizeSizeKey(String(v || ""));
+            return sum + (sizeCountMap.get(key) || 0);
+          }, 0);
+          return (
+            <button
+              key={group.key}
+              type="button"
+              onClick={() => {
+                hasInteracted.current = true;
+                if (isSelected) {
+                  setSelectedSizes((prev) =>
+                    prev.filter((v) => !group.values.includes(v))
+                  );
+                } else {
+                  if (isDisabled) return;
+                  setSelectedSizes((prev) => [
+                    ...prev,
+                    ...group.values.filter((v) => !prev.includes(v)),
+                  ]);
+                }
+              }}
+              className={`w-full min-h-10 px-2 py-2 text-[11px] leading-snug border transition-colors whitespace-normal break-words text-center ${
+                isSelected
+                  ? "border-black text-black"
+                  : isDisabled
+                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "border-gray-300 text-gray-700"
+              }`}
+            >
+              <span>{group.label}</span>
+              <span className="ml-1 text-[10px] text-gray-500"></span>
+            </button>
+          );
+        })}
+      </div>
+      {sizeGroups.length > SIZE_VISIBLE_COUNT && (
+        <button
+          type="button"
+          onClick={() => setShowAllSizes((prev) => !prev)}
+          className="mt-4 w-full h-9 border border-gray-300 text-xs font-medium tracking-[0.2em] uppercase hover:border-black"
+        >
+          {showAllSizes ? "Show Less" : "Show More"}
+        </button>
+      )}
+    </div>
+  );
+
+  const renderPriceContent = () => (
+    <div className="pb-5">
+      <div className="flex items-center gap-3 text-sm">
+        <Input
+          type="number"
+          value={priceInputMin}
+          onChange={(e) => {
+            hasInteracted.current = true;
+            setPriceInputMin(e.target.value);
+            setPriceApplyError("");
+          }}
+          className="w-1/2 rounded-none border-gray-300"
+        />
+        <Input
+          type="number"
+          value={priceInputMax}
+          onChange={(e) => {
+            hasInteracted.current = true;
+            setPriceInputMax(e.target.value);
+            setPriceApplyError("");
+          }}
+          className="w-1/2 rounded-none border-gray-300"
+        />
+      </div>
+
+      {isPriceDirty && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={handleApplyPrice}
+            className="w-full h-9 border border-gray-300 text-sm font-medium hover:border-black"
+          >
+            Apply
+          </button>
+          {priceApplyError && (
+            <p className="mt-2 text-xs text-red-600">{priceApplyError}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 z-220 flex overflow-hidden">
+    <div
+      className={open ? "fixed inset-0 z-220 flex overflow-hidden" : "hidden"}
+      aria-hidden={!open}
+    >
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black/40"
@@ -691,6 +1012,40 @@ export default function SidebarFilters({
             </div>
           ) : (
             <>
+              {isMobile && mobileSection && (
+                <div className="fixed inset-0 z-230 bg-white flex flex-col">
+                  <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+                    <div className="text-sm font-medium tracking-[0.2em] uppercase">
+                      {mobileSection}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMobileSection(null)}
+                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                      aria-label="Close"
+                    >
+                      <XIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto px-6 py-4">
+                    {mobileSection === "category" && renderCategoryContent()}
+                    {mobileSection === "brand" && renderBrandContent()}
+                    {mobileSection === "gender" && renderGenderContent()}
+                    {mobileSection === "color" && renderColorContent()}
+                    {mobileSection === "size" && renderSizeContent()}
+                    {mobileSection === "price" && renderPriceContent()}
+                  </div>
+                  <div className="border-t border-gray-200 bg-white px-6 py-4">
+                    <Button
+                      onClick={() => setMobileSection(null)}
+                      className="w-full bg-black text-white font-medium"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="pb-5">
                 <div className="text-xs tracking-[0.2em] uppercase text-gray-900 mb-4">
                   Sort by
@@ -757,20 +1112,12 @@ export default function SidebarFilters({
                 </div>
               )}
 
-              {availableSections.length > 0 && missingSections.length > 0 && (
-                <div className="mb-4 text-xs text-gray-500">
-                  Some filters are not available for this selection.
-                </div>
-              )}
-
               {/* --- Category Filter --- */}
               {categories.length > 0 && (
                 <>
               <button
                 type="button"
-                onClick={() =>
-                  setOpenSection(openSection === "category" ? null : "category")
-                }
+                    onClick={() => handleSectionToggle("category")}
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Category
@@ -780,64 +1127,7 @@ export default function SidebarFilters({
                   }`}
                 />
               </button>
-              {openSection === "category" && (
-                <div className="pb-5 space-y-2">
-                  {(() => {
-                    const currentCategoryId =
-                      categoryStack.length > 0
-                        ? categoryStack[categoryStack.length - 1].id
-                        : null;
-                    const list = currentCategoryId
-                      ? categoryChildren[currentCategoryId] || []
-                      : categories;
-
-                    return (
-                      <>
-                        {currentCategoryId && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setCategoryStack((prev) => prev.slice(0, -1))
-                            }
-                            className="w-full text-left text-xs tracking-[0.2em] uppercase text-gray-500 hover:text-gray-700 transition-colors py-1"
-                          >
-                            Back
-                          </button>
-                        )}
-                        {list.map((cat) => {
-                          const children = categoryChildren[cat.id] || [];
-                          return (
-                            <div key={cat.id} className="space-y-2">
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const nextChildren =
-                                    children.length > 0
-                                      ? children
-                                      : await fetchCategoryChildren(cat.id);
-                                  if (nextChildren.length > 0) {
-                                    setCategoryStack((prev) => [
-                                      ...prev,
-                                      { id: cat.id, path: cat.path },
-                                    ]);
-                                    return;
-                                  }
-                                  onClose?.();
-                                  const query = buildFiltersQuery();
-                                  router.push(`/shop/${cat.path}/${cat.id}?${query}`);
-                                }}
-                                className="w-full text-left text-sm text-gray-800 hover:text-black transition-colors py-1"
-                              >
-                                {_.startCase(_.toLower(cat.name))}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
+                  {!isMobile && openSection === "category" && renderCategoryContent()}
                   <Separator />
                 </>
               )}
@@ -847,9 +1137,7 @@ export default function SidebarFilters({
                 <>
               <button
                 type="button"
-                onClick={() =>
-                  setOpenSection(openSection === "brand" ? null : "brand")
-                }
+                    onClick={() => handleSectionToggle("brand")}
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Brand
@@ -859,56 +1147,7 @@ export default function SidebarFilters({
                   }`}
                 />
               </button>
-              {openSection === "brand" && (
-                <div className="pb-5">
-                  <div className="relative mb-4">
-                    <Search className="absolute left-0 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                      placeholder={`Search ${allBrands.length || brands.length} brands`}
-                  value={brandSearch}
-                  onChange={(e) => setBrandSearch(e.target.value)}
-                      className="pl-6 border-0 border-b border-gray-300 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                    />
-                  </div>
-                  <div className="max-h-52 overflow-y-auto pr-2">
-                    <div className="space-y-4">
-                      {groupedBrands.map((group) => (
-                        <div key={group.key}>
-                          <div className="text-xs font-semibold text-gray-600 mb-2">
-                            {group.key}
-                          </div>
-                          <div className="space-y-3">
-                            {group.items.map((item) => {
-                              const isSelected = selectedBrands.includes(item.value);
-                              const isDisabled = item.count === 0 && !isSelected;
-                              return (
-                                <label
-                                  key={item.value}
-                                  className={`flex items-center justify-between gap-3 text-sm ${
-                                    isDisabled ? "text-gray-400" : "text-gray-700"
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <Checkbox
-                                      checked={isSelected}
-                                      onCheckedChange={() =>
-                                        toggle(setSelectedBrands, selectedBrands, item.value)
-                                      }
-                                      disabled={isDisabled}
-                                    />
-                                    <span>{item.label}</span>
-                                  </div>
-                                  <span className="text-xs text-gray-500"></span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+                  {!isMobile && openSection === "brand" && renderBrandContent()}
                   <Separator className="my-1" />
                 </>
               )}
@@ -918,9 +1157,7 @@ export default function SidebarFilters({
                 <>
               <button
                 type="button"
-                onClick={() =>
-                  setOpenSection(openSection === "gender" ? null : "gender")
-                }
+                    onClick={() => handleSectionToggle("gender")}
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Gender
@@ -930,38 +1167,7 @@ export default function SidebarFilters({
                   }`}
                 />
               </button>
-              {openSection === "gender" && (
-                <div className="pb-5">
-                  <div className="space-y-3">
-                    {(allGenders.length > 0 ? allGenders : genders).map((g) => {
-                      const key = String(g || "").trim().toLowerCase();
-                      const count = genderCountMap.get(key) ?? 0;
-                      const isSelected = selectedGenders.includes(g);
-                      const isDisabled = count === 0 && !isSelected;
-                      return (
-                        <label
-                          key={g}
-                          className={`flex items-center justify-between gap-3 text-sm ${
-                            isDisabled ? "text-gray-400" : "text-gray-700"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                    <Checkbox
-                              checked={isSelected}
-                      onCheckedChange={() =>
-                                toggle(setSelectedGenders, selectedGenders, g)
-                              }
-                              disabled={isDisabled}
-                            />
-                            <span>{_.startCase(_.toLower(g))}</span>
-                          </div>
-                          <span className="text-xs text-gray-500"></span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                  {!isMobile && openSection === "gender" && renderGenderContent()}
                   <Separator className="my-1" />
                 </>
               )}
@@ -971,9 +1177,7 @@ export default function SidebarFilters({
                 <>
               <button
                 type="button"
-                onClick={() =>
-                  setOpenSection(openSection === "color" ? null : "color")
-                }
+                    onClick={() => handleSectionToggle("color")}
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Colour
@@ -983,38 +1187,7 @@ export default function SidebarFilters({
                   }`}
                 />
               </button>
-              {openSection === "color" && (
-                <div className="pb-5">
-                  <div className="space-y-3">
-                    {(allColors.length > 0 ? allColors : colors).map((c) => {
-                      const key = String(c || "").trim().toLowerCase();
-                      const count = colorCountMap.get(key) ?? 0;
-                      const isSelected = selectedColors.includes(c);
-                      const isDisabled = count === 0 && !isSelected;
-                      return (
-                        <label
-                          key={c}
-                          className={`flex items-center justify-between gap-3 text-sm ${
-                            isDisabled ? "text-gray-400" : "text-gray-700"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                    <Checkbox
-                              checked={isSelected}
-                      onCheckedChange={() =>
-                        toggle(setSelectedColors, selectedColors, c)
-                      }
-                              disabled={isDisabled}
-                            />
-                            <span>{c}</span>
-                          </div>
-                          <span className="text-xs text-gray-500"></span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                  {!isMobile && openSection === "color" && renderColorContent()}
                   <Separator className="my-1" />
                 </>
               )}
@@ -1024,9 +1197,7 @@ export default function SidebarFilters({
                 <>
               <button
                 type="button"
-                onClick={() =>
-                  setOpenSection(openSection === "size" ? null : "size")
-                }
+                    onClick={() => handleSectionToggle("size")}
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Size
@@ -1036,62 +1207,7 @@ export default function SidebarFilters({
                   }`}
                 />
               </button>
-              {openSection === "size" && (
-                <div className="pb-5">
-                  <div className="grid grid-cols-3 gap-2">
-                    {visibleSizeGroups.map((group) => {
-                      const isSelected = group.values.some((v) =>
-                        selectedSizes.includes(v)
-                      );
-                      const isAvailable = availableSizeKeys.has(group.key);
-                      const isDisabled = !isAvailable && !isSelected;
-                      const count = group.values.reduce((sum, v) => {
-                        const key = normalizeSizeKey(String(v || ""));
-                        return sum + (sizeCountMap.get(key) || 0);
-                      }, 0);
-                      return (
-                        <button
-                          key={group.key}
-                          type="button"
-                          onClick={() => {
-                            hasInteracted.current = true;
-                            if (isSelected) {
-                              setSelectedSizes((prev) =>
-                                prev.filter((v) => !group.values.includes(v))
-                              );
-                            } else {
-                              if (isDisabled) return;
-                              setSelectedSizes((prev) => [
-                                ...prev,
-                                ...group.values.filter((v) => !prev.includes(v)),
-                              ]);
-                            }
-                          }}
-                          className={`w-full min-h-10 px-2 py-2 text-[11px] leading-snug border transition-colors whitespace-normal break-words text-center ${
-                            isSelected
-                              ? "border-black text-black"
-                              : isDisabled
-                              ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                              : "border-gray-300 text-gray-700"
-                          }`}
-                        >
-                          <span>{group.label}</span>
-                          <span className="ml-1 text-[10px] text-gray-500"></span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {sizeGroups.length > SIZE_VISIBLE_COUNT && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllSizes((prev) => !prev)}
-                      className="mt-4 w-full h-9 border border-gray-300 text-xs font-medium tracking-[0.2em] uppercase hover:border-black"
-                    >
-                      {showAllSizes ? "Show Less" : "Show More"}
-                    </button>
-                  )}
-                </div>
-              )}
+                  {!isMobile && openSection === "size" && renderSizeContent()}
                   <Separator className="my-1" />
                 </>
               )}
@@ -1101,9 +1217,7 @@ export default function SidebarFilters({
                 <>
               <button
                 type="button"
-                onClick={() =>
-                  setOpenSection(openSection === "price" ? null : "price")
-                }
+                    onClick={() => handleSectionToggle("price")}
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Price
@@ -1113,47 +1227,7 @@ export default function SidebarFilters({
                   }`}
                 />
               </button>
-              {openSection === "price" && (
-                <div className="pb-5">
-                  <div className="flex items-center gap-3 text-sm">
-                <Input
-                  type="number"
-                      value={priceInputMin}
-                  onChange={(e) => {
-                    hasInteracted.current = true;
-                        setPriceInputMin(e.target.value);
-                        setPriceApplyError("");
-                      }}
-                      className="w-1/2 rounded-none border-gray-300"
-                />
-                <Input
-                  type="number"
-                      value={priceInputMax}
-                  onChange={(e) => {
-                    hasInteracted.current = true;
-                        setPriceInputMax(e.target.value);
-                        setPriceApplyError("");
-                      }}
-                      className="w-1/2 rounded-none border-gray-300"
-                />
-              </div>
-
-                  {isPriceDirty && (
-                    <div className="mt-3">
-                      <button
-                        type="button"
-                        onClick={handleApplyPrice}
-                        className="w-full h-9 border border-gray-300 text-sm font-medium hover:border-black"
-                      >
-                        Apply
-                      </button>
-                      {priceApplyError && (
-                        <p className="mt-2 text-xs text-red-600">{priceApplyError}</p>
-                      )}
-                    </div>
-                  )}
-              </div>
-              )}
+                  {!isMobile && openSection === "price" && renderPriceContent()}
                 </>
               )}
             </>
