@@ -29,6 +29,7 @@ export default function ProductsListGrid({
 
   const searchQuery =
     searchParams.get("query") || searchParams.get("q") || null;
+  const searchCategorySlug = searchParams.get("category") || null;
   const isSearchMode = !!searchQuery;
 
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -95,6 +96,9 @@ export default function ProductsListGrid({
 
     if (isSearchMode && searchQuery) {
       params.set("q", searchQuery);
+      if (searchCategorySlug) {
+        params.set("category", searchCategorySlug);
+      }
     }
 
     if (filters.brands?.length)
@@ -136,6 +140,9 @@ export default function ProductsListGrid({
 
       if (isSearchMode) {
         url += `&q=${encodeURIComponent(searchQuery)}`;
+        if (searchCategorySlug) {
+          url += `&category_slug=${encodeURIComponent(searchCategorySlug)}`;
+        }
       } else if (categoryId) {
         url += `&category_id=${categoryId}`;
       } else if (categorySlug && categorySlug !== "Shop") {

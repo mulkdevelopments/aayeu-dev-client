@@ -30,6 +30,7 @@ export default function SidebarFilters({
   const searchParams = useSearchParams();
   const searchQuery =
     searchParams.get("query") || searchParams.get("q") || null;
+  const searchCategorySlug = searchParams.get("category") || null;
 
   const buildFiltersQuery = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -199,6 +200,9 @@ export default function SidebarFilters({
 
         if (searchQuery) {
           params.set("q", searchQuery);
+          if (searchCategorySlug) {
+            params.set("category_slug", searchCategorySlug);
+          }
         } else if (categoryId) {
           params.set("category_id", categoryId);
         }

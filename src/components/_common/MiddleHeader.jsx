@@ -218,7 +218,11 @@ export default function MiddleHeader() {
 
   const submitSearch = () => {
     if (!search.trim()) return;
-    router.push(`/search?query=${encodeURIComponent(search.trim())}`);
+    const query = encodeURIComponent(search.trim());
+    const categoryParam = activeCategorySlug
+      ? `&category=${encodeURIComponent(activeCategorySlug)}`
+      : "";
+    router.push(`/search?query=${query}${categoryParam}`);
     setIsSheetOpen(false);
     setIsSearchSheetOpen(false);
   };
