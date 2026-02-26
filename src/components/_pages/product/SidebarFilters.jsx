@@ -21,6 +21,8 @@ export default function SidebarFilters({
   initialFilters = {}, // parent passes filters parsed from URL
   categories = [],
   totalCount = null,
+  sortValue = "is_our_picks",
+  onSortChange,
 }) {
   const { request, loading } = useAxios();
   const { selectedCurrency, exchangeRates, format } = useCurrency();
@@ -605,6 +607,13 @@ export default function SidebarFilters({
 
   if (!open) return null;
 
+  const sortOptions = [
+    { value: "is_our_picks", label: "Our Picks" },
+    { value: "is_newest", label: "Newest first" },
+    { value: "price_high_to_low", label: "Price: high to low" },
+    { value: "price_low_to_high", label: "Price: low to high" },
+  ];
+
   return (
     <div className="fixed inset-0 z-220 flex overflow-hidden">
       {/* Overlay */}
@@ -669,46 +678,46 @@ export default function SidebarFilters({
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4 scroll-smooth">
           {showSkeleton ? (
-            <div className="space-y-6 pb-3">
-              {Array.from({ length: 4 }).map((_, sectionIndex) => (
-                <div key={`filter-skel-${sectionIndex}`} className="space-y-4">
-                  <Skeleton className="h-4 w-28" />
-                  <div className="space-y-3">
-                    {Array.from({ length: 4 }).map((__, rowIndex) => (
-                      <div
-                        key={`filter-skel-row-${sectionIndex}-${rowIndex}`}
-                        className="flex items-center gap-3"
-                      >
-                        <Skeleton className="h-4 w-4 rounded-sm" />
-                        <Skeleton className="h-3 w-40" />
-                      </div>
-                    ))}
+            <div className="space-y-2 pb-3">
+              {Array.from({ length: 6 }).map((_, sectionIndex) => (
+                <div key={`filter-skel-${sectionIndex}`}>
+                  <div className="flex items-center justify-between py-4">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-4 w-4" />
                   </div>
                   <Separator />
                 </div>
               ))}
-
-              <div className="space-y-4">
-                <Skeleton className="h-4 w-24" />
-                <div className="grid grid-cols-3 gap-2">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <Skeleton key={`size-skel-${i}`} className="h-9" />
-                  ))}
-                </div>
-                <Separator />
-              </div>
-
-              <div className="space-y-4">
-                <Skeleton className="h-4 w-20" />
-                <div className="grid grid-cols-2 gap-3">
-                  <Skeleton className="h-9" />
-                  <Skeleton className="h-9" />
-                </div>
-                <Skeleton className="h-9 w-28" />
-              </div>
             </div>
           ) : (
             <>
+              <div className="pb-5">
+                <div className="text-xs tracking-[0.2em] uppercase text-gray-900 mb-4">
+                  Sort by
+                </div>
+                <div className="space-y-4">
+                  {sortOptions.map((option) => {
+                    const isActive = sortValue === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onSortChange?.(option.value)}
+                        className="w-full flex items-center gap-3 text-sm text-gray-800"
+                      >
+                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-400">
+                          {isActive && (
+                            <span className="h-2 w-2 rounded-full bg-black" />
+                          )}
+                        </span>
+                        <span>{option.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <Separator className="my-1" />
+
               {availableSections.length === 0 && (
                 <div className="flex flex-col items-start gap-3 py-6">
                   <p className="text-sm text-gray-700">

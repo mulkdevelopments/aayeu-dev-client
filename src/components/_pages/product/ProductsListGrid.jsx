@@ -457,12 +457,13 @@ export default function ProductsListGrid({
               <div className="sticky top-4 z-30 self-start">
                 <button
                   onClick={handleOpenFilters}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 font-medium text-sm"
+                  className="flex items-center gap-2 px-3 h-9 bg-white border border-gray-300 transition-all duration-200 font-medium text-xs md:text-sm"
                 >
+                  <span className="md:hidden">Refine</span>
+                  <span className="hidden md:inline">Filters</span>
                   <SlidersHorizontal className="w-4 h-4" />
-                  <span>Filters</span>
                   {activeFiltersCount > 0 && (
-                    <span className="ml-1 bg-black text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="ml-1 bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                       {activeFiltersCount}
                     </span>
                   )}
@@ -496,14 +497,14 @@ export default function ProductsListGrid({
                       </button>
                       <div
                         ref={categoryScrollRef}
-                        className="hidden md:block overflow-x-auto category-scroll flex-1"
+                        className="overflow-x-auto category-scroll flex-1 scrollbar-hide"
                       >
                         <div className="flex gap-2 md:gap-3">
                           {childCategories.map((cat) => (
                             <button
                               key={cat.id}
                               onClick={() => router.push(`/shop/${cat.path}/${cat.id}`)}
-                              className="flex-shrink-0 px-4 py-2.5 md:px-5 md:py-3 bg-white border-2 border-gray-200 hover:border-black hover:shadow-md transition-all duration-200 text-sm font-medium whitespace-nowrap"
+                              className="flex-shrink-0 h-9 px-3 md:px-5 md:h-11 bg-white border border-gray-300 hover:border-black transition-all duration-200 text-xs md:text-sm font-medium whitespace-nowrap"
                             >
                               {startCase(toLower(cat.name))}
                             </button>
@@ -528,20 +529,7 @@ export default function ProductsListGrid({
                 )}
               </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
-                  <Select value={sort} onValueChange={handleSortChange}>
-                    <SelectTrigger className="w-[140px] sm:w-48 border-2 border-gray-200 transition-colors">
-                      <SelectValue placeholder="Our Picks" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="is_our_picks">Our Picks</SelectItem>
-                      <SelectItem value="is_newest">Newest Arrivals</SelectItem>
-                      <SelectItem value="price_low_to_high">Price: Low to High</SelectItem>
-                      <SelectItem value="price_high_to_low">Price: High to Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="flex items-center gap-2" />
               </div>
             </div>
           ) : (
@@ -561,20 +549,7 @@ export default function ProductsListGrid({
                 </button>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 hidden sm:inline">Sort by:</span>
-                <Select value={sort} onValueChange={handleSortChange}>
-                  <SelectTrigger className="w-[140px] sm:w-48 border-2 border-gray-200 transition-colors">
-                    <SelectValue placeholder="Our Picks" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="is_our_picks">Our Picks</SelectItem>
-                    <SelectItem value="is_newest">Newest Arrivals</SelectItem>
-                    <SelectItem value="price_low_to_high">Price: Low to High</SelectItem>
-                    <SelectItem value="price_high_to_low">Price: High to Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="flex items-center gap-2" />
             </div>
           )}
         </div>
@@ -667,6 +642,8 @@ export default function ProductsListGrid({
         initialFilters={selectedFilters}
         categories={categoryId ? childCategories : []}
         totalCount={totalProducts}
+        sortValue={sort}
+        onSortChange={handleSortChange}
         onClose={handleCloseFilters}
         onApply={(filters) => {
           const query = buildQuery(filters, sort);
