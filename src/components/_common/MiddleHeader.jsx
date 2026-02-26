@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Globe, User, Heart, ShoppingBag, Menu, Search, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -30,6 +30,7 @@ const brandGroupsInflight = new Map();
 
 export default function MiddleHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated } = useSelector((state) => state.auth);
   const { items } = useCart();
   const { menu, fetchMenu } = useMenu();
@@ -70,6 +71,12 @@ export default function MiddleHeader() {
     if (!activeCategory?.name) return "";
     return toLower(activeCategory.name);
   }, [activeCategory]);
+
+  const pathCategorySlug = useMemo(() => {
+    if (!pathname?.startsWith("/shop/")) return "";
+    const parts = pathname.split("/").filter(Boolean);
+    return parts[1] || "";
+  }, [pathname]);
 
   const lastBrandCategoryRef = useRef("");
 
@@ -219,8 +226,9 @@ export default function MiddleHeader() {
   const submitSearch = () => {
     if (!search.trim()) return;
     const query = encodeURIComponent(search.trim());
-    const categoryParam = activeCategorySlug
-      ? `&category=${encodeURIComponent(activeCategorySlug)}`
+    const categorySlug = pathCategorySlug || activeCategorySlug;
+    const categoryParam = categorySlug
+      ? `&category=${encodeURIComponent(categorySlug)}`
       : "";
     router.push(`/search?query=${query}${categoryParam}`);
     setIsSheetOpen(false);
