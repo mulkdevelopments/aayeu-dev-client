@@ -100,6 +100,17 @@ export default function ProductInfoSection() {
 
     const isThumbnailUrl = (url) =>
       typeof url === "string" && url.includes("-150x150-");
+    const dedupeUrls = (list) => {
+      const seen = new Set();
+      const result = [];
+      list.forEach((item) => {
+        const key = String(item || "").trim();
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        result.push(item);
+      });
+      return result;
+    };
 
     const variantImages =
       product.variants?.flatMap((v) => v.images || []).filter(Boolean) || [];
@@ -111,10 +122,11 @@ export default function ProductInfoSection() {
       const picked = filteredVariantImages.length
         ? filteredVariantImages
         : variantImages;
-      return picked.slice(0, 6);
+      return dedupeUrls(picked).slice(0, 6);
     }
 
-    if (product.product_img) return [product.product_img].slice(0, 6);
+    if (product.product_img)
+      return dedupeUrls([product.product_img]).slice(0, 6);
 
     return [];
   }, [product]);

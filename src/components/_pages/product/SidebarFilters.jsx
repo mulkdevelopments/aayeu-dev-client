@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, XIcon, Search, ChevronDown, ChevronLeft } from "lucide-react";
+import { Loader2, XIcon, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import useCurrency from "@/hooks/useCurrency";
@@ -357,7 +357,7 @@ export default function SidebarFilters({
   };
 
   // ✅ Explicit apply button (for UX consistency)
-  const handleShowResults = () => {
+  const handleShowResults = ({ closeSidebar = true } = {}) => {
     hasInteracted.current = true;
     if (isPriceDirty) {
       const minVal = Number(priceInputMin);
@@ -385,11 +385,11 @@ export default function SidebarFilters({
         genders: selectedGenders,
         price: nextPrice,
       });
-      onClose?.();
+      if (closeSidebar) onClose?.();
       return;
     }
     onApply(buildFilters());
-    onClose?.();
+    if (closeSidebar) onClose?.();
   };
 
   const handleApplyPrice = () => {
@@ -915,7 +915,7 @@ export default function SidebarFilters({
         />
       </div>
 
-      {isPriceDirty && (
+      {!isMobile && isPriceDirty && (
         <div className="mt-3">
           <button
             type="button"
@@ -1037,7 +1037,10 @@ export default function SidebarFilters({
                   </div>
                   <div className="border-t border-gray-200 bg-white px-6 py-4">
                     <Button
-                      onClick={() => setMobileSection(null)}
+                      onClick={() => {
+                        handleShowResults({ closeSidebar: false });
+                        setMobileSection(null);
+                      }}
                       className="w-full bg-black text-white font-medium"
                     >
                       Apply
@@ -1121,11 +1124,7 @@ export default function SidebarFilters({
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Category
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    openSection === "category" ? "rotate-180" : ""
-                  }`}
-                />
+                <ChevronRight className="h-4 w-4" />
               </button>
                   {!isMobile && openSection === "category" && renderCategoryContent()}
                   <Separator />
@@ -1141,11 +1140,7 @@ export default function SidebarFilters({
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Brand
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    openSection === "brand" ? "rotate-180" : ""
-                  }`}
-                />
+                <ChevronRight className="h-4 w-4" />
               </button>
                   {!isMobile && openSection === "brand" && renderBrandContent()}
                   <Separator className="my-1" />
@@ -1161,11 +1156,7 @@ export default function SidebarFilters({
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Gender
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    openSection === "gender" ? "rotate-180" : ""
-                  }`}
-                />
+                <ChevronRight className="h-4 w-4" />
               </button>
                   {!isMobile && openSection === "gender" && renderGenderContent()}
                   <Separator className="my-1" />
@@ -1181,11 +1172,7 @@ export default function SidebarFilters({
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Colour
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    openSection === "color" ? "rotate-180" : ""
-                  }`}
-                />
+                <ChevronRight className="h-4 w-4" />
               </button>
                   {!isMobile && openSection === "color" && renderColorContent()}
                   <Separator className="my-1" />
@@ -1201,11 +1188,7 @@ export default function SidebarFilters({
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Size
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    openSection === "size" ? "rotate-180" : ""
-                  }`}
-                />
+                <ChevronRight className="h-4 w-4" />
               </button>
                   {!isMobile && openSection === "size" && renderSizeContent()}
                   <Separator className="my-1" />
@@ -1217,15 +1200,11 @@ export default function SidebarFilters({
                 <>
               <button
                 type="button"
-                    onClick={() => handleSectionToggle("price")}
+                onClick={() => handleSectionToggle("price")}
                 className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
               >
                 Price
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    openSection === "price" ? "rotate-180" : ""
-                  }`}
-                />
+                <ChevronRight className="h-4 w-4" />
               </button>
                   {!isMobile && openSection === "price" && renderPriceContent()}
                 </>
