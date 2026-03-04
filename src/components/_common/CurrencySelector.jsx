@@ -102,7 +102,7 @@ export default function CurrencySelector({ isMobileSidebar = false }) {
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
-          className="w-8 h-8 rounded-full overflow-hidden border border-gray-300 hover:border-black transition-colors outline-none flex-shrink-0 flex items-center justify-center bg-gray-50"
+          className="w-6 h-6 rounded-full overflow-hidden border border-gray-300 hover:border-black transition-colors outline-none flex-shrink-0 flex items-center justify-center bg-gray-50"
           title={triggerLabel}
           aria-label={triggerLabel}
         >
