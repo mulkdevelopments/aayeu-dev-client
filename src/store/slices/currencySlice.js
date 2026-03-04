@@ -2,23 +2,51 @@
 
 import { createSlice } from "@reduxjs/toolkit";
 
+// All supported currencies: GCC (6) + Asia (2)
 const CURRENCIES = {
-  EUR: { code: "EUR", symbol: "€", name: "Euro" },
+  // GCC
   AED: { code: "AED", symbol: "AED", name: "UAE Dirham" },
+  SAR: { code: "SAR", symbol: "SAR", name: "Saudi Riyal" },
+  QAR: { code: "QAR", symbol: "QAR", name: "Qatari Riyal" },
+  KWD: { code: "KWD", symbol: "KWD", name: "Kuwaiti Dinar" },
+  OMR: { code: "OMR", symbol: "OMR", name: "Omani Rial" },
+  BHD: { code: "BHD", symbol: "BHD", name: "Bahraini Dinar" },
+  // Asia
   INR: { code: "INR", symbol: "₹", name: "Indian Rupee" },
   PKR: { code: "PKR", symbol: "Rs", name: "Pakistani Rupee" },
 };
 
-// Default fallback exchange rates (used if API fails or cache is cleared)
+// Region → list of currency codes (for region-first selection)
+export const REGIONS = {
+  GCC: [
+    { code: "AED", country: "United Arab Emirates" },
+    { code: "SAR", country: "Saudi Arabia" },
+    { code: "QAR", country: "Qatar" },
+    { code: "KWD", country: "Kuwait" },
+    { code: "OMR", country: "Oman" },
+    { code: "BHD", country: "Bahrain" },
+  ],
+  Asia: [
+    { code: "INR", country: "India" },
+    { code: "PKR", country: "Pakistan" },
+  ],
+};
+
+// Default fallback exchange rates (used if API fails or cache is cleared). Base: EUR.
 const DEFAULT_EXCHANGE_RATES = {
   EUR: 1,
-  AED: 4.3,
-  INR: 105,
-  PKR: 328,
+  AED: 4.27,
+  SAR: 4.0,
+  QAR: 3.9,
+  KWD: 0.33,
+  OMR: 0.38,
+  BHD: 0.38,
+  INR: 106.89,
+  PKR: 324.68,
 };
 
 const initialState = {
-  selectedCurrency: "EUR", // Default currency
+  selectedCurrency: "AED", // Default currency
   exchangeRates: DEFAULT_EXCHANGE_RATES,
   lastUpdated: null,
   loading: false,
@@ -60,7 +88,8 @@ export default currencySlice.reducer;
 // Selectors
 export const selectSelectedCurrency = (state) => state.currency.selectedCurrency;
 export const selectExchangeRates = (state) => state.currency.exchangeRates;
-export const selectCurrencyInfo = (state) => CURRENCIES[state.currency.selectedCurrency];
+export const selectCurrencyInfo = (state) =>
+  CURRENCIES[state.currency.selectedCurrency] || CURRENCIES.AED;
 export const selectCurrencyLoading = (state) => state.currency.loading;
 export const selectCurrencyLastUpdated = (state) => state.currency.lastUpdated;
 
@@ -82,8 +111,8 @@ export const convertPrice = (eurPrice, selectedCurrency, exchangeRates) => {
 export const formatPrice = (eurPrice, selectedCurrency, exchangeRates) => {
   const convertedPrice = convertPrice(eurPrice, selectedCurrency, exchangeRates);
 
-  // Fallback to EUR if currency is invalid
-  const currencyInfo = CURRENCIES[selectedCurrency] || CURRENCIES.EUR;
+  // Fallback to AED if currency is invalid
+  const currencyInfo = CURRENCIES[selectedCurrency] || CURRENCIES.AED;
 
   return `${currencyInfo.symbol}${convertedPrice}`;
 };
