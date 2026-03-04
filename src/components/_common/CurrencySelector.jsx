@@ -11,18 +11,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Use w80 for sharper display on retina (trigger circle is 32px, 2x = 64px)
-const FLAG_CDN = "https://flagcdn.com/w80";
-const COUNTRY_FLAGS = {
-  AED: `${FLAG_CDN}/ae.png`,
-  SAR: `${FLAG_CDN}/sa.png`,
-  QAR: `${FLAG_CDN}/qa.png`,
-  KWD: `${FLAG_CDN}/kw.png`,
-  OMR: `${FLAG_CDN}/om.png`,
-  BHD: `${FLAG_CDN}/bh.png`,
-  INR: `${FLAG_CDN}/in.png`,
-  PKR: `${FLAG_CDN}/pk.png`,
+// Circular SVG flag icons (same aspect in circle for UAE, Oman, etc.)
+const CIRCLE_FLAGS_BASE = "https://hatscripts.github.io/circle-flags/flags";
+const CURRENCY_TO_ISO2 = {
+  AED: "ae",
+  SAR: "sa",
+  QAR: "qa",
+  KWD: "kw",
+  OMR: "om",
+  BHD: "bh",
+  INR: "in",
+  PKR: "pk",
 };
+function getFlagSrc(currencyCode) {
+  const iso2 = CURRENCY_TO_ISO2[currencyCode] || "ae";
+  return `${CIRCLE_FLAGS_BASE}/${iso2}.svg`;
+}
 
 function getCountryByCode(code) {
   for (const items of Object.values(REGIONS)) {
@@ -63,11 +67,11 @@ export default function CurrencySelector({ isMobileSidebar = false }) {
                       : "hover:bg-gray-50"
                   }`}
                 >
-                  <div className="w-8 h-6 rounded overflow-hidden border border-gray-200 flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
                     <img
-                      src={COUNTRY_FLAGS[code]}
+                      src={getFlagSrc(code)}
                       alt=""
-                      className="w-full h-full object-cover"
+                      className="w-full h-full"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -98,14 +102,14 @@ export default function CurrencySelector({ isMobileSidebar = false }) {
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
-          className="w-8 h-8 rounded-full overflow-hidden border border-gray-300 hover:border-black transition-colors outline-none flex-shrink-0 flex items-center justify-center"
+          className="w-8 h-8 rounded-full overflow-hidden border border-gray-300 hover:border-black transition-colors outline-none flex-shrink-0 flex items-center justify-center bg-gray-50"
           title={triggerLabel}
           aria-label={triggerLabel}
         >
           <img
-            src={COUNTRY_FLAGS[currencyInfo?.code] || COUNTRY_FLAGS.AED}
+            src={getFlagSrc(currencyInfo?.code || "AED")}
             alt=""
-            className="w-full h-full object-cover"
+            className="w-full h-full"
           />
         </button>
       </DropdownMenuTrigger>
@@ -125,11 +129,11 @@ export default function CurrencySelector({ isMobileSidebar = false }) {
                 onClick={() => changeCurrency(code)}
                 className="cursor-pointer flex items-center justify-between gap-2.5 py-2.5 px-3 rounded-none border-b border-gray-50 last:border-0 focus:bg-gray-50"
               >
-                <div className="w-8 h-6 rounded overflow-hidden border border-gray-200 flex-shrink-0">
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
                   <img
-                    src={COUNTRY_FLAGS[code]}
+                    src={getFlagSrc(code)}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="w-full h-full"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

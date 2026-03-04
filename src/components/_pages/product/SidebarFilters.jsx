@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, XIcon, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, XIcon, Search, ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import useCurrency from "@/hooks/useCurrency";
@@ -663,15 +663,6 @@ export default function SidebarFilters({
 
         return (
           <>
-            {currentCategoryId && (
-              <button
-                type="button"
-                onClick={() => setCategoryStack((prev) => prev.slice(0, -1))}
-                className="w-full text-left text-xs tracking-[0.2em] uppercase text-gray-500 hover:text-gray-700 transition-colors py-1"
-              >
-                Back
-              </button>
-            )}
             {list.map((cat) => {
               const children = categoryChildren[cat.id] || [];
               return (
@@ -686,7 +677,7 @@ export default function SidebarFilters({
                       if (nextChildren.length > 0) {
                         setCategoryStack((prev) => [
                           ...prev,
-                          { id: cat.id, path: cat.path },
+                          { id: cat.id, path: cat.path, name: cat.name },
                         ]);
                         return;
                       }
@@ -1015,17 +1006,33 @@ export default function SidebarFilters({
               {isMobile && mobileSection && (
                 <div className="fixed inset-0 z-230 bg-white flex flex-col">
                   <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
-                    <div className="text-sm font-medium tracking-[0.2em] uppercase">
-                      {mobileSection}
-                    </div>
                     <button
                       type="button"
-                      onClick={() => setMobileSection(null)}
-                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                      aria-label="Close"
+                      onClick={() => {
+                        if (mobileSection === "category" && categoryStack.length > 0) {
+                          setCategoryStack((prev) => prev.slice(0, -1));
+                        } else {
+                          setMobileSection(null);
+                        }
+                      }}
+                      className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-black transition-colors -ml-1"
+                      aria-label={
+                        mobileSection === "category" && categoryStack.length > 1
+                          ? `Back to ${categoryStack[categoryStack.length - 2]?.name ?? "category"}`
+                          : "Back"
+                      }
                     >
-                      <XIcon className="h-5 w-5" />
+                      <Undo2 className="h-5 w-5" />
+                      <span>
+                        {mobileSection === "category" && categoryStack.length > 1
+                          ? `Back to ${categoryStack[categoryStack.length - 2]?.name ?? "category"}`
+                          : "Back"}
+                      </span>
                     </button>
+                    <div className="text-sm font-medium tracking-[0.2em] uppercase text-gray-700">
+                      {mobileSection}
+                    </div>
+                    <div className="w-14" />
                   </div>
                   <div className="flex-1 overflow-y-auto px-6 py-4">
                     {mobileSection === "category" && renderCategoryContent()}
