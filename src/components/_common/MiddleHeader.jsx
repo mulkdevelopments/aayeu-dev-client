@@ -858,13 +858,18 @@ export default function MiddleHeader() {
           </Sheet>
 
           {/* Center Logo */}
-          <Link href="/" className="flex-1 flex justify-center">
+          <Link href="/" className="flex-1 flex justify-center min-w-0">
             <img
               src="/assets/images/aayeu_logo.png"
               alt="Aayeu"
               className="h-auto w-32"
             />
           </Link>
+
+          {/* Currency / Region — circular flag, before wishlist */}
+          <div className="flex-shrink-0">
+            <CurrencySelector />
+          </div>
 
           {/* Wishlist Icon */}
           <button
