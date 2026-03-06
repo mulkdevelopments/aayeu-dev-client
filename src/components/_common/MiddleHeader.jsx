@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, User, Heart, ShoppingBag, Menu, Search, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, X } from "lucide-react";
+import { User, Heart, ShoppingBag, Menu, Search, ChevronDown, ChevronRight, ChevronLeft, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -21,7 +21,7 @@ import {
 import useCart from "@/hooks/useCart";
 import useMenu from "@/hooks/useMenu";
 import useAxios from "@/hooks/useAxios";
-import CurrencySelector from "./CurrencySelector";
+import PreferencesSelector from "./PreferencesSelector";
 import NavMenuCategoryImage from "./NavMenuCategoryImage";
 import { startCase, toLower } from "lodash";
 
@@ -40,7 +40,6 @@ export default function MiddleHeader() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [isCurrencyExpanded, setIsCurrencyExpanded] = useState(false);
   const [mobileActiveCategory, setMobileActiveCategory] = useState(null);
   const [mobileRootTab, setMobileRootTab] = useState(null);
   const [hoveredCategory, setHoveredCategory] = useState(null);
@@ -125,7 +124,6 @@ export default function MiddleHeader() {
   useEffect(() => {
     if (!isSheetOpen) {
       setMobileActiveCategory(null);
-      setIsCurrencyExpanded(false);
     }
   }, [isSheetOpen, menu]);
 
@@ -334,7 +332,7 @@ export default function MiddleHeader() {
 
             {/* Right - Icons */}
             <div className="flex items-center gap-6">
-              <CurrencySelector />
+              <PreferencesSelector />
 
               <button
                 onClick={() => handleNavigation("/profile-overview", { requireAuth: true })}
@@ -743,38 +741,22 @@ export default function MiddleHeader() {
                             onClick={() => handleNavigation("/auth?type=signin", { requireAuth: false })}
                             className="w-full flex items-center justify-center gap-2 p-3 rounded-md bg-black text-white hover:bg-gray-800 transition-colors text-sm font-medium"
                           >
-                            Sign In
+                            Request Access
                           </button>
+                          {/* Register — commented out
                           <button
                             onClick={() => handleNavigation("/auth?type=signup", { requireAuth: false })}
                             className="w-full flex items-center justify-center gap-2 p-3 rounded-md border border-gray-300 text-gray-900 hover:bg-gray-50 transition-colors text-sm font-medium"
                           >
                             Register
                           </button>
+                          */}
                         </div>
                       )}
                     </div>
 
-                    <div className="border-b border-gray-200">
-                      <button
-                        onClick={() => setIsCurrencyExpanded(!isCurrencyExpanded)}
-                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Globe className="w-5 h-5 text-gray-700" />
-                          <span className="text-sm font-medium text-gray-900">Change Region</span>
-                        </div>
-                        {isCurrencyExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-gray-500" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-gray-500" />
-                        )}
-                      </button>
-                      {isCurrencyExpanded && (
-                        <div className="px-4 pb-4">
-                          <CurrencySelector isMobileSidebar={true} />
-                        </div>
-                      )}
+                    <div className="border-b border-gray-200 p-4">
+                      <PreferencesSelector isMobileSidebar={true} />
                     </div>
                   </div>
                 ) : (
@@ -866,9 +848,9 @@ export default function MiddleHeader() {
             />
           </Link>
 
-          {/* Currency / Region — circular flag, before wishlist */}
-          <div className="flex-shrink-0">
-            <CurrencySelector />
+          {/* Country & Language — hidden on mobile; show in hamburger menu only */}
+          <div className="hidden md:flex flex-shrink-0">
+            <PreferencesSelector />
           </div>
 
           {/* Wishlist Icon */}

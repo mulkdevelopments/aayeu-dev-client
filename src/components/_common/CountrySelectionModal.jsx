@@ -5,6 +5,19 @@ import useCurrency from "@/hooks/useCurrency";
 import { CURRENCIES, REGIONS } from "@/store/slices/currencySlice";
 import Link from "next/link";
 
+// ISO 3166-1 alpha-2 country code → our currency code (for auto-detect)
+const COUNTRY_TO_CURRENCY = {
+  AE: "AED", // UAE
+  SA: "SAR", // Saudi Arabia
+  QA: "QAR", // Qatar
+  KW: "KWD", // Kuwait
+  OM: "OMR", // Oman
+  BH: "BHD", // Bahrain
+  IN: "INR", // India
+  PK: "PKR", // Pakistan
+};
+const DEFAULT_CURRENCY = "AED";
+
 const REGION_INFO = {
   GCC: {
     name: "GCC",
@@ -21,14 +34,44 @@ export default function CountrySelectionModal() {
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [search, setSearch] = useState("");
+  const [autoDetectDone, setAutoDetectDone] = useState(false);
   const { changeCurrency } = useCurrency();
 
+  // Auto-detect country on first visit; set currency and never show modal
   useEffect(() => {
     const hasSelectedCountry = localStorage.getItem("hasSelectedCountry");
-    if (!hasSelectedCountry) {
-      setIsOpen(true);
-    }
-  }, []);
+    if (hasSelectedCountry || autoDetectDone) return;
+
+    let cancelled = false;
+
+    const detectAndSet = async () => {
+      try {
+        const res = await fetch("https://ipapi.co/json/", { method: "GET" });
+        if (cancelled) return;
+        const data = res.ok ? await res.json() : null;
+        const countryCode = data?.country_code?.toUpperCase?.();
+        const currency =
+          countryCode && COUNTRY_TO_CURRENCY[countryCode]
+            ? COUNTRY_TO_CURRENCY[countryCode]
+            : DEFAULT_CURRENCY;
+        if (!cancelled) {
+          changeCurrency(currency);
+          localStorage.setItem("hasSelectedCountry", "true");
+        }
+      } catch {
+        if (!cancelled) {
+          changeCurrency(DEFAULT_CURRENCY);
+          localStorage.setItem("hasSelectedCountry", "true");
+        }
+      }
+      if (!cancelled) setAutoDetectDone(true);
+    };
+
+    detectAndSet();
+    return () => {
+      cancelled = true;
+    };
+  }, [changeCurrency, autoDetectDone]);
 
   const handleRegionSelect = (regionKey) => {
     setSelectedRegion(regionKey);

@@ -32,6 +32,48 @@ export const REGIONS = {
   ],
 };
 
+// All countries flat (for searchable list, no flags)
+export const ALL_COUNTRIES = [
+  ...REGIONS.GCC,
+  ...REGIONS.Asia,
+];
+
+// Languages per country (currency code) — text only, no flags
+export const COUNTRY_LANGUAGES = {
+  AED: [
+    { code: "en", label: "English" },
+    { code: "ar", label: "العربي" },
+  ],
+  SAR: [
+    { code: "en", label: "English" },
+    { code: "ar", label: "العربي" },
+  ],
+  QAR: [
+    { code: "en", label: "English" },
+    { code: "ar", label: "العربي" },
+  ],
+  KWD: [
+    { code: "en", label: "English" },
+    { code: "ar", label: "العربي" },
+  ],
+  OMR: [
+    { code: "en", label: "English" },
+    { code: "ar", label: "العربي" },
+  ],
+  BHD: [
+    { code: "en", label: "English" },
+    { code: "ar", label: "العربي" },
+  ],
+  INR: [
+    { code: "en", label: "English" },
+    { code: "hi", label: "हिन्दी" },
+  ],
+  PKR: [
+    { code: "en", label: "English" },
+    { code: "ur", label: "اردو" },
+  ],
+};
+
 // Default fallback exchange rates (used if API fails or cache is cleared). Base: EUR.
 const DEFAULT_EXCHANGE_RATES = {
   EUR: 1,
@@ -46,7 +88,8 @@ const DEFAULT_EXCHANGE_RATES = {
 };
 
 const initialState = {
-  selectedCurrency: "AED", // Default currency
+  selectedCurrency: "AED",
+  selectedLanguage: "en",
   exchangeRates: DEFAULT_EXCHANGE_RATES,
   lastUpdated: null,
   loading: false,
@@ -59,6 +102,14 @@ const currencySlice = createSlice({
   reducers: {
     setSelectedCurrency: (state, action) => {
       state.selectedCurrency = action.payload;
+    },
+    setSelectedLanguage: (state, action) => {
+      state.selectedLanguage = action.payload;
+    },
+    setPreferences: (state, action) => {
+      const { currency, language } = action.payload || {};
+      if (currency !== undefined) state.selectedCurrency = currency;
+      if (language !== undefined) state.selectedLanguage = language;
     },
     setExchangeRates: (state, action) => {
       // Merge with default rates to ensure we always have fallback values
@@ -80,13 +131,14 @@ const currencySlice = createSlice({
   },
 });
 
-export const { setSelectedCurrency, setExchangeRates, setLoading, setError } =
+export const { setSelectedCurrency, setSelectedLanguage, setPreferences, setExchangeRates, setLoading, setError } =
   currencySlice.actions;
 
 export default currencySlice.reducer;
 
 // Selectors
 export const selectSelectedCurrency = (state) => state.currency.selectedCurrency;
+export const selectSelectedLanguage = (state) => state.currency.selectedLanguage;
 export const selectExchangeRates = (state) => state.currency.exchangeRates;
 export const selectCurrencyInfo = (state) =>
   CURRENCIES[state.currency.selectedCurrency] || CURRENCIES.AED;

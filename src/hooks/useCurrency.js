@@ -8,6 +8,7 @@ import {
   setLoading,
   setError,
   selectSelectedCurrency,
+  selectSelectedLanguage,
   selectExchangeRates,
   selectCurrencyInfo,
   selectCurrencyLoading,
@@ -23,6 +24,7 @@ export default function useCurrency() {
   const dispatch = useDispatch();
   const { request } = useAxios();
   const selectedCurrency = useSelector(selectSelectedCurrency);
+  const selectedLanguage = useSelector(selectSelectedLanguage) || "en";
   const exchangeRates = useSelector(selectExchangeRates);
   const currencyInfo = useSelector(selectCurrencyInfo);
   const loading = useSelector(selectCurrencyLoading);
@@ -77,6 +79,7 @@ export default function useCurrency() {
 
   return {
     selectedCurrency,
+    selectedLanguage,
     exchangeRates,
     currencyInfo,
     loading,
