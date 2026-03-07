@@ -47,6 +47,7 @@ export default function MiddleHeader() {
   const headerRef = useRef(null);
   const [panelTop, setPanelTop] = useState(0);
   const [brandGroups, setBrandGroups] = useState([]);
+  const [menuLoading, setMenuLoading] = useState(true);
 
   const categorizedSubCategories = useMemo(() => {
     const list = hoveredCategory?.children ? [...hoveredCategory.children] : [];
@@ -61,9 +62,12 @@ export default function MiddleHeader() {
   }, [hoveredCategory]);
 
   useEffect(() => {
-    fetchMenu().then((res) => {
-      if (res?.data?.length) setActiveCategory(res.data[0]);
-    });
+    setMenuLoading(true);
+    fetchMenu()
+      .then((res) => {
+        if (res?.data?.length) setActiveCategory(res.data[0]);
+      })
+      .finally(() => setMenuLoading(false));
   }, []);
 
   const activeCategorySlug = useMemo(() => {
@@ -303,22 +307,29 @@ export default function MiddleHeader() {
           <div className="max-w-[1440px] mx-auto px-8 h-16 flex items-center justify-between">
             {/* Left - Top Level Category Links */}
             <div className="flex items-center gap-8">
-              {menu.slice(0, 5).map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => {
-                    setActiveCategory(category);
-                    router.push(`/shop/${toLower(category.name)}/${category.id}`);
-                  }}
-                  className={`text-sm transition-colors ${
-                    activeCategory?.id === category.id
-                      ? "font-semibold text-gray-900"
-                      : "text-gray-600 hover:text-black"
-                  }`}
-                >
-                  {safeCap(category.name)}
-                </button>
-              ))}
+              {menuLoading ? (
+                <>
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-20" />
+                </>
+              ) : (
+                menu.slice(0, 5).map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      setActiveCategory(category);
+                      router.push(`/shop/${toLower(category.name)}/${category.id}`);
+                    }}
+                    className={`text-sm transition-colors ${
+                      activeCategory?.id === category.id
+                        ? "font-semibold text-gray-900"
+                        : "text-gray-600 hover:text-black"
+                    }`}
+                  >
+                    {safeCap(category.name)}
+                  </button>
+                ))
+              )}
             </div>
 
             {/* Center - Logo */}
@@ -368,61 +379,73 @@ export default function MiddleHeader() {
         <div className="max-w-[1440px] mx-auto px-8 h-12 flex items-center justify-between">
           {/* Left - Main Navigation - First active category's children */}
           <nav className="flex items-center gap-8 relative">
-            {activeCategory?.children?.slice(0, 1).map((childCategory) => (
-              <div
-                key={childCategory.id}
-                className="relative"
-                onMouseEnter={() => handleCategoryHover(childCategory)}
-                onMouseLeave={handleCategoryLeave}
-              >
-                <Link
-                  href={`/shop/${toLower(activeCategory?.name)}/${toLower(childCategory.name)}/${childCategory.id}`}
-                  className={`text-sm transition-colors whitespace-nowrap ${
-                    hoveredCategory?.id === childCategory.id
-                      ? "text-gray-600 font-medium"
-                      : "text-gray-700 hover:text-black"
-                  }`}
+            {menuLoading ? (
+              <>
+                <Skeleton className="h-4 w-14" />
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-12" />
+              </>
+            ) : (
+              <>
+                {activeCategory?.children?.slice(0, 1).map((childCategory) => (
+                  <div
+                    key={childCategory.id}
+                    className="relative"
+                    onMouseEnter={() => handleCategoryHover(childCategory)}
+                    onMouseLeave={handleCategoryLeave}
+                  >
+                    <Link
+                      href={`/shop/${toLower(activeCategory?.name)}/${toLower(childCategory.name)}/${childCategory.id}`}
+                      className={`text-sm transition-colors whitespace-nowrap ${
+                        hoveredCategory?.id === childCategory.id
+                          ? "text-gray-600 font-medium"
+                          : "text-gray-700 hover:text-black"
+                      }`}
+                    >
+                      {safeCap(childCategory.name)}
+                    </Link>
+                  </div>
+                ))}
+                <div
+                  className="relative"
+                  onMouseEnter={() => {
+                    ensureBrandGroups(activeCategorySlug);
+                    setHoveredCategory({ name: "Brands", children: [] });
+                  }}
+                  onMouseLeave={handleCategoryLeave}
                 >
-                  {safeCap(childCategory.name)}
-                </Link>
-              </div>
-            ))}
-            <div
-              className="relative"
-              onMouseEnter={() => {
-                ensureBrandGroups(activeCategorySlug);
-                setHoveredCategory({ name: "Brands", children: [] });
-              }}
-              onMouseLeave={handleCategoryLeave}
-            >
-              <Link
-                href={activeCategorySlug ? `/brands?category=${encodeURIComponent(activeCategorySlug)}` : "/brands"}
-                className="text-sm transition-colors whitespace-nowrap text-gray-700 hover:text-black"
-                onClick={() => setHoveredCategory(null)}
-              >
-                Brands
-              </Link>
-            </div>
-            {activeCategory?.children?.slice(1, 9).map((childCategory) => (
-              <div
-                key={childCategory.id}
-                className="relative"
-                onMouseEnter={() => handleCategoryHover(childCategory)}
-                onMouseLeave={handleCategoryLeave}
-              >
-                <Link
-                  href={`/shop/${toLower(activeCategory?.name)}/${toLower(childCategory.name)}/${childCategory.id}`}
-                  className={`text-sm transition-colors whitespace-nowrap ${
-                    hoveredCategory?.id === childCategory.id
-                      ? "text-gray-600 font-medium"
-                      : "text-gray-700 hover:text-black"
-                  }`}
-                >
-                  {safeCap(childCategory.name)}
-                </Link>
-              </div>
-            ))}
-
+                  <Link
+                    href={activeCategorySlug ? `/brands?category=${encodeURIComponent(activeCategorySlug)}` : "/brands"}
+                    className="text-sm transition-colors whitespace-nowrap text-gray-700 hover:text-black"
+                    onClick={() => setHoveredCategory(null)}
+                  >
+                    Brands
+                  </Link>
+                </div>
+                {activeCategory?.children?.slice(1, 9).map((childCategory) => (
+                  <div
+                    key={childCategory.id}
+                    className="relative"
+                    onMouseEnter={() => handleCategoryHover(childCategory)}
+                    onMouseLeave={handleCategoryLeave}
+                  >
+                    <Link
+                      href={`/shop/${toLower(activeCategory?.name)}/${toLower(childCategory.name)}/${childCategory.id}`}
+                      className={`text-sm transition-colors whitespace-nowrap ${
+                        hoveredCategory?.id === childCategory.id
+                          ? "text-gray-600 font-medium"
+                          : "text-gray-700 hover:text-black"
+                      }`}
+                    >
+                      {safeCap(childCategory.name)}
+                    </Link>
+                  </div>
+                ))}
+              </>
+            )}
             {/* Floating Panel for Children - MegaMenu Style */}
             {hoveredCategory && (hoveredCategory.children?.length > 0 || hoveredCategory?.name?.toLowerCase() === "brands") && (
               <div

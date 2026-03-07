@@ -48,22 +48,23 @@ export default function HeroVideoSection() {
 
   /* ------------------ RENDER ------------------ */
 
-  // Loading skeleton
+  // Loading skeleton — matches category cards area (grid + aspect-[16/9] cards)
   if (isLoading) {
     return (
       <section className="w-full bg-white">
         <div className="max-w-[1600px] mx-auto">
-          {/* Hero Banner Skeleton */}
+          {/* Hero title skeleton */}
           <div className="px-4 md:px-12 lg:px-16 py-8 md:py-12 lg:py-16">
-            <Skeleton className="h-8 md:h-10 lg:h-12 w-3/4 max-w-4xl mx-auto mb-8" />
+            <Skeleton className="h-8 md:h-10 lg:h-12 w-3/4 max-w-4xl mb-8" />
           </div>
 
-          {/* Category Cards Skeleton */}
+          {/* Category cards skeleton — same layout as real cards */}
           <div className="px-4 md:px-12 lg:px-16 pb-8 md:pb-12">
             <div className="grid gap-4 md:gap-6 sm:grid-cols-2">
               <Skeleton className="w-full aspect-[16/9] rounded-md" />
               <Skeleton className="w-full aspect-[16/9] rounded-md" />
-              <Skeleton className="w-full aspect-[16/9] rounded-md sm:col-span-2" />
+              <Skeleton className="w-full aspect-[16/9] rounded-md" />
+              <Skeleton className="w-full aspect-[16/9] rounded-md" />
             </div>
           </div>
         </div>
