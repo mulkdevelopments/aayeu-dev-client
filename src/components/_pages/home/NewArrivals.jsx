@@ -54,7 +54,13 @@ export default function NewArrivals() {
     );
   }
 
-  if (!newArrivals?.length) return null;
+  // Only show active, non-deleted products
+  const items = (newArrivals || []).filter((item) => {
+    const p = item?.product ?? item;
+    return p && p.deleted_at == null && p.is_active !== false;
+  });
+
+  if (!items.length) return null;
 
   return (
  <section className="py-8 md:py-16 bg-neutral-50 relative overflow-hidden">
@@ -77,16 +83,16 @@ export default function NewArrivals() {
           </div>
         </div>
 
-        {/* Mobile: 2-Column Grid */}
+        {/* Mobile: 2-Column Grid — show all */}
         <div className="md:hidden grid grid-cols-2 gap-3">
-          {newArrivals.slice(0, 4).map((item) => (
+          {items.map((item) => (
             <ProductCard key={item.id} product={item?.product || item} />
           ))}
         </div>
 
-        {/* Desktop: 4-Column Grid */}
+        {/* Desktop: 4-Column Grid — show all */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {newArrivals.slice(0, 4).map((item) => (
+          {items.map((item) => (
             <ProductCard key={item.id} product={item?.product || item} />
           ))}
         </div>

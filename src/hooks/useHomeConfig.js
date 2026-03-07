@@ -100,6 +100,7 @@ export default function useHomeConfig() {
       const { data, error } = await request({
         url: "/users/get-active-new-arrivals",
         method: "GET",
+        params: { limit: 500 },
       });
 
       if (error) return { error };
