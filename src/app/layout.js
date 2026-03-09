@@ -24,9 +24,13 @@ export const metadata = {
   title: "AAYEU powered by FashionTV | Defining Luxury and Quality",
   description: "AAYEU powered by FashionTV — Defining luxury and quality. Designer fashion and lifestyle ecommerce for men and women.",
   icons: {
-    icon: "/assets/images/favicon.png",
-    shortcut: "/assets/images/favicon.png",
-    apple: "/assets/images/favicon.png",
+    icon: [
+      { url: "/assets/images/favicon/16x16.jpg.jpeg", sizes: "16x16", type: "image/jpeg" },
+      { url: "/assets/images/favicon/32x32.jpg.jpeg", sizes: "32x32", type: "image/jpeg" },
+      { url: "/assets/images/favicon/48x48.jpg.jpeg", sizes: "48x48", type: "image/jpeg" },
+    ],
+    shortcut: "/assets/images/favicon/32x32.jpg.jpeg",
+    apple: "/assets/images/favicon/180x180.jpg.jpeg",
   },
 };
 
