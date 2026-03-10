@@ -23,6 +23,21 @@ function getCountryByCode(code) {
   return found ? found.country : code;
 }
 
+// Short display for button: UAE, KSA, etc.
+const COUNTRY_SHORT = {
+  AED: "UAE",
+  SAR: "KSA",
+  QAR: "Qatar",
+  KWD: "Kuwait",
+  OMR: "Oman",
+  BHD: "Bahrain",
+  INR: "India",
+  PKR: "Pakistan",
+};
+function getCountryShort(code) {
+  return COUNTRY_SHORT[code] || code;
+}
+
 function getLanguageLabel(currencyCode, langCode) {
   const list = COUNTRY_LANGUAGES[currencyCode] || COUNTRY_LANGUAGES.AED;
   const item = list.find((l) => l.code === langCode);
@@ -104,12 +119,12 @@ export default function PreferencesSelector({ isMobileSidebar = false }) {
         <button
           type="button"
           onClick={openModal}
-          className="w-full flex items-center justify-between py-3 px-3 border border-black rounded-sm text-left hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-start py-3 px-3 text-left hover:bg-gray-50 transition-colors underline"
+          style={{ fontFamily: "var(--font-raleway), sans-serif" }}
         >
-          <span className="text-sm font-medium text-black">
-            {getCountryByCode(selectedCurrency)} | {getLanguageLabel(selectedCurrency, selectedLanguage)}
+          <span className="text-sm font-normal text-black uppercase">
+            {getCountryShort(selectedCurrency)} | {selectedLanguage}
           </span>
-          <ChevronRight className="w-4 h-4 text-gray-500" />
         </button>
         <PreferencesModal {...modalProps} />
       </div>
@@ -121,13 +136,13 @@ export default function PreferencesSelector({ isMobileSidebar = false }) {
       <button
         type="button"
         onClick={openModal}
-        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-black rounded-sm text-sm font-medium text-black hover:bg-gray-50 transition-colors min-w-[140px]"
+        className="inline-flex items-center justify-center px-3 py-2 text-sm font-normal text-black hover:bg-gray-50 transition-colors min-w-0 underline"
+        style={{ fontFamily: "var(--font-raleway), sans-serif" }}
         aria-label="Select country and language"
       >
-        <span className="truncate">
-          {getCountryByCode(selectedCurrency)} | {getLanguageLabel(selectedCurrency, selectedLanguage)}
+        <span className="truncate uppercase">
+          {getCountryShort(selectedCurrency)} | {selectedLanguage}
         </span>
-        <ChevronRight className="w-4 h-4 flex-shrink-0 text-gray-500" />
       </button>
       <PreferencesModal {...modalProps} />
     </>

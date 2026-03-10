@@ -1,5 +1,5 @@
 // app/layout.tsx
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Poppins, Raleway } from "next/font/google";
 import "../styles/globals.css";
 import AppProviders from "@/providers/AppProviders";
 import Script from "next/script";
@@ -17,6 +17,12 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-inter",
+  display: "swap",
+});
+const raleway = Raleway({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-raleway",
   display: "swap",
 });
 
@@ -37,7 +43,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${poppins.className} ${inter.variable} antialiased`}>
+      <body className={`${poppins.className} ${inter.variable} ${raleway.variable} antialiased`}>
         {/* GA SCRIPT */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
