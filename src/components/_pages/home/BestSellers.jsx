@@ -19,8 +19,14 @@ export default function BestSellers() {
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
+  const INITIAL_COUNT = 4;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const displayedItems = bestSellers.slice(0, visibleCount);
+  const hasMore = bestSellers.length > visibleCount;
+  const showViewMore = hasMore && bestSellers.length > INITIAL_COUNT;
 
   useEffect(() => {
     let isMounted = true;
@@ -118,7 +124,7 @@ export default function BestSellers() {
         {/* Mobile: Horizontal Scroll */}
         <div className="md:hidden overflow-x-auto px-4 pb-4 scrollbar-hide">
           <div className="flex gap-4">
-            {bestSellers.map((bs, idx) => {
+            {displayedItems.map((bs, idx) => {
             const product = bs?.product ?? bs;
             const variant = resolveVariant(product);
 
@@ -253,7 +259,7 @@ export default function BestSellers() {
         {/* Desktop: Grid */}
         <div className="hidden md:block px-8">
           <div className="grid grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {bestSellers.map((bs, idx) => {
+            {displayedItems.map((bs, idx) => {
               const product = bs?.product ?? bs;
               const variant = resolveVariant(product);
 
@@ -383,7 +389,31 @@ export default function BestSellers() {
               );
             })}
           </div>
+          {showViewMore && (
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((prev) => Math.min(prev + 4, bestSellers.length))}
+                className="px-6 py-3 border border-black text-sm font-medium text-black hover:bg-black hover:text-white transition-colors"
+              >
+                View more
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Mobile: View more button */}
+        {showViewMore && (
+          <div className="md:hidden mt-6 px-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => Math.min(prev + 4, bestSellers.length))}
+              className="px-6 py-3 border border-black text-sm font-medium text-black hover:bg-black hover:text-white transition-colors"
+            >
+              View more
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

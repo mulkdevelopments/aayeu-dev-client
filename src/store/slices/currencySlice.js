@@ -91,6 +91,7 @@ const initialState = {
   selectedCurrency: "AED",
   selectedLanguage: "en",
   exchangeRates: DEFAULT_EXCHANGE_RATES,
+  customDuties: {}, // e.g. { INR: 42, PKR: 30 } — duty % per currency for display
   lastUpdated: null,
   loading: false,
   error: null,
@@ -117,6 +118,9 @@ const currencySlice = createSlice({
         ...DEFAULT_EXCHANGE_RATES,
         ...(action.payload.rates || {}),
       };
+      if (action.payload.duties && typeof action.payload.duties === "object") {
+        state.customDuties = action.payload.duties;
+      }
       state.lastUpdated = action.payload.updated_at;
       state.loading = false;
       state.error = null;
@@ -140,30 +144,32 @@ export default currencySlice.reducer;
 export const selectSelectedCurrency = (state) => state.currency.selectedCurrency;
 export const selectSelectedLanguage = (state) => state.currency.selectedLanguage;
 export const selectExchangeRates = (state) => state.currency.exchangeRates;
+export const selectCustomDuties = (state) => state.currency.customDuties || {};
 export const selectCurrencyInfo = (state) =>
   CURRENCIES[state.currency.selectedCurrency] || CURRENCIES.AED;
 export const selectCurrencyLoading = (state) => state.currency.loading;
 export const selectCurrencyLastUpdated = (state) => state.currency.lastUpdated;
 
-// Helper function to convert EUR price to selected currency
-export const convertPrice = (eurPrice, selectedCurrency, exchangeRates) => {
+// Helper function to convert EUR price to selected currency (includes custom duty if set)
+export const convertPrice = (eurPrice, selectedCurrency, exchangeRates, customDuties = {}) => {
   if (!eurPrice || eurPrice === 0) return 0;
 
-  // Fallback to default rates if exchangeRates is null/undefined
   const rates = exchangeRates || DEFAULT_EXCHANGE_RATES;
-
-  // Get rate with fallback to default for that currency
   const rate = rates[selectedCurrency] || DEFAULT_EXCHANGE_RATES[selectedCurrency] || 1;
+  let amount = eurPrice * rate;
 
-  // Round to nearest whole number
-  return Math.round(eurPrice * rate);
+  const dutyPercent = customDuties[selectedCurrency];
+  if (dutyPercent != null && Number(dutyPercent) > 0) {
+    amount = amount * (1 + Number(dutyPercent) / 100);
+  }
+
+  return Math.round(amount);
 };
 
-// Helper function to format price with currency symbol
-export const formatPrice = (eurPrice, selectedCurrency, exchangeRates) => {
-  const convertedPrice = convertPrice(eurPrice, selectedCurrency, exchangeRates);
+// Helper function to format price with currency symbol (includes duty when set)
+export const formatPrice = (eurPrice, selectedCurrency, exchangeRates, customDuties = {}) => {
+  const convertedPrice = convertPrice(eurPrice, selectedCurrency, exchangeRates, customDuties);
 
-  // Fallback to AED if currency is invalid
   const currencyInfo = CURRENCIES[selectedCurrency] || CURRENCIES.AED;
 
   return `${currencyInfo.symbol}${convertedPrice}`;

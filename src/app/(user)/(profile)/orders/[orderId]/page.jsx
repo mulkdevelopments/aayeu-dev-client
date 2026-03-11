@@ -7,6 +7,7 @@ import useAxios from "@/hooks/useAxios";
 import dayjs from "dayjs";
 import ReviewSection from "@/components/_pages/order-details/ReviewSection";
 import { useSelector } from "react-redux";
+import { selectCustomDuties } from "@/store/slices/currencySlice";
 import axiosInstance from "@/utils/axiosInstance";
 import { slugifyProductName } from "@/utils/seoHelpers";
 import Link from "next/link";
@@ -27,6 +28,7 @@ export default function OrderDetailsPage() {
   const [downloading, setDownloading] = useState(false);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const { isAuthenticated, token } = useSelector((state) => state.auth);
+  const customDuties = useSelector(selectCustomDuties) || {};
 
   // ✅ Fetch order details
   const fetchOrderDetails = async () => {
@@ -98,11 +100,16 @@ export default function OrderDetailsPage() {
       </div>
     );
 
-  // Use order's original currency
+  // Use order's original currency with duty-inclusive display
   const orderCurrency = order.currency_symbol || order.currency || "€";
-  const formatPrice = (price) => {
-    if (!price) return `${orderCurrency}0.00`;
-    return `${orderCurrency}${Number(price).toFixed(2)}`;
+  const orderCurrencyCode = order.currency || "AED";
+  const dutyPercent = customDuties[orderCurrencyCode] || 0;
+  const formatPrice = (eurAmount) => {
+    if (eurAmount == null) return `${orderCurrency}0.00`;
+    const rate = Number(order.exchange_rate) || 1;
+    let display = Number(eurAmount) * rate;
+    if (dutyPercent > 0) display = display * (1 + dutyPercent / 100);
+    return `${orderCurrency}${display.toFixed(2)}`;
   };
 
   const shipping = order.shipping_address || {};
@@ -256,12 +263,12 @@ export default function OrderDetailsPage() {
                     </div>
                     <div>
                       <span className="text-gray-500 text-xs block">Price</span>
-                      <p className="font-medium">{formatPrice(item.price * order.exchange_rate || 0)}</p>
+                      <p className="font-medium">{formatPrice(item.price)}</p>
                     </div>
                     <div>
                       <span className="text-gray-500 text-xs block">Subtotal</span>
                       <p className="font-semibold text-[#c38e1e]">
-                        {formatPrice((item.price * order.exchange_rate || 0) * (item.qty || 1))}
+                        {formatPrice((item.price || 0) * (item.qty || 1))}
                       </p>
                     </div>
                   </div>
@@ -303,12 +310,12 @@ export default function OrderDetailsPage() {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between text-gray-700">
               <span>Subtotal:</span>
-              <span className="font-medium">{formatPrice(order.total_amount * order.exchange_rate || 0)}</span>
+              <span className="font-medium">{formatPrice(order.total_amount)}</span>
             </div>
             {order.discount && order.discount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount{order.coupon_code && ` (${order.coupon_code})`}:</span>
-                <span className="font-medium">{formatPrice(order.discount * order.exchange_rate)}</span>
+                <span className="font-medium">{formatPrice(order.discount)}</span>
               </div>
             )}
 
@@ -323,7 +330,7 @@ export default function OrderDetailsPage() {
             <div className="flex justify-between text-base font-semibold text-gray-900">
               <span>Total Paid:</span>
               <span className="text-[#c38e1e]">
-                {formatPrice(orderTotal * order.exchange_rate)}
+                {formatPrice(orderTotal)}
               </span>
             </div>
           </div>

@@ -3,18 +3,26 @@
 import Link from "next/link";
 import React from "react";
 import dayjs from "dayjs";
+import { useSelector } from "react-redux";
+import { selectCustomDuties } from "@/store/slices/currencySlice";
 import { slugifyProductName } from "@/utils/seoHelpers";
 import CTAButton from "../_common/CTAButton";
 import _ from "lodash";
 
 function OrderCard({ order }) {
+  const customDuties = useSelector(selectCustomDuties) || {};
   if (!order) return null;
 
-  // Use order's original currency (stored when order was placed)
+  // Use order's original currency with duty-inclusive display
   const orderCurrency = order.currency_symbol || order.currency || "€";
-  const formatOrderPrice = (price) => {
-    if (!price) return `${orderCurrency}0.00`;
-    return `${orderCurrency}${Number(price).toFixed(2)}`;
+  const orderCurrencyCode = order.currency || "AED";
+  const dutyPercent = customDuties[orderCurrencyCode] || 0;
+  const formatOrderPrice = (eurAmount) => {
+    if (eurAmount == null) return `${orderCurrency}0.00`;
+    const rate = Number(order.exchange_rate) || 1;
+    let display = Number(eurAmount) * rate;
+    if (dutyPercent > 0) display = display * (1 + dutyPercent / 100);
+    return `${orderCurrency}${display.toFixed(2)}`;
   };
 
   const items = order?.items || [];
@@ -145,7 +153,7 @@ function OrderCard({ order }) {
           <div className="flex flex-col">
             <span className="text-gray-500 text-xs mb-1">Total Paid</span>
             <span className="text-[#c38e1e] font-semibold text-base">
-              {formatOrderPrice(orderTotal * order.exchange_rate )}
+              {formatOrderPrice(orderTotal)}
             </span>
           </div>
         </div>

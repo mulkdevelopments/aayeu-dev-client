@@ -10,6 +10,7 @@ import {
   selectSelectedCurrency,
   selectSelectedLanguage,
   selectExchangeRates,
+  selectCustomDuties,
   selectCurrencyInfo,
   selectCurrencyLoading,
   selectCurrencyLastUpdated,
@@ -26,55 +27,55 @@ export default function useCurrency() {
   const selectedCurrency = useSelector(selectSelectedCurrency);
   const selectedLanguage = useSelector(selectSelectedLanguage) || "en";
   const exchangeRates = useSelector(selectExchangeRates);
+  const customDuties = useSelector(selectCustomDuties);
   const currencyInfo = useSelector(selectCurrencyInfo);
   const loading = useSelector(selectCurrencyLoading);
   const lastUpdated = useSelector(selectCurrencyLastUpdated);
 
-  // Fetch exchange rates on mount
-  useEffect(() => {
-    if (loading || lastUpdated || ratesFetchInFlight) return;
-    fetchExchangeRates();
-  }, [loading, lastUpdated]);
-  
   const fetchExchangeRates = async () => {
     if (ratesFetchInFlight) return;
     ratesFetchInFlight = true;
     try {
       dispatch(setLoading(true));
-      const response = await request({
+      const result = await request({
         url: "/currency/rates",
         method: "GET",
       });
-
-      if (response.success && response.data) {
+      const body = result?.data;
+      const payload = body?.data ?? body;
+      if (body?.success && payload?.rates) {
         dispatch(
           setExchangeRates({
-            rates: response.data.rates,
-            updated_at: response.data.updated_at,
+            rates: payload.rates,
+            duties: payload.duties != null && typeof payload.duties === "object" ? payload.duties : {},
+            updated_at: payload.updated_at,
           })
         );
       }
     } catch (error) {
       console.error("Failed to fetch exchange rates:", error);
-      console.warn("Using default fallback exchange rates");
-      dispatch(setError(error.message));
-      // Note: Default rates (EUR:1, AED:4.3, INR:105, PKR:328) are already set in Redux
-      // So even if API fails, prices will still display correctly with fallback rates
+      dispatch(setError(error?.message));
     } finally {
       ratesFetchInFlight = false;
     }
   };
+
+  // Fetch rates + duties on mount so frontend reflects admin duty changes (no skip when persisted lastUpdated)
+  useEffect(() => {
+    fetchExchangeRates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount
+  }, []);
 
   const changeCurrency = (currencyCode) => {
     dispatch(setSelectedCurrency(currencyCode));
   };
 
   const convert = (eurPrice) => {
-    return convertPrice(eurPrice, selectedCurrency, exchangeRates);
+    return convertPrice(eurPrice, selectedCurrency, exchangeRates, customDuties);
   };
 
   const format = (eurPrice) => {
-    return formatPrice(eurPrice, selectedCurrency, exchangeRates);
+    return formatPrice(eurPrice, selectedCurrency, exchangeRates, customDuties);
   };
 
   return {

@@ -119,10 +119,10 @@ export default function PreferencesSelector({ isMobileSidebar = false }) {
         <button
           type="button"
           onClick={openModal}
-          className="w-full flex items-center justify-start py-3 px-3 text-left hover:bg-gray-50 transition-colors underline"
+          className="w-full flex items-center justify-start py-3 px-3 text-left hover:bg-gray-50 transition-colors hover:underline"
           style={{ fontFamily: "var(--font-raleway), sans-serif" }}
         >
-          <span className="text-sm font-normal text-black uppercase">
+          <span className="text-base font-normal text-black uppercase">
             {getCountryShort(selectedCurrency)} | {selectedLanguage}
           </span>
         </button>
@@ -136,7 +136,7 @@ export default function PreferencesSelector({ isMobileSidebar = false }) {
       <button
         type="button"
         onClick={openModal}
-        className="inline-flex items-center justify-center px-3 py-2 text-sm font-normal text-black hover:bg-gray-50 transition-colors min-w-0 underline"
+        className="inline-flex items-center justify-center px-3 py-2 text-base font-normal text-black hover:bg-gray-50 transition-colors min-w-0 hover:underline"
         style={{ fontFamily: "var(--font-raleway), sans-serif" }}
         aria-label="Select country and language"
       >
