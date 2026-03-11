@@ -44,7 +44,7 @@ export default function BrandsPage() {
   const [allBrands, setAllBrands] = useState([]);
   const [search, setSearch] = useState("");
   const [activeLetter, setActiveLetter] = useState(initialLetter);
-  const lastCategoryRef = useRef("");
+  const lastCategoryRef = useRef(null);
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -64,7 +64,7 @@ export default function BrandsPage() {
       }
     };
     const nextCategory = categoryParam || "";
-    if (lastCategoryRef.current === nextCategory) return;
+    if (lastCategoryRef.current !== null && lastCategoryRef.current === nextCategory) return;
     lastCategoryRef.current = nextCategory;
     fetchBrands();
   }, [categoryParam]);

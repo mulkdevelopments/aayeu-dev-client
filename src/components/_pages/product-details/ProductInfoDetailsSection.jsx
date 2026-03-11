@@ -472,6 +472,7 @@ const ProductInfoDetailsSection = forwardRef(
                 <span className="text-red-600 font-semibold">
                   {displayPrice.price ? format(displayPrice.price) : "—"}
                 </span>
+                <span className="text-xs text-gray-500">Import duties included</span>
               </div>
               {displayPrice.discountPct && (
                 <div className="text-xs text-red-600 font-medium">
