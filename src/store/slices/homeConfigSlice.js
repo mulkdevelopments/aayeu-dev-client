@@ -60,8 +60,20 @@ const homeConfigSlice = createSlice({
       state.timestamps.bestSellers = Date.now();
     },
 
+    appendBestSellers(state, action) {
+      const next = Array.isArray(action.payload) ? action.payload : [];
+      state.bestSellers = (state.bestSellers || []).concat(next);
+      state.timestamps.bestSellers = Date.now();
+    },
+
     setNewArrivals(state, action) {
       state.newArrivals = Array.isArray(action.payload) ? action.payload : [];
+      state.timestamps.newArrivals = Date.now();
+    },
+
+    appendNewArrivals(state, action) {
+      const next = Array.isArray(action.payload) ? action.payload : [];
+      state.newArrivals = (state.newArrivals || []).concat(next);
       state.timestamps.newArrivals = Date.now();
     },
 
@@ -99,7 +111,9 @@ const homeConfigSlice = createSlice({
 export const {
   setHomeConfig,
   setBestSellers,
+  appendBestSellers,
   setNewArrivals,
+  appendNewArrivals,
   setProductOverlayHome,
   setSaleSection,
   setBrandSpotlights,

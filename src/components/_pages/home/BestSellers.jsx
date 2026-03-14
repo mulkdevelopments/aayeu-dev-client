@@ -1,114 +1,100 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Heart } from "lucide-react";
-import { slugifyProductName } from "@/utils/seoHelpers";
-import STATIC from "@/utils/constants";
+import ProductCard from "@/components/_cards/ProductCard";
 import useHomeConfig from "@/hooks/useHomeConfig";
-import useCurrency from "@/hooks/useCurrency";
-import useWishlist from "@/hooks/useWishlist";
-import { useSelector } from "react-redux";
-import { showToast } from "@/providers/ToastProvider";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const INITIAL_LIMIT = 4;
+const NEXT_PAGE_LIMIT = 4;
+
 export default function BestSellers() {
-  const router = useRouter();
   const { bestSellers, fetchBestSellers } = useHomeConfig();
-  const { format } = useCurrency();
-  const { toggleWishlist, isWishlisted } = useWishlist();
-  const { isAuthenticated } = useSelector((state) => state.auth);
-
-  const INITIAL_COUNT = 4;
-  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreSentinelRef = useRef(null);
 
-  const displayedItems = bestSellers.slice(0, visibleCount);
-  const hasMore = bestSellers.length > visibleCount;
-  const showViewMore = hasMore && bestSellers.length > INITIAL_COUNT;
-
+  // Initial load: 4 items
   useEffect(() => {
-    let isMounted = true;
-    if (bestSellers.length > 0) {
-      setIsLoading(false);
-      return;
-    }
     setIsLoading(true);
-    fetchBestSellers()
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
+    setPage(1);
+    setHasMore(true);
+    fetchBestSellers({ limit: INITIAL_LIMIT, page: 1 })
+      .then((res) => {
+        if (res?.data?.length !== undefined)
+          setHasMore(res.data.length >= INITIAL_LIMIT);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const goToProduct = (product) => {
-    const id =
-      product?.product?.id ?? product?.product?.pid ?? product?.productid;
-    const name = product?.product?.name ?? product?.product?.title ?? "product";
-    if (id) {
-      router.push(`/shop/product/${slugifyProductName(name)}/${id}`);
-    }
-  };
+  // Load next page when sentinel is visible (user scrolled near end)
+  const loadNext = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    fetchBestSellers({ limit: NEXT_PAGE_LIMIT, page: nextPage, append: true })
+      .then((res) => {
+        const count = res?.data?.length ?? 0;
+        setHasMore(count >= NEXT_PAGE_LIMIT);
+        setPage(nextPage);
+      })
+      .finally(() => setLoadingMore(false));
+  }, [page, hasMore, loadingMore, fetchBestSellers]);
 
-  const resolveVariant = (prod) => {
-    const variants = prod?.variants ?? prod?.product?.variants ?? [];
-    return variants[0] ?? {};
-  };
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadNext();
+      },
+      { root: null, rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadNext]);
+
+  // Only show active, non-deleted products
+  const items = (bestSellers || []).filter((item) => {
+    const p = item?.product ?? item;
+    return p && p.deleted_at == null && p.is_active !== false;
+  });
 
   // Loading skeleton
   if (isLoading) {
     return (
       <section className="w-full bg-white py-12 md:py-16">
         <div className="max-w-[1440px] mx-auto">
-          {/* Header Skeleton */}
           <div className="mb-8 px-4 md:px-8">
-            <Skeleton className="h-10 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-10 w-64 mb-2" />
           </div>
 
-          {/* Mobile: Horizontal Scroll Skeleton */}
-          <div className="md:hidden overflow-x-auto px-4 pb-4 scrollbar-hide">
-            <div className="flex gap-4">
-              {[...Array(8)].map((_, idx) => (
-                <div key={idx} className="flex flex-col flex-shrink-0 w-[170px]">
-                  <Skeleton className="aspect-[3/4] w-full mb-3" />
-                  <Skeleton className="h-3 w-20 mb-1" />
-                  <Skeleton className="h-4 w-32 mb-1" />
-                  <Skeleton className="h-4 w-40 mb-2" />
-                  <Skeleton className="h-5 w-24" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Desktop: Grid Skeleton */}
-          <div className="hidden md:block px-8">
-            <div className="grid grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {[...Array(8)].map((_, idx) => (
-                <div key={idx} className="flex flex-col">
-                  <Skeleton className="aspect-[3/4] w-full mb-3" />
-                  <Skeleton className="h-3 w-20 mb-1" />
-                  <Skeleton className="h-4 w-32 mb-1" />
-                  <Skeleton className="h-4 w-40 mb-2" />
-                  <Skeleton className="h-5 w-24" />
-                </div>
-              ))}
-            </div>
+          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 scrollbar-thin">
+            {[...Array(4)].map((_, idx) => (
+              <div
+                key={idx}
+                className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72 flex flex-col"
+              >
+                <Skeleton className="aspect-[3/4] w-full mb-3 rounded-md" />
+                <Skeleton className="h-3 w-20 mb-1 rounded" />
+                <Skeleton className="h-4 w-32 mb-1 rounded" />
+                <Skeleton className="h-4 w-full mb-2 rounded" />
+                <Skeleton className="h-5 w-24 rounded" />
+              </div>
+            ))}
           </div>
         </div>
       </section>
     );
   }
 
-  if (!bestSellers.length) return null;
+  if (!items.length) return null;
 
   return (
     <section className="w-full bg-white py-12 md:py-16">
       <div className="max-w-[1440px] mx-auto">
-        {/* Header */}
         <div className="mb-8 px-4 md:px-8">
           <h2
             className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-black mb-2 text-left leading-tight tracking-tight"
@@ -116,304 +102,38 @@ export default function BestSellers() {
           >
             Trending: Most Loved Pieces
           </h2>
-          <p className="text-sm text-gray-600 text-left" style={{ fontFamily: "'Inter', sans-serif" }}>
-
-          </p>
         </div>
 
-        {/* Mobile: Horizontal Scroll */}
-        <div className="md:hidden overflow-x-auto px-4 pb-4 scrollbar-hide">
-          <div className="flex gap-4">
-            {displayedItems.map((bs, idx) => {
-            const product = bs?.product ?? bs;
-            const variant = resolveVariant(product);
-
-            const images = variant?.images ?? [];
-            const primaryImage =
-              images[0] ||
-              product?.product_img ||
-              STATIC.IMAGES.IMAGE_NOT_AVAILABLE;
-            const hoverImage = images[1] || primaryImage;
-
-            const name =
-              product?.name ??
-              product?.title ??
-              product?.product_sku ??
-              "Product";
-
-            const brand = product?.brand_name ?? product?.brand ?? "";
-            const category = product?.categories?.[0]?.name ?? "";
-
-            const price = variant?.price ?? product?.price ?? null;
-            const mrp = variant?.mrp ?? product?.mrp ?? null;
-
-            let discountPercent = 0;
-            if (mrp && price && mrp > price) {
-              discountPercent = Math.round(((mrp - price) / mrp) * 100);
-            }
-
-            const productId =
-              product?.id ?? product?.pid ?? product?.productid ?? idx;
-
-            const isHovered = hoveredIndex === idx;
-
-            const handleWishlistClick = (e) => {
-              e.stopPropagation();
-              if (!isAuthenticated) {
-                showToast("info", "Please login to manage your wishlist");
-                return;
-              }
-              toggleWishlist(productId);
-            };
-
-            return (
-              <div
-                key={productId}
-                onClick={() => goToProduct(bs)}
-                onMouseEnter={() => setHoveredIndex(idx)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className="group relative flex flex-col cursor-pointer flex-shrink-0 w-[170px]"
-              >
-                {/* Image Section */}
-                <div className="relative w-full overflow-hidden bg-gray-50 aspect-[3/4]">
-                  {/* Wishlist Button */}
-                  <button
-                    className="absolute top-3 right-3 z-30 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
-                    onClick={handleWishlistClick}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    <Heart
-                      size={18}
-                      className="transition-colors"
-                      fill={isWishlisted(productId) ? "black" : "none"}
-                      stroke={isWishlisted(productId) ? "black" : "#666"}
-                      strokeWidth={1.5}
-                    />
-                  </button>
-
-                  {/* Product Images */}
-                  <div className="relative w-full h-full">
-                    <img
-                      src={primaryImage}
-                      alt={name}
-                      loading="lazy"
-                      decoding="async"
-                      className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
-                        isHovered ? "opacity-0" : "opacity-100"
-                      }`}
-                    />
-                    <img
-                      src={hoverImage}
-                      alt={name}
-                      loading="lazy"
-                      decoding="async"
-                      className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
-                        isHovered ? "opacity-100" : "opacity-0"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {/* Product Info */}
-                <div className="flex flex-col pt-3 pb-2">
-                  {/* Category Label */}
-                  {category && (
-                    <span className="text-xs text-gray-500 mb-1">
-                      {category}
-                    </span>
-                  )}
-
-                  {/* Brand Name */}
-                  <h3 className="text-sm font-semibold text-black mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>
-                    {brand}
-                  </h3>
-
-                  {/* Product Title */}
-                  <p className="text-sm text-gray-700 mb-2 line-clamp-1">
-                    {name}
-                  </p>
-
-                  {/* Price Section */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base font-semibold text-black">
-                      {price !== null ? format(price) : "N/A"}
-                    </span>
-                    {mrp && mrp > price && (
-                      <>
-                        <span className="text-sm line-through text-gray-400">
-                          {format(mrp)}
-                        </span>
-                        <span className="text-xs text-red-600 font-medium">
-                          {discountPercent}% off
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-            })}
-          </div>
-        </div>
-
-        {/* Desktop: Grid */}
-        <div className="hidden md:block px-8">
-          <div className="grid grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {displayedItems.map((bs, idx) => {
-              const product = bs?.product ?? bs;
-              const variant = resolveVariant(product);
-
-              const images = variant?.images ?? [];
-              const primaryImage =
-                images[0] ||
-                product?.product_img ||
-                STATIC.IMAGES.IMAGE_NOT_AVAILABLE;
-              const hoverImage = images[1] || primaryImage;
-
-              const name =
-                product?.name ??
-                product?.title ??
-                product?.product_sku ??
-                "Product";
-
-              const brand = product?.brand_name ?? product?.brand ?? "";
-              const category = product?.categories?.[0]?.name ?? "";
-
-              const price = variant?.price ?? product?.price ?? null;
-              const mrp = variant?.mrp ?? product?.mrp ?? null;
-
-              let discountPercent = 0;
-              if (mrp && price && mrp > price) {
-                discountPercent = Math.round(((mrp - price) / mrp) * 100);
-              }
-
-              const productId =
-                product?.id ?? product?.pid ?? product?.productid ?? idx;
-
-              const isHovered = hoveredIndex === idx;
-
-              const handleWishlistClick = (e) => {
-                e.stopPropagation();
-                if (!isAuthenticated) {
-                  showToast("info", "Please login to manage your wishlist");
-                  return;
-                }
-                toggleWishlist(productId);
-              };
-
-              return (
-                <div
-                  key={productId}
-                  onClick={() => goToProduct(bs)}
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  className="group relative flex flex-col cursor-pointer"
-                >
-                  {/* Image Section */}
-                  <div className="relative w-full overflow-hidden bg-gray-50 aspect-[3/4]">
-                    {/* Wishlist Button */}
-                    <button
-                      className="absolute top-3 right-3 z-30 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
-                      onClick={handleWishlistClick}
-                      onMouseDown={(e) => e.preventDefault()}
-                    >
-                      <Heart
-                        size={18}
-                        className="transition-colors"
-                        fill={isWishlisted(productId) ? "black" : "none"}
-                        stroke={isWishlisted(productId) ? "black" : "#666"}
-                        strokeWidth={1.5}
-                      />
-                    </button>
-
-                    {/* Product Images */}
-                    <div className="relative w-full h-full">
-                      <img
-                        src={primaryImage}
-                        alt={name}
-                      loading="lazy"
-                      decoding="async"
-                        className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
-                          isHovered ? "opacity-0" : "opacity-100"
-                        }`}
-                      />
-                      <img
-                        src={hoverImage}
-                        alt={name}
-                      loading="lazy"
-                      decoding="async"
-                        className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
-                          isHovered ? "opacity-100" : "opacity-0"
-                        }`}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="flex flex-col pt-3 pb-2">
-                    {/* Category Label */}
-                    {category && (
-                      <span className="text-xs text-gray-500 mb-1">
-                        {category}
-                      </span>
-                    )}
-
-                    {/* Brand Name */}
-                    <h3 className="text-sm font-semibold text-black mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>
-                      {brand}
-                    </h3>
-
-                    {/* Product Title */}
-                    <p className="text-sm text-gray-700 mb-2 line-clamp-1">
-                      {name}
-                    </p>
-
-                    {/* Price Section */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-base font-semibold text-black">
-                        {price !== null ? format(price) : "N/A"}
-                      </span>
-                      {mrp && mrp > price && (
-                        <>
-                          <span className="text-sm line-through text-gray-400">
-                            {format(mrp)}
-                          </span>
-                          <span className="text-xs text-red-600 font-medium">
-                            {discountPercent}% off
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {showViewMore && (
-            <div className="mt-8 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setVisibleCount((prev) => Math.min(prev + 4, bestSellers.length))}
-                className="px-6 py-3 border border-black text-sm font-medium text-black hover:bg-black hover:text-white transition-colors"
-              >
-                View more
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile: View more button */}
-        {showViewMore && (
-          <div className="md:hidden mt-6 px-4 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setVisibleCount((prev) => Math.min(prev + 4, bestSellers.length))}
-              className="px-6 py-3 border border-black text-sm font-medium text-black hover:bg-black hover:text-white transition-colors"
+        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 scrollbar-thin">
+          {items.map((item) => (
+            <div
+              key={item.best_seller_id ?? item.id ?? item?.product?.id}
+              className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72"
             >
-              View more
-            </button>
-          </div>
-        )}
+              <ProductCard product={item?.product ?? item} />
+            </div>
+          ))}
+          {hasMore && (
+            <div
+              ref={loadMoreSentinelRef}
+              className="flex-shrink-0 w-1 min-w-[1px] h-1 self-center"
+              aria-hidden
+            />
+          )}
+          {loadingMore &&
+            [...Array(NEXT_PAGE_LIMIT)].map((_, idx) => (
+              <div
+                key={`skeleton-${idx}`}
+                className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72 flex flex-col"
+              >
+                <Skeleton className="aspect-[3/4] w-full mb-3 rounded-md" />
+                <Skeleton className="h-3 w-20 mb-1 rounded" />
+                <Skeleton className="h-4 w-32 mb-1 rounded" />
+                <Skeleton className="h-4 w-full mb-2 rounded" />
+                <Skeleton className="h-5 w-24 rounded" />
+              </div>
+            ))}
+        </div>
       </div>
     </section>
   );

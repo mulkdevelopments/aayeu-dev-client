@@ -5,7 +5,9 @@ import useAxios from "@/hooks/useAxios";
 import {
   setHomeConfig,
   setBestSellers,
+  appendBestSellers,
   setNewArrivals,
+  appendNewArrivals,
   setProductOverlayHome,
   setSaleSection,
   setBrandSpotlights,
@@ -63,17 +65,20 @@ export default function useHomeConfig() {
   );
 
   /* -----------------------------------
-       Best Sellers
+       Best Sellers (paginated: initial 4, fetch next when needed)
   -------------------------------------- */
   const fetchBestSellers = useCallback(
-    async ({ force = false } = {}) => {
+    async ({ force = false, limit = 4, page = 1, append = false } = {}) => {
       const last = timestamps.bestSellers;
-      if (!force && last && Date.now() - last < CACHE_TIME)
-        return { cached: true, data: config.bestSellers };
+      const useCache =
+        !force && !append && page === 1 && last && Date.now() - last < CACHE_TIME;
+
+      if (useCache) return { cached: true, data: config.bestSellers };
 
       const { data, error } = await request({
         url: "/users/get-active-best-sellers",
         method: "GET",
+        params: { limit, page },
       });
 
       if (error) return { error };
@@ -81,36 +86,43 @@ export default function useHomeConfig() {
       const payload = data?.data ?? data ?? [];
       const arr = Array.isArray(payload) ? payload : payload?.items ?? [];
 
-      dispatch(setBestSellers(arr));
+      if (append) {
+        dispatch(appendBestSellers(arr));
+      } else {
+        dispatch(setBestSellers(arr));
+      }
       return { data: arr };
     },
     [timestamps.bestSellers, request, config.bestSellers, dispatch]
   );
 
   /* -----------------------------------
-       New Arrivals
+       New Arrivals (paginated: initial 4, fetch next when needed)
   -------------------------------------- */
   const fetchNewArrivals = useCallback(
-    async ({ force = false } = {}) => {
+    async ({ force = false, limit = 4, page = 1, append = false } = {}) => {
       const last = timestamps.newArrivals;
+      const useCache = !force && !append && page === 1 && last && Date.now() - last < CACHE_TIME;
 
-      if (!force && last && Date.now() - last < CACHE_TIME)
-        return { cached: true, data: config.newArrivals };
+      if (useCache) return { cached: true, data: config.newArrivals };
 
       const { data, error } = await request({
         url: "/users/get-active-new-arrivals",
         method: "GET",
-        params: { limit: 500 },
+        params: { limit, page },
       });
 
       if (error) return { error };
 
       const payload =
         data?.data?.items ?? data?.items ?? data?.data ?? data ?? [];
-
       const arr = Array.isArray(payload) ? payload : payload?.items ?? [];
 
-      dispatch(setNewArrivals(arr));
+      if (append) {
+        dispatch(appendNewArrivals(arr));
+      } else {
+        dispatch(setNewArrivals(arr));
+      }
       return { data: arr };
     },
     [timestamps.newArrivals, request, config.newArrivals, dispatch]
