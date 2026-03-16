@@ -29,7 +29,9 @@ export default function HeroVideoSection() {
           title: s.title || "",
           description: s.description || "",
           image: s.image_url || "",
-          redirectUrl: s.redirect_url || "/shop",
+          redirectUrl: s.collection_slug
+            ? `/shop/curated/${s.collection_slug}`
+            : (s.redirect_url || "/shop"),
         })));
       } catch (err) {
         if (!cancelled) setHeroItems([]);

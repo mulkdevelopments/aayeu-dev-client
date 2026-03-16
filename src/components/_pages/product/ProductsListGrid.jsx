@@ -22,6 +22,7 @@ export default function ProductsListGrid({
   categoryId = null,
   categorySlug = "Shop",
   showCategoryFilters = false,
+  curatedSlug = null,
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -51,6 +52,7 @@ export default function ProductsListGrid({
   const observerTarget = useRef(null);
   const categoryScrollRef = useRef(null);
   const isClosingFilters = useRef(false);
+  const lastFilterQueryRef = useRef("");
 
   const { request: getAllProducts } = useAxios();
   const { request: getCategory } = useAxios();
@@ -138,7 +140,9 @@ export default function ProductsListGrid({
 
       let url = `/users/get-products-from-our-categories?limit=20&page=${pageNumber}`;
 
-      if (isSearchMode) {
+      if (curatedSlug) {
+        url += `&curated_slug=${encodeURIComponent(curatedSlug)}`;
+      } else if (isSearchMode) {
         url += `&q=${encodeURIComponent(searchQuery)}`;
         if (searchCategorySlug) {
           url += `&category_slug=${encodeURIComponent(searchCategorySlug)}`;
@@ -270,25 +274,39 @@ export default function ProductsListGrid({
 
     const sortValue = params.get("sort_by") || "is_our_picks";
 
+    const withoutFilters = new URLSearchParams(params);
+    withoutFilters.delete("filters");
+    lastFilterQueryRef.current = withoutFilters.toString();
+
     setSelectedFilters(filters);
     setPage(1);
     setSort(sortValue);
 
     fetchAllProducts(1, filters, sortValue, false);
-  }, [categoryId]);
+  }, [categoryId, curatedSlug]);
 
-  // ✅ Sync URL change
+  // ✅ Sync URL change — skip when only "filters" (sidebar open/close) changed so reopening the panel doesn't reset list or selections
   useEffect(() => {
     if (!hasMounted.current) return;
 
     const params = new URLSearchParams(searchParams.toString());
-    const filters = parseFilters(params);
-    const sortValue = params.get("sort_by") || "is_our_picks";
+    const paramsWithoutFilters = new URLSearchParams(params);
+    paramsWithoutFilters.delete("filters");
+    const filterOnlyQuery = paramsWithoutFilters.toString();
 
     if (isSyncing.current) {
       isSyncing.current = false;
+      lastFilterQueryRef.current = filterOnlyQuery;
       return;
     }
+
+    if (filterOnlyQuery === lastFilterQueryRef.current) {
+      return;
+    }
+    lastFilterQueryRef.current = filterOnlyQuery;
+
+    const filters = parseFilters(params);
+    const sortValue = params.get("sort_by") || "is_our_picks";
 
     setSelectedFilters(filters);
     setPage(1);
@@ -367,15 +385,35 @@ export default function ProductsListGrid({
     };
   }, [hasMore, loadingMore, loading, loadMore]);
 
-  // ✅ Handlers
-  const handleSortChange = (newSort) => {
+  // ✅ Handlers — use URL as source of truth for filters so changing sort keeps current brand/color/size etc.
+  const handleSortChange = (newSort, filtersFromSidebar) => {
     setSort(newSort);
     setPage(1);
     setProducts([]);
-    const query = buildQuery(selectedFilters, newSort);
+    const fromUrl = parseFilters(new URLSearchParams(searchParams.toString()));
+    const hasSidebarFilters =
+      filtersFromSidebar &&
+      typeof filtersFromSidebar === "object" &&
+      ((Array.isArray(filtersFromSidebar.brands) && filtersFromSidebar.brands.length > 0) ||
+        (Array.isArray(filtersFromSidebar.colors) && filtersFromSidebar.colors.length > 0) ||
+        (Array.isArray(filtersFromSidebar.sizes) && filtersFromSidebar.sizes.length > 0) ||
+        (Array.isArray(filtersFromSidebar.genders) && filtersFromSidebar.genders.length > 0) ||
+        (filtersFromSidebar.price &&
+          (filtersFromSidebar.price.min !== 0 || filtersFromSidebar.price.max !== 100000)));
+    const filters = hasSidebarFilters
+      ? filtersFromSidebar
+      : {
+          brands: fromUrl.brands?.length ? fromUrl.brands : selectedFilters.brands ?? [],
+          colors: fromUrl.colors?.length ? fromUrl.colors : selectedFilters.colors ?? [],
+          sizes: fromUrl.sizes?.length ? fromUrl.sizes : selectedFilters.sizes ?? [],
+          genders: fromUrl.genders?.length ? fromUrl.genders : selectedFilters.genders ?? [],
+          price: fromUrl.price ?? selectedFilters.price,
+        };
+    const query = buildQuery(filters, newSort);
     isSyncing.current = true;
     router.replace(`${pathname}?${query}`);
-    fetchAllProducts(1, selectedFilters, newSort, false);
+    setSelectedFilters(filters);
+    fetchAllProducts(1, filters, newSort, false);
   };
 
   const handleResetFilters = () => {

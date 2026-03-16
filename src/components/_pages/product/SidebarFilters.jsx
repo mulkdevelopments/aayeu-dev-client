@@ -77,6 +77,15 @@ export default function SidebarFilters({
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSection, setMobileSection] = useState(null);
 
+  // Match backend/DB brand normalization for count lookup (e.g. "Dolce & Gabbana" -> "dolce gabbana")
+  const normalizeBrandKey = (value) =>
+    String(value || "")
+      .trim()
+      .replace(/[^a-zA-Z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+
   const normalizeSizeKey = (value) => {
     const raw = String(value || "").trim().toLowerCase();
     if (!raw) return "";
@@ -427,7 +436,7 @@ export default function SidebarFilters({
   const brandCountMap = useMemo(() => {
     const map = new Map();
     brandCounts.forEach((b) => {
-      const key = String(b.value || "").trim().toLowerCase();
+      const key = normalizeBrandKey(b.value ?? b.label);
       if (!key) return;
       map.set(key, { label: b.label, count: Number(b.count) || 0 });
     });
@@ -484,7 +493,7 @@ export default function SidebarFilters({
       let key = (label[0] || "#").toUpperCase();
       if (!/^[A-Z]$/.test(key)) key = "#";
       if (!groups.has(key)) groups.set(key, []);
-      const countKey = String(brand || "").trim().toLowerCase();
+      const countKey = normalizeBrandKey(brand);
       const countInfo = brandCountMap.get(countKey);
       const count = countInfo?.count ?? 0;
       groups.get(key).push({ value: brand, label, count });
@@ -611,7 +620,8 @@ export default function SidebarFilters({
     hasInitializedSection.current = true;
   }, [availableSections]);
 
-  const showSkeleton = isFiltersLoading || !hasFetchedFilters;
+  // Only show full skeleton on initial load; when refetching after filter change keep current content so scroll position is preserved
+  const showSkeleton = !hasFetchedFilters;
   const missingSections = useMemo(() => {
     const list = [];
     if (categories.length === 0) list.push("category");

@@ -66,8 +66,8 @@ export default function NewArrivals() {
             <Skeleton className="h-10 w-64 mb-2" />
           </div>
 
-          {/* Single horizontal row skeleton */}
-          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 scrollbar-thin">
+          {/* Single horizontal row skeleton — no negative margin so section stays within container width */}
+          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
             {[...Array(4)].map((_, idx) => (
               <div key={idx} className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72 flex flex-col">
                 <Skeleton className="aspect-[3/4] w-full mb-3" />
@@ -113,7 +113,7 @@ export default function NewArrivals() {
         </div>
 
         {/* Single horizontal row — scroll to see all; load more when sentinel visible */}
-        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 scrollbar-thin">
+        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
           {items.map((item) => (
             <div key={item.id} className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72">
               <ProductCard product={item?.product || item} />

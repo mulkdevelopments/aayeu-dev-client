@@ -71,7 +71,7 @@ export default function BestSellers() {
             <Skeleton className="h-10 w-64 mb-2" />
           </div>
 
-          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 scrollbar-thin">
+          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
             {[...Array(4)].map((_, idx) => (
               <div
                 key={idx}
@@ -104,7 +104,7 @@ export default function BestSellers() {
           </h2>
         </div>
 
-        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6 lg:-mx-8 lg:px-8 scrollbar-thin">
+        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
           {items.map((item) => (
             <div
               key={item.best_seller_id ?? item.id ?? item?.product?.id}
