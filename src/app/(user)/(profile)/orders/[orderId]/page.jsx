@@ -12,13 +12,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { slugifyProductName } from "@/utils/seoHelpers";
 import Link from "next/link";
 import { Package, MapPin, CreditCard, Calendar, Truck, Download } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import ShipmentTrackingDialog from "@/components/_pages/order-details/ShipmentTrackingDialog";
 
 export default function OrderDetailsPage() {
   const { orderId } = useParams();
@@ -419,73 +413,16 @@ export default function OrderDetailsPage() {
       {/* Review Section */}
       <ReviewSection order={order} />
 
-      <Dialog open={isTrackingOpen} onOpenChange={setIsTrackingOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Order Tracking</DialogTitle>
-            <DialogDescription>
-              Order #{order.order_no || order.id} • Current status:{" "}
-              <span className="capitalize">{normalizedStatus}</span>
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-2">
-            <div className="relative pl-6">
-              <div className="absolute left-[11px] top-1 bottom-1 w-px bg-gray-200" />
-              <div className="space-y-6">
-                {trackingSteps.map((step, index) => {
-                  const isCurrent = index === currentIndex;
-                  const isCompleted =
-                    normalizedStatus === "cancelled"
-                      ? index === 0
-                      : index < currentIndex;
-                  const isCancelled = step.key === "cancelled";
-                  const dotClass = isCancelled
-                    ? "bg-red-600"
-                    : isCompleted || isCurrent
-                    ? "bg-black"
-                    : "bg-gray-300";
-
-                  return (
-                    <div key={step.key} className="relative flex gap-4">
-                      <div className="absolute left-[-1px] top-1.5">
-                        <div
-                          className={`h-3 w-3 rounded-full border border-white shadow ${dotClass}`}
-                        />
-                      </div>
-                      <div className="ml-4">
-                        <div className="flex items-center gap-2">
-                          <p
-                            className={`text-sm font-semibold ${
-                              isCancelled
-                                ? "text-red-700"
-                                : isCurrent
-                                ? "text-gray-900"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {step.label}
-                          </p>
-                          {isCurrent && (
-                            <span className="text-[10px] uppercase tracking-wider text-gray-500">
-                              Current
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-600">
-                          {step.key === "created"
-                            ? `Placed on ${formattedDate}`
-                            : step.description}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ShipmentTrackingDialog
+        open={isTrackingOpen}
+        onOpenChange={setIsTrackingOpen}
+        order={order}
+        orderId={orderId}
+        formattedDate={formattedDate}
+        normalizedStatus={normalizedStatus}
+        trackingSteps={trackingSteps}
+        currentIndex={currentIndex}
+      />
     </div>
   );
 }
