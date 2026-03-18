@@ -44,12 +44,24 @@ function OrderCard({ order }) {
   // Calculate order total (considering discount if applied)
   const orderTotal = (order?.total_amount || 0) - (order?.discount || 0);
 
-  const statusClass =
-    order.order_status?.toLowerCase() === "delivered"
-      ? "text-green-700 bg-green-100"
-      : order.order_status?.toLowerCase() === "processing"
-      ? "text-gray-700 bg-gray-100"
-      : "text-gray-700 bg-gray-100";
+  const os = order.order_status?.toLowerCase() || "";
+  const ps = order.payment_status?.toLowerCase() || "";
+  const isReturned =
+    os === "cancelled" ||
+    ps === "refund_completed" ||
+    ps === "refund_initiated" ||
+    ps === "refunded";
+  const statusClass = isReturned
+    ? "text-amber-800 bg-amber-100"
+    : os === "delivered"
+    ? "text-green-700 bg-green-100"
+    : os === "processing"
+    ? "text-gray-700 bg-gray-100"
+    : "text-gray-700 bg-gray-100";
+
+  const statusLabel = isReturned
+    ? "Returned / refunded"
+    : order.order_status || "—";
 
   return (
     <div className="order-card flex flex-col sm:flex-row items-start mb-4 p-6 border border-gray-200 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
@@ -92,7 +104,7 @@ function OrderCard({ order }) {
           <span
             className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wide ${statusClass} mt-2 sm:mt-0`}
           >
-            {order.order_status}
+            {statusLabel}
           </span>
         </div>
 
