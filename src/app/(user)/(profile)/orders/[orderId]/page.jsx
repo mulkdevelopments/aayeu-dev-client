@@ -21,6 +21,7 @@ export default function OrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const { isAuthenticated, token } = useSelector((state) => state.auth);
   const customDuties = useSelector(selectCustomDuties) || {};
 
@@ -126,7 +127,31 @@ export default function OrderDetailsPage() {
   const paymentStatusColor =
     order.payment_status === "paid"
       ? "bg-green-100 text-green-700"
+      : order.payment_status === "refund_completed" || order.payment_status === "refunded"
+      ? "bg-amber-100 text-amber-800"
       : "bg-red-100 text-red-700";
+
+  const handleCancelOrder = async () => {
+    if (!orderId || cancelling) return;
+    const ok = window.confirm(
+      "Cancel this order? Your payment will be refunded to your original card. This cannot be undone."
+    );
+    if (!ok) return;
+    setCancelling(true);
+    const { data, error, errorData } = await request({
+      url: "/users/cancel-order",
+      method: "POST",
+      authRequired: true,
+      payload: { order_id: orderId },
+    });
+    setCancelling(false);
+    if (error) {
+      alert(errorData?.message || error || "Could not cancel the order.");
+      return;
+    }
+    alert(data?.message || "Order cancelled. Refund will appear on your card soon.");
+    await fetchOrderDetails();
+  };
 
   const statusAliases = {
     pending: "created",
@@ -199,6 +224,17 @@ export default function OrderDetailsPage() {
               <Download className="w-4 h-4 mr-2" />
               {downloading ? "Downloading..." : ""}
             </CTAButton>
+            {order.can_cancel_order && (
+              <CTAButton
+                variant="outline"
+                color="danger"
+                size="sm"
+                onClick={handleCancelOrder}
+                disabled={cancelling}
+              >
+                {cancelling ? "Cancelling…" : "Cancel order"}
+              </CTAButton>
+            )}
           </div>
         </div>
       </div>
