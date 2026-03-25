@@ -2,8 +2,7 @@
 import { Inter, Poppins, Raleway } from "next/font/google";
 import "../styles/globals.css";
 import AppProviders from "@/providers/AppProviders";
-import Script from "next/script";
-import { GA_TRACKING_ID, GTM_CONTAINER_ID } from "@/utils/constants";
+import { GTM_CONTAINER_ID } from "@/utils/constants";
 import ConditionalLayout from "@/components/ConditionalLayout";
 
 //  Import Poppins with all weights you want
@@ -64,22 +63,6 @@ export default function RootLayout({ children }) {
             title="Google Tag Manager"
           />
         </noscript>
-        {/* GA SCRIPT */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
-          strategy="afterInteractive"
-        />
-
-        <Script id="ga-init" strategy="afterInteractive">
-          {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${GA_TRACKING_ID}', {
-            send_page_view: false
-          });
-        `}
-        </Script>
 
         <AppProviders>
           <ConditionalLayout>

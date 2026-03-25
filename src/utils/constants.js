@@ -1,5 +1,3 @@
-export const GA_TRACKING_ID = "G-Q41VFNW7M2";
-
 /** Google Tag Manager container ID (GTM-XXXXXXX) */
 export const GTM_CONTAINER_ID = "GTM-N67TB976";
 
