@@ -4,6 +4,7 @@ import ProductCard from "@/components/_cards/ProductCard";
 import useHomeConfig from "@/hooks/useHomeConfig";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 const INITIAL_LIMIT = 4;
 const NEXT_PAGE_LIMIT = 4;
@@ -61,13 +62,14 @@ export default function NewArrivals() {
     return (
       <section className="py-8 md:py-16 bg-neutral-50 relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
-          {/* Header Skeleton */}
-          <div className="mb-8 md:mb-12">
-            <Skeleton className="h-10 w-64 mb-2" />
+          {/* Header Skeleton — matches title + Show more row */}
+          <div className="mb-8 md:mb-12 flex flex-row items-start justify-between gap-3 sm:gap-6 sm:items-end">
+            <Skeleton className="h-9 sm:h-10 flex-1 max-w-[min(100%,20rem)] mb-0" />
+            <Skeleton className="h-10 w-[7.25rem] shrink-0" />
           </div>
 
           {/* Single horizontal row skeleton — no negative margin so section stays within container width */}
-          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
+          <div className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
             {[...Array(4)].map((_, idx) => (
               <div key={idx} className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72 flex flex-col">
                 <Skeleton className="aspect-[3/4] w-full mb-3" />
@@ -99,21 +101,24 @@ export default function NewArrivals() {
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-amber-100/30 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
-        <div className="mb-8 md:mb-12 text-start">
-          <div className="inline-block">
-            <h2
-              className="text-xl md:text-3xl lg:text-4xl xl:text-5xl font-light tracking-tight text-black leading-tight"
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
-              New in: Latest Arrivals
-            </h2>
-            {/* <div className="mt-2 md:mt-3 h-1 w-20 md:w-24 mx-auto bg-black rounded-full animate-pulse"></div> */}
-          </div>
+        {/* Section header — same pattern as Best Sellers (title + Show more) */}
+        <div className="mb-8 md:mb-12 flex flex-row items-start justify-between gap-3 sm:gap-6 sm:items-end">
+          <h2
+            className="min-w-0 flex-1 pr-1 text-lg sm:text-xl md:text-3xl lg:text-4xl xl:text-5xl font-light tracking-tight text-black text-left leading-[1.15] sm:leading-tight"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+          >
+            New in: Latest Arrivals
+          </h2>
+          <Link
+            href="/shop/new-arrivals"
+            className="inline-flex shrink-0 items-center justify-center whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold border-2 border-black text-black hover:bg-black hover:text-white transition-colors"
+          >
+            Show more
+          </Link>
         </div>
 
         {/* Single horizontal row — scroll to see all; load more when sentinel visible */}
-        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
+        <div className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
           {items.map((item) => (
             <div key={item.id} className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72">
               <ProductCard product={item?.product || item} />

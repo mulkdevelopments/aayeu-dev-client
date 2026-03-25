@@ -4,6 +4,11 @@ import "../styles/globals.css";
 import AppProviders from "@/providers/AppProviders";
 import { GTM_CONTAINER_ID } from "@/utils/constants";
 import ConditionalLayout from "@/components/ConditionalLayout";
+import CookieConsentBanner from "@/components/_common/CookieConsentBanner";
+import {
+  getConsentDefaultScript,
+  getConsentRestoreScript,
+} from "@/utils/cookieConsent";
 
 //  Import Poppins with all weights you want
 const poppins = Poppins({
@@ -50,6 +55,12 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <script
+          dangerouslySetInnerHTML={{ __html: getConsentDefaultScript() }}
+        />
+        <script
+          dangerouslySetInnerHTML={{ __html: getConsentRestoreScript() }}
+        />
+        <script
           dangerouslySetInnerHTML={{ __html: GTM_HEAD_SNIPPET }}
         />
       </head>
@@ -68,6 +79,7 @@ export default function RootLayout({ children }) {
           <ConditionalLayout>
             {children}
           </ConditionalLayout>
+          <CookieConsentBanner />
         </AppProviders>
       </body>
     </html>

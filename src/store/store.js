@@ -2,7 +2,25 @@
 
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import createWebStorage from "redux-persist/lib/storage/createWebStorage";
+
+/** Avoid importing default storage on the server — it touches localStorage and logs + noop fallback. */
+const createNoopStorage = () => ({
+  getItem() {
+    return Promise.resolve(null);
+  },
+  setItem() {
+    return Promise.resolve();
+  },
+  removeItem() {
+    return Promise.resolve();
+  },
+});
+
+const storage =
+  typeof window !== "undefined"
+    ? createWebStorage("local")
+    : createNoopStorage();
 
 import authReducer, { logout } from "./slices/authSlice";
 import wishlistReducer from "./slices/wishlistSlice";

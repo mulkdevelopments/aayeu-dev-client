@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import useAxios from "@/hooks/useAxios";
 
@@ -36,17 +36,21 @@ export default function useHomeConfig() {
   const { request } = useAxios();
 
   const config = useSelector((state) => state.homeConfig);
-  const timestamps = config.timestamps;
+  const configRef = useRef(config);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   /* -----------------------------------
        Fetch Home Banners
   -------------------------------------- */
   const fetchHomeConfig = useCallback(
     async ({ force = false } = {}) => {
-      const last = timestamps.homeConfig;
+      const cfg = configRef.current;
+      const last = cfg.timestamps.homeConfig;
 
       if (!force && last && Date.now() - last < CACHE_TIME) {
-        return { cached: true, data: config };
+        return { cached: true, data: cfg };
       }
 
       const { data, error } = await request({
@@ -61,7 +65,7 @@ export default function useHomeConfig() {
       dispatch(setHomeConfig(normalized));
       return { data: normalized };
     },
-    [timestamps.homeConfig, request, config, dispatch]
+    [request, dispatch]
   );
 
   /* -----------------------------------
@@ -69,11 +73,17 @@ export default function useHomeConfig() {
   -------------------------------------- */
   const fetchBestSellers = useCallback(
     async ({ force = false, limit = 4, page = 1, append = false } = {}) => {
-      const last = timestamps.bestSellers;
+      const cfg = configRef.current;
+      const last = cfg.timestamps.bestSellers;
+      // Do not require len >= limit: partial API responses must still cache or we refetch forever.
       const useCache =
-        !force && !append && page === 1 && last && Date.now() - last < CACHE_TIME;
+        !force &&
+        !append &&
+        page === 1 &&
+        last &&
+        Date.now() - last < CACHE_TIME;
 
-      if (useCache) return { cached: true, data: config.bestSellers };
+      if (useCache) return { cached: true, data: cfg.bestSellers };
 
       const { data, error } = await request({
         url: "/users/get-active-best-sellers",
@@ -93,7 +103,7 @@ export default function useHomeConfig() {
       }
       return { data: arr };
     },
-    [timestamps.bestSellers, request, config.bestSellers, dispatch]
+    [request, dispatch]
   );
 
   /* -----------------------------------
@@ -101,10 +111,11 @@ export default function useHomeConfig() {
   -------------------------------------- */
   const fetchNewArrivals = useCallback(
     async ({ force = false, limit = 4, page = 1, append = false } = {}) => {
-      const last = timestamps.newArrivals;
+      const cfg = configRef.current;
+      const last = cfg.timestamps.newArrivals;
       const useCache = !force && !append && page === 1 && last && Date.now() - last < CACHE_TIME;
 
-      if (useCache) return { cached: true, data: config.newArrivals };
+      if (useCache) return { cached: true, data: cfg.newArrivals };
 
       const { data, error } = await request({
         url: "/users/get-active-new-arrivals",
@@ -125,7 +136,7 @@ export default function useHomeConfig() {
       }
       return { data: arr };
     },
-    [timestamps.newArrivals, request, config.newArrivals, dispatch]
+    [request, dispatch]
   );
 
   /* -----------------------------------
@@ -133,10 +144,11 @@ export default function useHomeConfig() {
   -------------------------------------- */
   const fetchProductOverlayHome = useCallback(
     async ({ force = false } = {}) => {
-      const last = timestamps.productOverlayHome;
+      const cfg = configRef.current;
+      const last = cfg.timestamps.productOverlayHome;
 
       if (!force && last && Date.now() - last < CACHE_TIME)
-        return { cached: true, data: config.productOverlayHome };
+        return { cached: true, data: cfg.productOverlayHome };
 
       const { data, error } = await request({
         url: "/users/get-overlay-grid",
@@ -150,12 +162,7 @@ export default function useHomeConfig() {
       dispatch(setProductOverlayHome(payload));
       return { data: payload };
     },
-    [
-      timestamps.productOverlayHome,
-      request,
-      config.productOverlayHome,
-      dispatch,
-    ]
+    [request, dispatch]
   );
 
   /* -----------------------------------
@@ -164,13 +171,14 @@ export default function useHomeConfig() {
   /* ---------------- Fetch SALE SECTION ---------------- */
   const fetchSaleSection = useCallback(
     async ({ force = false } = {}) => {
-      const last = timestamps.saleSection;
+      const cfg = configRef.current;
+      const last = cfg.timestamps.saleSection;
 
       // ⏳ If cached & not expired → use cache
       const shouldUseCache = !force && last && Date.now() - last < CACHE_TIME;
 
       if (shouldUseCache) {
-        return { cached: true, data: config.saleSection };
+        return { cached: true, data: cfg.saleSection };
       }
 
       // ⏳ Make API call
@@ -189,7 +197,7 @@ export default function useHomeConfig() {
 
       return { data: payload };
     },
-    [timestamps.saleSection, request, config.saleSection, dispatch]
+    [request, dispatch]
   );
 
   /* -----------------------------------
@@ -197,10 +205,11 @@ export default function useHomeConfig() {
   -------------------------------------- */
   const fetchBrandSpotlights = useCallback(
     async ({ force = false } = {}) => {
-      const last = timestamps.brandSpotlights;
+      const cfg = configRef.current;
+      const last = cfg.timestamps.brandSpotlights;
 
       if (!force && last && Date.now() - last < CACHE_TIME)
-        return { cached: true, data: config.brandSpotlights };
+        return { cached: true, data: cfg.brandSpotlights };
 
       const { data, error } = await request({
         url: "/users/get-active-brand-spotlights",
@@ -215,7 +224,7 @@ export default function useHomeConfig() {
       dispatch(setBrandSpotlights(arr));
       return { data: arr };
     },
-    [timestamps.brandSpotlights, request, config.brandSpotlights, dispatch]
+    [request, dispatch]
   );
 
   return {

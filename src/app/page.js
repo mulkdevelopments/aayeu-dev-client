@@ -8,6 +8,7 @@ import Categories from "@/components/_pages/home/Categories";
 import NewArrivals from "@/components/_pages/home/NewArrivals";
 import SaleSection from "@/components/_pages/home/SaleSection";
 import ShopTheLook from "@/components/_pages/home/ShopTheLook";
+import RecentlyViewedSection from "@/components/_pages/home/RecentlyViewedSection";
 
 export default function Home() {
   return (
@@ -17,6 +18,7 @@ export default function Home() {
       <HeroVideoSection />
       {/* <BrandsSection /> */}
       <BestSellers />
+      <RecentlyViewedSection />
          {/* <ShopTheLook /> */}
       {/* <SaleSection /> */}
 

@@ -10,6 +10,7 @@ import ProductGallerySection from "./ProductGallerySection";
 import ProductInfoDetailsSection from "./ProductInfoDetailsSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import useCart from "@/hooks/useCart";
+import { addRecentlyViewed } from "@/utils/recentlyViewed";
 
 export default function ProductInfoSection() {
   const { productId } = useParams();
@@ -54,6 +55,10 @@ export default function ProductInfoSection() {
       }
     })();
   }, [productId]);
+
+  useEffect(() => {
+    if (product) addRecentlyViewed(product);
+  }, [product]);
 
   // ✅ Fetch live stock from vendor API
   const fetchLiveStock = async () => {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { User, Heart, ShoppingBag, Menu, Search, ChevronDown, ChevronRight, ChevronLeft, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
 import {
   Sheet,
@@ -24,6 +24,11 @@ import useAxios from "@/hooks/useAxios";
 import PreferencesSelector from "./PreferencesSelector";
 import NavMenuCategoryImage from "./NavMenuCategoryImage";
 import { startCase, toLower } from "lodash";
+import {
+  getRecentlyViewed,
+  getRecentlyViewedProductHref,
+  RECENTLY_VIEWED_EVENT,
+} from "@/utils/recentlyViewed";
 
 const brandGroupsCache = new Map();
 const brandGroupsInflight = new Map();
@@ -48,6 +53,7 @@ export default function MiddleHeader() {
   const [panelTop, setPanelTop] = useState(0);
   const [brandGroups, setBrandGroups] = useState([]);
   const [menuLoading, setMenuLoading] = useState(true);
+  const [recentViewed, setRecentViewed] = useState([]);
 
   const categorizedSubCategories = useMemo(() => {
     const list = hoveredCategory?.children ? [...hoveredCategory.children] : [];
@@ -69,6 +75,20 @@ export default function MiddleHeader() {
       })
       .finally(() => setMenuLoading(false));
   }, []);
+
+  const syncRecentViewed = useCallback(() => {
+    setRecentViewed(getRecentlyViewed());
+  }, []);
+
+  useEffect(() => {
+    syncRecentViewed();
+    window.addEventListener(RECENTLY_VIEWED_EVENT, syncRecentViewed);
+    return () => window.removeEventListener(RECENTLY_VIEWED_EVENT, syncRecentViewed);
+  }, [syncRecentViewed]);
+
+  useEffect(() => {
+    if (isSearchSheetOpen) syncRecentViewed();
+  }, [isSearchSheetOpen, syncRecentViewed]);
 
   const activeCategorySlug = useMemo(() => {
     if (!activeCategory?.name) return "";
@@ -844,8 +864,8 @@ export default function MiddleHeader() {
               </button>
             </SheetTrigger>
 
-            <SheetContent side="top" className="p-0 h-auto">
-              <SheetHeader className="p-6">
+            <SheetContent side="top" className="p-0 h-auto max-h-[85vh] overflow-y-auto">
+              <SheetHeader className="p-6 space-y-4 text-left">
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
@@ -858,6 +878,42 @@ export default function MiddleHeader() {
                     autoFocus
                   />
                 </div>
+                {recentViewed.length > 0 && !search.trim() && (
+                  <div className="space-y-3 border-t border-gray-100 pt-4">
+                    <p
+                      className="text-[11px] font-semibold tracking-[0.2em] text-gray-500 uppercase"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      Recently viewed
+                    </p>
+                    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+                      {recentViewed.slice(0, 10).map((item) => (
+                        <Link
+                          key={item.id}
+                          href={getRecentlyViewedProductHref(item)}
+                          onClick={() => setIsSearchSheetOpen(false)}
+                          className="flex-shrink-0 flex flex-col w-[4.5rem] sm:w-20"
+                        >
+                          <div className="relative w-full aspect-[3/4] rounded-md overflow-hidden bg-gray-100 border border-gray-100">
+                            {item.product_img ? (
+                              <img
+                                src={item.product_img}
+                                alt={item.name || "Product"}
+                                className="absolute inset-0 w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 bg-gray-200" />
+                            )}
+                          </div>
+                          <span className="mt-1.5 line-clamp-2 text-[10px] sm:text-xs text-gray-800 leading-snug">
+                            {item.brand_name ? `${item.brand_name} · ` : ""}
+                            {item.name}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </SheetHeader>
             </SheetContent>
           </Sheet>
