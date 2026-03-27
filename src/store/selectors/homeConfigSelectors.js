@@ -17,6 +17,7 @@ export const selectTopBanner = selectField("topBanner");
 export const selectMiddleBanner = selectField("middleBanner");
 export const selectBottomTopBanner = selectField("bottomTopBanner");
 export const selectBottomLeftBanner = selectField("bottomLeftBanner");
+export const selectBottomRightBanner = selectField("bottomRightBanner");
 
 /* Product list selectors */
 export const selectBestSellers = selectField("bestSellers");

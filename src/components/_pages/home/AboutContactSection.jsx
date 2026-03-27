@@ -3,19 +3,19 @@
 import CTAButton from "@/components/_common/CTAButton";
 import {
   selectBottomLeftBanner,
+  selectBottomRightBanner,
   selectBottomTopBanner,
 } from "@/store/selectors/homeConfigSelectors";
-import Image from "next/image";
-import Link from "next/link";
 import { useSelector } from "react-redux";
-import NewsletterForm from "./NewsletterForm";
 
 export default function AboutContactSection() {
   const bottomTopBanner = useSelector(selectBottomTopBanner);
   const bottomLeftBanner = useSelector(selectBottomLeftBanner);
+  const bottomRightBanner = useSelector(selectBottomRightBanner);
 
   const hasTopBanner = bottomTopBanner?.media_url;
   const hasLeftBanner = bottomLeftBanner?.media_url;
+  const hasRightBanner = bottomRightBanner?.media_url;
 
   return (
     <section className="w-full">
@@ -64,16 +64,34 @@ export default function AboutContactSection() {
           </div>
         </div>
 
-        {/* ---------------- RIGHT BLOCK (Newsletter) ---------------- */}
-        <div className="relative flex flex-col justify-center text-center text-white min-h-[500px] lg:min-h-[695px] flex-1 bg-[url('/assets/images/footer-2.jpg')] bg-cover bg-center p-8">
+        {/* ---------------- RIGHT BLOCK (Newsletter / promo headline) ---------------- */}
+        <div
+          className="relative flex flex-col justify-center text-center text-white min-h-[500px] lg:min-h-[695px] flex-1 p-8 bg-cover bg-center"
+          style={{
+            backgroundImage: hasRightBanner
+              ? `url(${bottomRightBanner.media_url})`
+              : `url('/assets/images/footer-2.jpg')`,
+          }}
+        >
           <div className="relative z-10 max-w-xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold leading-tight">
-              Sign up to get our welcome offer of 10% discount on your first order
+              {bottomRightBanner?.title ??
+                "Sign up to get our welcome offer of 10% discount on your first order"}
             </h2>
           </div>
 
-          {/* ---------------- Newsletter Form with RHF ---------------- */}
-          {/* <NewsletterForm /> */}
+          {bottomRightBanner?.button_text ? (
+            <div className="relative z-10 mt-6 lg:mt-auto">
+              <CTAButton
+                color="black"
+                className="mb-4"
+                as="link"
+                href={bottomRightBanner.link_url ?? "#"}
+              >
+                {bottomRightBanner.button_text}
+              </CTAButton>
+            </div>
+          ) : null}
         </div>
       </div>
 

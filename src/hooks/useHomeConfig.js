@@ -24,6 +24,7 @@ const normalizeHomeBanners = (data) => {
     middleBanner: data["middle-banner"] ?? null,
     bottomTopBanner: data["bottom-top-banner"] ?? null,
     bottomLeftBanner: data["bottom-left-banner"] ?? null,
+    bottomRightBanner: data["bottom-right-banner"] ?? null,
 
     productOverlay: data.productOverlay ?? null,
     saleSection: data.saleSection ?? null,
@@ -242,6 +243,7 @@ export default function useHomeConfig() {
     middleBanner: config.middleBanner,
     bottomTopBanner: config.bottomTopBanner,
     bottomLeftBanner: config.bottomLeftBanner,
+    bottomRightBanner: config.bottomRightBanner,
 
     bestSellers: config.bestSellers,
     newArrivals: config.newArrivals,

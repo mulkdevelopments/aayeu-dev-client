@@ -6,6 +6,7 @@ const initialState = {
   middleBanner: null,
   bottomTopBanner: null,
   bottomLeftBanner: null,
+  bottomRightBanner: null,
 
   // product lists
   bestSellers: [],
@@ -42,6 +43,7 @@ const homeConfigSlice = createSlice({
       state.middleBanner = payload.middleBanner ?? null;
       state.bottomTopBanner = payload.bottomTopBanner ?? null;
       state.bottomLeftBanner = payload.bottomLeftBanner ?? null;
+      state.bottomRightBanner = payload.bottomRightBanner ?? null;
 
       if (payload.productOverlay !== undefined)
         state.productOverlay = payload.productOverlay;
