@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import useAxios from "@/hooks/useAxios";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -11,11 +11,13 @@ import ProductInfoDetailsSection from "./ProductInfoDetailsSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import useCart from "@/hooks/useCart";
 import { addRecentlyViewed } from "@/utils/recentlyViewed";
+import { pushGa4ViewItem } from "@/lib/ga4Ecommerce";
 
 export default function ProductInfoSection() {
   const { productId } = useParams();
   const router = useRouter();
   const { isAuthenticated } = useSelector((state) => state.auth);
+  const selectedCurrency = useSelector((s) => s.currency?.selectedCurrency);
 
   const [product, setProduct] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
@@ -23,6 +25,8 @@ export default function ProductInfoSection() {
   const [addSuccess, setAddSuccess] = useState(false);
   const [liveStockData, setLiveStockData] = useState(null);
   const [stockLoading, setStockLoading] = useState(false);
+
+  const viewItemSentForProductId = useRef(null);
 
   const { addToCart } = useCart();
 
@@ -59,6 +63,18 @@ export default function ProductInfoSection() {
   useEffect(() => {
     if (product) addRecentlyViewed(product);
   }, [product]);
+
+  useEffect(() => {
+    if (!product?.id || !product.variants?.length) return;
+    if (String(product.id) !== String(productId)) return;
+    if (viewItemSentForProductId.current === productId) return;
+    viewItemSentForProductId.current = productId;
+    pushGa4ViewItem({
+      product,
+      variant: product.variants[0],
+      currency: selectedCurrency,
+    });
+  }, [product, productId, selectedCurrency]);
 
   // ✅ Fetch live stock from vendor API
   const fetchLiveStock = async () => {

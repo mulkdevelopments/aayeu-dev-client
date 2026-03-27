@@ -1,8 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import { Spinner } from "../ui/spinner";
+import { pushGa4Purchase } from "@/lib/ga4Ecommerce";
 
 export default function PaymentSuccess() {
   const searchParams = useSearchParams();
@@ -11,6 +12,11 @@ export default function PaymentSuccess() {
   const { request: verifyPayment, loading } = useAxios();
   const [status, setStatus] = useState("loading"); // 'loading' | 'success' | 'error'
   const [paymentData, setPaymentData] = useState(null);
+  const purchasePushedRef = useRef(false);
+
+  useEffect(() => {
+    purchasePushedRef.current = false;
+  }, [orderId]);
 
   useEffect(() => {
     if (!orderId) return;
@@ -24,9 +30,14 @@ export default function PaymentSuccess() {
       });
 
       if (data.status === 200) {
-        setPaymentData(data.data || {});
+        const payload = data.data || {};
+        setPaymentData(payload);
         setStatus("success");
         localStorage.removeItem("cart_coupon_code");
+        if (!purchasePushedRef.current && payload.ga4_purchase) {
+          purchasePushedRef.current = true;
+          pushGa4Purchase(payload.ga4_purchase);
+        }
       } else {
         setStatus("error");
       }

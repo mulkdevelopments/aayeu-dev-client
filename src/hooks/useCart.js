@@ -1,6 +1,7 @@
 // src/hooks/useCart.js
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { pushGa4AddToCart } from "@/lib/ga4Ecommerce";
 import useAxios from "@/hooks/useAxios";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -32,6 +33,7 @@ const recalcTotalsFromItems = (items) => {
 export default function useCart() {
   const dispatch = useDispatch();
   const items = useSelector(selectCartItems);
+  const selectedCurrency = useSelector((s) => s.currency?.selectedCurrency);
   const { request } = useAxios();
 
   let isFetchingCart = false;
@@ -162,6 +164,12 @@ export default function useCart() {
         dispatch(addItemLocal(cart_item_shape));
         updateGuestCartStorage(next);
         dispatch(setCartTotals(recalcTotalsFromItems(next)));
+        pushGa4AddToCart({
+          product,
+          variant,
+          qty,
+          currency: selectedCurrency,
+        });
         return { success: true, local: true };
       }
 
@@ -182,9 +190,16 @@ export default function useCart() {
       dispatch(setCartItems(payload.items));
       dispatch(setCartTotals(payload));
 
+      pushGa4AddToCart({
+        product,
+        variant,
+        qty,
+        currency: selectedCurrency,
+      });
+
       return { success: true };
     },
-    [dispatch, items, request, updateGuestCartStorage]
+    [dispatch, items, request, updateGuestCartStorage, selectedCurrency]
   );
 
   /* ---------------- UPDATE QTY ---------------- */
