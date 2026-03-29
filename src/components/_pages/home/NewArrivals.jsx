@@ -104,7 +104,7 @@ export default function NewArrivals() {
         {/* Section header — same pattern as Best Sellers (title + Show more) */}
         <div className="mb-8 md:mb-12 flex flex-row items-start justify-between gap-3 sm:gap-6 sm:items-end">
           <h2
-            className="min-w-0 flex-1 pr-1 text-lg sm:text-xl md:text-3xl lg:text-4xl xl:text-5xl font-light tracking-tight text-black text-left leading-[1.15] sm:leading-tight"
+            className="min-w-0 flex-1 pr-1 text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-light tracking-tight text-black text-left leading-[1.15] sm:leading-tight"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             New in: Latest Arrivals
