@@ -110,6 +110,15 @@ export default function CartSummarySection({ liveStockMap, stockCheckLoading }) 
     });
   };
 
+  const shippingAddrObj = addresses.find(
+    (a) => String(a.id) === String(shippingAddress)
+  );
+  const shippingCountryUpper = String(shippingAddrObj?.country || "").toUpperCase();
+  const showUpiCheckoutHint =
+    Boolean(shippingAddress) &&
+    selectedCurrency === "INR" &&
+    (shippingCountryUpper === "IN" || shippingCountryUpper === "INDIA");
+
   const handlePay = async () => {
     // Check for out of stock items
     if (hasOutOfStockItems()) {
@@ -240,6 +249,14 @@ export default function CartSummarySection({ liveStockMap, stockCheckLoading }) 
           <p className="text-xs">🔄 Checking live stock availability...</p>
         </div>
       )} */}
+
+      {isAuthenticated && showUpiCheckoutHint && (
+        <p className="mt-3 text-xs text-gray-600">
+          On the Stripe page you should see <strong>UPI</strong>,{" "}
+          <strong>Link</strong>, card wallets (Apple&nbsp;Pay / Google&nbsp;Pay
+          when your browser supports them), and card.
+        </p>
+      )}
 
       {isAuthenticated ? (
         <CTAButton
