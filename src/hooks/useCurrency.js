@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setSelectedCurrency,
@@ -15,6 +15,7 @@ import {
   selectCurrencyLoading,
   selectCurrencyLastUpdated,
   convertPrice,
+  convertDisplayPriceToEur,
   formatPrice,
 } from "@/store/slices/currencySlice";
 import useAxios from "@/hooks/useAxios";
@@ -70,13 +71,29 @@ export default function useCurrency() {
     dispatch(setSelectedCurrency(currencyCode));
   };
 
-  const convert = (eurPrice) => {
-    return convertPrice(eurPrice, selectedCurrency, exchangeRates, customDuties);
-  };
+  const convert = useCallback(
+    (eurPrice) =>
+      convertPrice(eurPrice, selectedCurrency, exchangeRates, customDuties),
+    [selectedCurrency, exchangeRates, customDuties]
+  );
 
-  const format = (eurPrice) => {
-    return formatPrice(eurPrice, selectedCurrency, exchangeRates, customDuties);
-  };
+  const format = useCallback(
+    (eurPrice) =>
+      formatPrice(eurPrice, selectedCurrency, exchangeRates, customDuties),
+    [selectedCurrency, exchangeRates, customDuties]
+  );
+
+  /** Amount shown in inputs (₹, AED, …) → EUR stored in URL / API — same math as format/convert in reverse. */
+  const parseDisplayPrice = useCallback(
+    (displayAmount) =>
+      convertDisplayPriceToEur(
+        displayAmount,
+        selectedCurrency,
+        exchangeRates,
+        customDuties
+      ),
+    [selectedCurrency, exchangeRates, customDuties]
+  );
 
   return {
     selectedCurrency,
@@ -87,6 +104,7 @@ export default function useCurrency() {
     changeCurrency,
     convert,
     format,
+    parseDisplayPrice,
     fetchExchangeRates,
   };
 }

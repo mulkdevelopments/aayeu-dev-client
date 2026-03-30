@@ -166,6 +166,28 @@ export const convertPrice = (eurPrice, selectedCurrency, exchangeRates, customDu
   return Math.round(amount);
 };
 
+/** Inverse of convertPrice: user-entered display amount → EUR base (must match filter chip / formatPrice). */
+export const convertDisplayPriceToEur = (
+  displayAmount,
+  selectedCurrency,
+  exchangeRates,
+  customDuties = {}
+) => {
+  const n = Number(displayAmount);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+
+  const rates = exchangeRates || DEFAULT_EXCHANGE_RATES;
+  const rate = rates[selectedCurrency] || DEFAULT_EXCHANGE_RATES[selectedCurrency] || 1;
+  const dutyPercent = customDuties[selectedCurrency];
+  const dutyFactor =
+    dutyPercent != null && Number(dutyPercent) > 0
+      ? 1 + Number(dutyPercent) / 100
+      : 1;
+  const combined = Number(rate) * dutyFactor;
+  if (!combined || !Number.isFinite(combined)) return 0;
+  return n / combined;
+};
+
 // Helper function to format price with currency symbol (includes duty when set)
 export const formatPrice = (eurPrice, selectedCurrency, exchangeRates, customDuties = {}) => {
   const convertedPrice = convertPrice(eurPrice, selectedCurrency, exchangeRates, customDuties);

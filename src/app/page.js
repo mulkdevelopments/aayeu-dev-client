@@ -9,15 +9,17 @@ import NewArrivals from "@/components/_pages/home/NewArrivals";
 import SaleSection from "@/components/_pages/home/SaleSection";
 import ShopTheLook from "@/components/_pages/home/ShopTheLook";
 import RecentlyViewedSection from "@/components/_pages/home/RecentlyViewedSection";
+import BrandsHighlightSection from "@/components/_pages/home/BrandsHighlightSection";
 
 export default function Home() {
   return (
     <>
       <Categories />
-      <NewArrivals title="New Arrivals" />
+      <NewArrivals />
       <HeroVideoSection />
       {/* <BrandsSection /> */}
       <BestSellers />
+      <BrandsHighlightSection />
       <RecentlyViewedSection />
          {/* <ShopTheLook /> */}
       {/* <SaleSection /> */}

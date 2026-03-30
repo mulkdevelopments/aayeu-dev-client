@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Loader2, XIcon, Search, ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams, useRouter, usePathname } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import useCurrency from "@/hooks/useCurrency";
 import { Input } from "@/components/ui/input";
@@ -21,13 +21,16 @@ export default function SidebarFilters({
   initialFilters = {}, // parent passes filters parsed from URL
   categories = [],
   categoryId: categoryIdProp = null, // prefer parent UUID (same as ProductsListGrid / page)
+  activeCategoryName = null, // applied PLP category label for chips
+  onRemoveAppliedFilter = null, // (type, value?) => void — updates URL + listing
   totalCount = null,
   sortValue = "is_our_picks",
   onSortChange,
 }) {
   const { request, loading } = useAxios();
-  const { selectedCurrency, exchangeRates, format } = useCurrency();
+  const { format, convert, parseDisplayPrice } = useCurrency();
   const router = useRouter();
+  const pathname = usePathname();
   const params = useParams();
   const categoryIdFromRoute =
     params?.category?.[params.category?.length - 1] ?? null;
@@ -37,11 +40,25 @@ export default function SidebarFilters({
     searchParams.get("query") || searchParams.get("q") || null;
   const searchCategorySlug = searchParams.get("category") || null;
 
-  const buildFiltersQuery = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("filters", "1");
-    return params.toString();
-  };
+  /**
+   * Category navigation inside the drawer must NOT copy facet params (brand/color/…),
+   * or mobile keeps ?brand= from the parent PLP while PC often used clean links — same UX everywhere.
+   * Only keep sort, filters drawer flag, and search query when on /search.
+   */
+  const buildFiltersQuery = useCallback(() => {
+    const p = new URLSearchParams();
+    const sortBy = searchParams.get("sort_by");
+    if (sortBy) p.set("sort_by", sortBy);
+    else p.set("sort_by", "is_our_picks");
+    if (searchParams.get("filters") === "1") p.set("filters", "1");
+    if (pathname?.includes("/search")) {
+      const q = searchParams.get("q") || searchParams.get("query");
+      if (q) p.set("q", q);
+      const cat = searchParams.get("category");
+      if (cat) p.set("category", cat);
+    }
+    return p.toString();
+  }, [searchParams, pathname]);
 
   const [brands, setBrands] = useState([]);
   const [allBrands, setAllBrands] = useState([]);
@@ -79,6 +96,19 @@ export default function SidebarFilters({
   const lastFiltersKeyRef = useRef("");
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSection, setMobileSection] = useState(null);
+
+  const handleRemoveCategoryChip = useCallback(() => {
+    const query = buildFiltersQuery();
+    if (categoryId && categoryMap?.has(categoryId)) {
+      const parentId = categoryMap.get(categoryId)?.parent_id;
+      const parentNode = parentId ? categoryMap.get(parentId) : null;
+      if (parentNode?.id && parentNode?.path) {
+        router.push(`/shop/${parentNode.path}/${parentNode.id}?${query}`);
+        return;
+      }
+    }
+    router.push(`/shop?${query}`);
+  }, [categoryId, categoryMap, router, buildFiltersQuery]);
 
   // Match backend/DB brand normalization for count lookup (e.g. "Dolce & Gabbana" -> "dolce gabbana")
   const normalizeBrandKey = (value) =>
@@ -121,17 +151,66 @@ export default function SidebarFilters({
     return key.toUpperCase();
   };
 
-  const currencyRate = useMemo(() => {
-    const rate = exchangeRates?.[selectedCurrency];
-    return rate && Number(rate) > 0 ? Number(rate) : 1;
-  }, [exchangeRates, selectedCurrency]);
+  /** Applied filters from URL/parent — shown above Sort by */
+  const appliedFilterChips = useMemo(() => {
+    const f = initialFilters || {};
+    const chips = [];
+    const catLabel =
+      typeof activeCategoryName === "string" ? activeCategoryName.trim() : "";
+    if (catLabel && categoryId) {
+      chips.push({ key: "cat", kind: "category", label: catLabel });
+    }
+    (f.brands || []).forEach((b) => {
+      const t = String(b || "").trim();
+      if (t) chips.push({ key: `b-${t}`, kind: "brand", label: t, value: t });
+    });
+    (f.colors || []).forEach((c) => {
+      const t = String(c || "").trim();
+      if (t) chips.push({ key: `c-${t}`, kind: "color", label: t, value: t });
+    });
+    (f.sizes || []).forEach((s) => {
+      const raw = String(s || "").trim();
+      if (!raw) return;
+      const nk = normalizeSizeKey(raw);
+      chips.push({
+        key: `s-${raw}`,
+        kind: "size",
+        label: formatSizeLabel(nk),
+        value: raw,
+      });
+    });
+    (f.genders || []).forEach((g) => {
+      const t = String(g || "").trim();
+      if (t)
+        chips.push({
+          key: `g-${t}`,
+          kind: "gender",
+          label: _.startCase(_.toLower(t)),
+          value: t,
+        });
+    });
+    const pr = f.price;
+    if (pr && (Number(pr.min) !== 0 || Number(pr.max) !== 100000)) {
+      chips.push({
+        key: "price",
+        kind: "price",
+        label: `${format(Number(pr.min) || 0)} – ${format(Number(pr.max) || 100000)}`,
+      });
+    }
+    return chips;
+  }, [
+    activeCategoryName,
+    categoryId,
+    initialFilters,
+    format,
+  ]);
 
   const displayPriceRange = useMemo(
     () => ({
-      min: Math.round(priceRange.min * currencyRate),
-      max: Math.round(priceRange.max * currencyRate),
+      min: convert(priceRange.min),
+      max: convert(priceRange.max),
     }),
-    [priceRange, currencyRate]
+    [priceRange, convert]
   );
 
   const fetchCategoryChildren = async (categoryId) => {
@@ -175,19 +254,19 @@ export default function SidebarFilters({
 
   const displayPrice = useMemo(
     () => ({
-      min: Math.round(price.min * currencyRate),
-      max: Math.round(price.max * currencyRate),
+      min: convert(price.min),
+      max: convert(price.max),
     }),
-    [price, currencyRate]
+    [price, convert]
   );
 
   const isPriceDirty = useMemo(() => {
     const base = initialFilters.price || { min: 0, max: 100000 };
     return (
-      priceInputMin !== String(Math.round(base.min * currencyRate)) ||
-      priceInputMax !== String(Math.round(base.max * currencyRate))
+      priceInputMin !== String(convert(base.min)) ||
+      priceInputMax !== String(convert(base.max))
     );
-  }, [priceInputMin, priceInputMax, initialFilters, currencyRate]);
+  }, [priceInputMin, priceInputMax, initialFilters, convert]);
 
   const priceInputErrors = useMemo(() => {
     const minVal = Number(priceInputMin);
@@ -385,8 +464,8 @@ export default function SidebarFilters({
         return;
       }
       const nextPrice = {
-        min: Math.max(0, minVal / currencyRate),
-        max: Math.max(0, maxVal / currencyRate),
+        min: Math.max(0, parseDisplayPrice(minVal)),
+        max: Math.max(0, parseDisplayPrice(maxVal)),
       };
       setPriceApplyError("");
       setPrice(nextPrice);
@@ -420,8 +499,8 @@ export default function SidebarFilters({
     }
 
     const nextPrice = {
-      min: Math.max(0, minVal / currencyRate),
-      max: Math.max(0, maxVal / currencyRate),
+      min: Math.max(0, parseDisplayPrice(minVal)),
+      max: Math.max(0, parseDisplayPrice(maxVal)),
     };
     setPriceApplyError("");
     setPrice(nextPrice);
@@ -942,21 +1021,24 @@ export default function SidebarFilters({
 
   return (
     <div
-      className={open ? "fixed inset-0 z-220 flex overflow-hidden" : "hidden"}
+      className={
+        open ? "fixed inset-0 z-220 flex overflow-hidden" : "hidden"
+      }
       aria-hidden={!open}
     >
-      {/* Overlay */}
+      {/* Backdrop: absolute inside fixed shell so it never stacks above the panel (fixed sibling was stealing chip / Clear all clicks). */}
       <div
-        className="fixed inset-0 bg-black/40"
+        className="absolute inset-0 z-0 bg-black/40"
         onClick={() => onClose?.()}
         aria-hidden="true"
       />
 
       {/* Sidebar */}
       <aside
-        className="relative bg-white w-full sm:w-[420px] h-full shadow-xl flex flex-col"
+        className="relative z-10 flex h-full w-full flex-col bg-white shadow-xl sm:w-[420px]"
         role="dialog"
         aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex-shrink-0 px-6 py-5 border-b border-gray-200 flex items-center justify-between bg-white z-10 relative">
@@ -1070,6 +1152,47 @@ export default function SidebarFilters({
                       Apply
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {appliedFilterChips.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 pb-5 border-b border-gray-100">
+                  {appliedFilterChips.map((ch) => (
+                    <span
+                      key={ch.key}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-gray-100 px-2.5 py-1.5 text-sm text-gray-900"
+                    >
+                      <span className="max-w-[220px] truncate" title={ch.label}>
+                        {ch.label}
+                      </span>
+                      <button
+                        type="button"
+                        className="shrink-0 rounded p-0.5 text-gray-500 transition-colors hover:text-gray-900"
+                        aria-label={`Remove ${ch.label}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (ch.kind === "category") handleRemoveCategoryChip();
+                          else if (ch.kind === "price")
+                            onRemoveAppliedFilter?.("price");
+                          else onRemoveAppliedFilter?.(ch.kind, ch.value);
+                        }}
+                      >
+                        <XIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                  <button
+                    type="button"
+                    className="ml-1 text-sm font-bold text-gray-900"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleReset();
+                    }}
+                  >
+                    Clear all
+                  </button>
                 </div>
               )}
 

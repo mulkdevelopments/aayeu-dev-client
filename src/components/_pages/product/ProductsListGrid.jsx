@@ -53,6 +53,8 @@ export default function ProductsListGrid({
   const categoryScrollRef = useRef(null);
   const isClosingFilters = useRef(false);
   const lastFilterQueryRef = useRef("");
+  /** Detect category → category navigation so stale ?brand=&color= from parent PLP do not carry over */
+  const prevCategoryIdRef = useRef(null);
 
   const { request: getAllProducts } = useAxios();
   const { request: getCategory } = useAxios();
@@ -267,8 +269,48 @@ export default function ProductsListGrid({
     return filters;
   };
 
-  // ✅ Initial load
+  // ✅ Initial load + reset facet query when drilling into another category (fixes mobile: old brand in URL, 0 products, wrong counts)
   useEffect(() => {
+    const prevCat = prevCategoryIdRef.current;
+    const navigatedToNewCategory =
+      prevCat != null &&
+      categoryId != null &&
+      prevCat !== categoryId &&
+      !curatedSlug;
+
+    if (navigatedToNewCategory) {
+      const next = new URLSearchParams(searchParams.toString());
+      let stripped = false;
+      ["brand", "color", "size", "gender"].forEach((key) => {
+        if (next.has(key)) {
+          next.delete(key);
+          stripped = true;
+        }
+      });
+      if (next.has("min_price") || next.has("max_price")) {
+        next.delete("min_price");
+        next.delete("max_price");
+        stripped = true;
+      }
+      if (stripped) {
+        if (searchParams.get("filters") === "1") next.set("filters", "1");
+        const sortParam = searchParams.get("sort_by");
+        if (sortParam) next.set("sort_by", sortParam);
+        else if (!next.has("sort_by")) next.set("sort_by", "is_our_picks");
+        const filtersClean = parseFilters(next);
+        const sortValue = next.get("sort_by") || "is_our_picks";
+        setSelectedFilters(filtersClean);
+        setPage(1);
+        setSort(sortValue);
+        const q = next.toString();
+        prevCategoryIdRef.current = categoryId;
+        router.replace(q ? `${pathname}?${q}` : pathname);
+        return;
+      }
+    }
+
+    prevCategoryIdRef.current = categoryId;
+
     const params = new URLSearchParams(searchParams.toString());
     const filters = parseFilters(params);
 
@@ -283,6 +325,7 @@ export default function ProductsListGrid({
     setSort(sortValue);
 
     fetchAllProducts(1, filters, sortValue, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams/pathname/router only read when categoryId/curatedSlug change; listing sync stays in the searchParams effect
   }, [categoryId, curatedSlug]);
 
   // ✅ Sync URL change — skip when only "filters" (sidebar open/close) changed so reopening the panel doesn't reset list or selections
@@ -409,9 +452,10 @@ export default function ProductsListGrid({
           genders: fromUrl.genders?.length ? fromUrl.genders : selectedFilters.genders ?? [],
           price: fromUrl.price ?? selectedFilters.price,
         };
-    const query = buildQuery(filters, newSort);
+    const params = new URLSearchParams(buildQuery(filters, newSort));
+    if (searchParams.get("filters") === "1") params.set("filters", "1");
     isSyncing.current = true;
-    router.replace(`${pathname}?${query}`);
+    router.replace(`${pathname}?${params.toString()}`);
     setSelectedFilters(filters);
     fetchAllProducts(1, filters, newSort, false);
   };
@@ -419,12 +463,41 @@ export default function ProductsListGrid({
   const handleResetFilters = () => {
     const params = new URLSearchParams();
     params.set("sort_by", sort);
+    if (searchParams.get("filters") === "1") params.set("filters", "1");
     isSyncing.current = true;
     router.replace(`${pathname}?${params.toString()}`);
     setSelectedFilters({});
     setPage(1);
     setProducts([]);
     fetchAllProducts(1, {}, sort, false);
+  };
+
+  const handleRemoveAppliedFilter = (type, value) => {
+    const next = { ...selectedFilters };
+    if (type === "brand" && value != null) {
+      next.brands = (next.brands || []).filter((x) => x !== value);
+      if (!next.brands.length) delete next.brands;
+    } else if (type === "color" && value != null) {
+      next.colors = (next.colors || []).filter((x) => x !== value);
+      if (!next.colors.length) delete next.colors;
+    } else if (type === "size" && value != null) {
+      next.sizes = (next.sizes || []).filter((x) => x !== value);
+      if (!next.sizes.length) delete next.sizes;
+    } else if (type === "gender" && value != null) {
+      next.genders = (next.genders || []).filter((x) => x !== value);
+      if (!next.genders.length) delete next.genders;
+    } else if (type === "price") {
+      delete next.price;
+    }
+
+    const params = new URLSearchParams(buildQuery(next, sort));
+    if (searchParams.get("filters") === "1") params.set("filters", "1");
+    isSyncing.current = true;
+    router.replace(`${pathname}?${params.toString()}`);
+    setSelectedFilters(next);
+    setPage(1);
+    setProducts([]);
+    fetchAllProducts(1, next, sort, false);
   };
 
   // Count active filters
@@ -680,14 +753,24 @@ export default function ProductsListGrid({
         initialFilters={selectedFilters}
         categoryId={categoryId}
         categories={categoryId ? childCategories : []}
+        activeCategoryName={
+          !isSearchMode && !curatedSlug && categoryId
+            ? categoryData?.name ??
+              (categorySlug && categorySlug !== "Shop"
+                ? startCase(toLower(categorySlug.replace(/-/g, " ")))
+                : null)
+            : null
+        }
+        onRemoveAppliedFilter={handleRemoveAppliedFilter}
         totalCount={totalProducts}
         sortValue={sort}
         onSortChange={handleSortChange}
         onClose={handleCloseFilters}
         onApply={(filters) => {
-          const query = buildQuery(filters, sort);
+          const params = new URLSearchParams(buildQuery(filters, sort));
+          if (searchParams.get("filters") === "1") params.set("filters", "1");
           isSyncing.current = true;
-          router.replace(`${pathname}?${query}`);
+          router.replace(`${pathname}?${params.toString()}`);
           setSelectedFilters(filters);
           setPage(1);
           setProducts([]);
