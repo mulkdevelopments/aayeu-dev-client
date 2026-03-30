@@ -33,6 +33,23 @@ import {
 const brandGroupsCache = new Map();
 const brandGroupsInflight = new Map();
 
+/** First segment after /shop/ — normalize so /shop/men matches Menswear, /shop/women matches Womenswear. */
+function normalizedPathRootSlug(segment) {
+  const s = toLower(String(segment ?? ""))
+    .replace(/[-_/]+/g, " ")
+    .replace(/\s+/g, "")
+    .trim();
+  if (s === "men") return "menswear";
+  if (s === "women") return "womenswear";
+  return s;
+}
+
+function menuCategoryRootSlug(cat) {
+  return toLower(String(cat?.name ?? ""))
+    .replace(/\s+/g, "")
+    .trim();
+}
+
 export default function MiddleHeader() {
   const router = useRouter();
   const pathname = usePathname();
@@ -101,6 +118,26 @@ export default function MiddleHeader() {
     return parts[1] || "";
   }, [pathname]);
 
+  /**
+   * Desktop “Menswear / Womenswear” tabs + mobile drawer root follow the first /shop/:segment segment
+   * (homepage cards use /shop/men, /shop/women; nav uses /shop/menswear/…).
+   * Default mobile root to menu[0] only when there is no matching shop segment (avoids racing the old init effect).
+   */
+  useEffect(() => {
+    if (!menu?.length) return;
+    const root = pathCategorySlug;
+    if (root) {
+      const norm = normalizedPathRootSlug(root);
+      const found = menu.find((cat) => menuCategoryRootSlug(cat) === norm);
+      if (found) {
+        setActiveCategory((prev) => (prev?.id === found.id ? prev : found));
+        setMobileRootTab((prev) => (prev?.id === found.id ? prev : found));
+        return;
+      }
+    }
+    setMobileRootTab((prev) => prev ?? menu[0]);
+  }, [menu, pathCategorySlug]);
+
   const lastBrandCategoryRef = useRef("");
 
   const ensureBrandGroups = async (slug) => {
@@ -139,11 +176,6 @@ export default function MiddleHeader() {
       console.error("Failed to fetch brand data:", err);
     }
   };
-
-  useEffect(() => {
-    if (!menu?.length) return;
-    if (!mobileRootTab) setMobileRootTab(menu[0]);
-  }, [menu, mobileRootTab]);
 
   useEffect(() => {
     if (!isSheetOpen) {
