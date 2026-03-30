@@ -13,6 +13,9 @@ import useWishlist from "@/hooks/useWishlist";
 import useAxios from "@/hooks/useAxios";
 import { showToast } from "@/providers/ToastProvider";
 import useCurrency from "@/hooks/useCurrency";
+import { useSelector } from "react-redux";
+import { selectSelectedCurrency } from "@/store/slices/currencySlice";
+import { pushGa4AddToWishlist } from "@/lib/ga4Ecommerce";
 
 const SIZE_GUIDE_SOURCES = [
   {
@@ -134,6 +137,7 @@ const ProductInfoDetailsSection = forwardRef(
     const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
     const [sizeGuideTab, setSizeGuideTab] = useState("conversion");
     const { toggleWishlist, isWishlisted } = useWishlist();
+    const selectedCurrency = useSelector(selectSelectedCurrency);
     const { format } = useCurrency();
     const { request } = useAxios();
     const canLiveStock =
@@ -381,13 +385,25 @@ const ProductInfoDetailsSection = forwardRef(
       return { price, mrp, discountPct };
     }, [product]);
 
-    const handleWishlistToggle = () => {
+    const handleWishlistToggle = async () => {
       if (!isAuthenticated) {
         showToast("info", "Please login to manage your wishlist");
         return;
       }
-      if (product?.id) {
-        toggleWishlist(product.id);
+      if (!product?.id) return;
+      const variant =
+        product.variants?.find(
+          (v) =>
+            (!selectedColor || v.variant_color === selectedColor) &&
+            (!selectedSize || v.variant_size === selectedSize)
+        ) || product.variants?.[0];
+      const result = await toggleWishlist(product.id);
+      if (result?.success && result.added && variant) {
+        pushGa4AddToWishlist({
+          product,
+          variant,
+          currency: selectedCurrency,
+        });
       }
     };
 

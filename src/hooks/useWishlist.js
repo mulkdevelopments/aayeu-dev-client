@@ -49,12 +49,14 @@ export default function useWishlist() {
     if (error) {
       if (exists) dispatch(addWish({ product_id }));
       else dispatch(removeWish(product_id));
-      return;
+      return { success: false };
     }
 
     if (data?.status === 200) {
       showToast("success", data.message);
+      return { success: true, added: !exists };
     }
+    return { success: false };
   };
 
   return {

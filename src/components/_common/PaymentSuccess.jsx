@@ -29,17 +29,18 @@ export default function PaymentSuccess() {
         payload: { order_id: orderId },
       });
 
-      if (data.status === 200) {
-        const payload = data.data || {};
-        setPaymentData(payload);
-        setStatus("success");
-        localStorage.removeItem("cart_coupon_code");
-        if (!purchasePushedRef.current && payload.ga4_purchase) {
-          purchasePushedRef.current = true;
-          pushGa4Purchase(payload.ga4_purchase);
-        }
-      } else {
+      if (error || !data || data.status !== 200) {
         setStatus("error");
+        return;
+      }
+
+      const payload = data.data || {};
+      setPaymentData(payload);
+      setStatus("success");
+      localStorage.removeItem("cart_coupon_code");
+      if (!purchasePushedRef.current && payload.ga4_purchase) {
+        purchasePushedRef.current = true;
+        pushGa4Purchase(payload.ga4_purchase);
       }
     };
 

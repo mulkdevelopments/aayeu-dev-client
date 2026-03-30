@@ -13,6 +13,10 @@ import useCurrency from "@/hooks/useCurrency";
 
 import { selectCartTotals, selectCartItems } from "@/store/selectors/cartSelectors";
 import { selectSelectedCurrency, selectExchangeRates, selectCurrencyInfo } from "@/store/slices/currencySlice";
+import {
+  cartLineToGa4Item,
+  pushGa4BeginCheckout,
+} from "@/lib/ga4Ecommerce";
 
 export default function CartSummarySection({ liveStockMap, stockCheckLoading }) {
   const router = useRouter();
@@ -132,6 +136,18 @@ export default function CartSummarySection({ liveStockMap, stockCheckLoading }) 
 
     try {
       setLoading(true);
+
+      const gaItems = cartItems
+        .map((line) => cartLineToGa4Item(line))
+        .filter(Boolean);
+      if (gaItems.length > 0) {
+        pushGa4BeginCheckout({
+          items: gaItems,
+          value: Number(updatedTotals.total_payable) || 0,
+          currency: selectedCurrency,
+        });
+      }
+
       const { data, error } = await createSession({
         url: "/users/create-checkout-session",
         method: "POST",

@@ -93,3 +93,44 @@ export function pushGa4ViewItem({ product, variant, currency }) {
     items: [item],
   });
 }
+
+/** Cart line shape from Redux / useCart */
+export function cartLineToGa4Item(line) {
+  if (!line) return null;
+  const salePrice = line.sale_price ?? line.variant_price ?? 0;
+  const qty = Math.max(1, Number(line.qty) || 1);
+  return {
+    item_id: String(
+      line.sku || line.variant_id?.id || line.product?.id || ""
+    ),
+    item_name: line.product?.name || "",
+    item_brand: line.brand_name || undefined,
+    item_variant: [line.variant_id?.color, line.variant_id?.size]
+      .filter(Boolean)
+      .join(" / ") || undefined,
+    price: Number(salePrice) || 0,
+    quantity: qty,
+  };
+}
+
+export function pushGa4BeginCheckout({ items, value, currency }) {
+  if (!Array.isArray(items) || items.length === 0) return;
+  pushGa4EcommerceEvent("begin_checkout", {
+    currency: normalizeCurrency(currency),
+    value: Number(value) || 0,
+    items,
+  });
+}
+
+/**
+ * Custom retail event — configure GTM trigger on event name "add_to_wishlist".
+ */
+export function pushGa4AddToWishlist({ product, variant, currency }) {
+  if (!product || !variant) return;
+  const item = productVariantToGa4Item(product, variant, 1);
+  pushGa4EcommerceEvent("add_to_wishlist", {
+    currency: normalizeCurrency(currency),
+    value: Number(item.price) || 0,
+    items: [item],
+  });
+}

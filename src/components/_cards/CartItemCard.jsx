@@ -7,6 +7,8 @@ import Link from "next/link";
 import { slugifyProductName } from "@/utils/seoHelpers";
 import useWishlist from "@/hooks/useWishlist";
 import { useSelector } from "react-redux";
+import { selectSelectedCurrency } from "@/store/slices/currencySlice";
+import { pushGa4AddToWishlist } from "@/lib/ga4Ecommerce";
 import SignupDialog from "../_dialogs/SignupDialog";
 import useCurrency from "@/hooks/useCurrency";
 
@@ -14,6 +16,7 @@ export default function CartItemCard({ product, liveStockData, stockCheckLoading
   if (!product) return null;
 
   const { isAuthenticated } = useSelector((state) => state.auth);
+  const selectedCurrency = useSelector(selectSelectedCurrency);
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { format } = useCurrency();
 
@@ -90,9 +93,29 @@ export default function CartItemCard({ product, liveStockData, stockCheckLoading
     [line_total, price, qty]
   );
 
-  const handleMoveToWishlist = () => {
+  const handleMoveToWishlist = async () => {
     if (!isAuthenticated) return;
-    toggleWishlist(id);
+    const result = await toggleWishlist(id);
+    if (result?.success && result.added) {
+      const gaProduct = {
+        id: productInfo?.id,
+        name: productInfo?.name,
+        brand_name: brand_name || productInfo?.brand_name,
+      };
+      const gaVariant = {
+        id: variant_id?.id,
+        sku,
+        variant_color: variant_id?.color,
+        variant_size: variant_id?.size,
+        sale_price,
+        price: variant_price,
+      };
+      pushGa4AddToWishlist({
+        product: gaProduct,
+        variant: gaVariant,
+        currency: selectedCurrency,
+      });
+    }
     onRemove?.(product);
   };
 

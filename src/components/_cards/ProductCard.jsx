@@ -8,6 +8,8 @@ import { slugifyProductName } from "@/utils/seoHelpers";
 import STATIC from "@/utils/constants";
 import useWishlist from "@/hooks/useWishlist";
 import { useSelector } from "react-redux";
+import { selectSelectedCurrency } from "@/store/slices/currencySlice";
+import { pushGa4AddToWishlist } from "@/lib/ga4Ecommerce";
 import { showToast } from "@/providers/ToastProvider";
 import useCurrency from "@/hooks/useCurrency";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +20,7 @@ export default function ProductCard({
   useNextImage = true,
 }) {
   const { isAuthenticated } = useSelector((state) => state.auth);
+  const selectedCurrency = useSelector(selectSelectedCurrency);
   const { format } = useCurrency();
 
   const [hovered, setHovered] = useState(false);
@@ -73,10 +76,17 @@ export default function ProductCard({
     ? `/shop/product/${slugifyProductName(product.name)}/${product.id}?cat=${mappedCategory.slug}`
     : `/shop/product/${slugifyProductName(product.name)}/${product.id}`;
 
-  const toggleWish = (e) => {
+  const toggleWish = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleWishlist(id);
+    const result = await toggleWishlist(id);
+    if (result?.success && result.added && firstVariant) {
+      pushGa4AddToWishlist({
+        product,
+        variant: firstVariant,
+        currency: selectedCurrency,
+      });
+    }
   };
 
   const MAX_RETRIES = 2;

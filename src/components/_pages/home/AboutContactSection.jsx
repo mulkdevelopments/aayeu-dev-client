@@ -32,7 +32,7 @@ export default function AboutContactSection() {
       <div className="flex flex-col lg:flex-row">
         {/* ---------------- LEFT BLOCK ---------------- */}
         <div
-          className="relative flex flex-col justify-center text-center text-white min-h-[500px] lg:min-h-[695px] flex-1 p-8"
+          className="relative flex flex-col justify-center text-center text-white min-h-[min(72dvh,440px)] sm:min-h-[480px] lg:min-h-[695px] flex-1 px-5 py-8 sm:p-8"
           style={{
             backgroundImage: hasLeftBanner
               ? `url(${bottomLeftBanner.media_url})`
@@ -41,13 +41,13 @@ export default function AboutContactSection() {
             backgroundPosition: "center",
           }}
         >
-          <div className="relative z-10 max-w-xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+          <div className="relative z-10 max-w-xl mx-auto px-1">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-snug sm:leading-tight">
               {bottomLeftBanner?.title ?? "Adventure Pass, Aayeu's Club"}
             </h2>
           </div>
 
-          <div className="relative z-10 mt-6 lg:mt-auto">
+          <div className="relative z-10 mt-5 sm:mt-6 lg:mt-auto">
             {bottomLeftBanner?.button_text ? (
               <CTAButton
                 color="black"
@@ -67,22 +67,22 @@ export default function AboutContactSection() {
 
         {/* ---------------- RIGHT BLOCK (Newsletter / promo headline) ---------------- */}
         <div
-          className="relative flex flex-col justify-center text-center text-white min-h-[500px] lg:min-h-[695px] flex-1 p-8 bg-cover bg-center"
+          className="relative flex flex-col justify-center text-center text-white min-h-[min(72dvh,440px)] sm:min-h-[480px] lg:min-h-[695px] flex-1 px-5 py-8 sm:p-8 bg-cover bg-center"
           style={{
             backgroundImage: hasRightBanner
               ? `url(${bottomRightBanner.media_url})`
               : `url('/assets/images/footer-2.jpg')`,
           }}
         >
-          <div className="relative z-10 max-w-xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+          <div className="relative z-10 max-w-xl mx-auto px-1">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-snug sm:leading-tight">
               {bottomRightBanner?.title ??
-                "Sign up to get our welcome offer of 10% discount on your first order"}
+                "Sign up to get your welcome offer of 10% discount on your first order"}
             </h2>
           </div>
 
           {bottomRightBanner?.button_text ? (
-            <div className="relative z-10 mt-6 lg:mt-auto">
+            <div className="relative z-10 mt-5 sm:mt-6 lg:mt-auto">
               <CTAButton
                 color="black"
                 className="mb-4"
