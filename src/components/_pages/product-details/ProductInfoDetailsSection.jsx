@@ -335,7 +335,7 @@ const ProductInfoDetailsSection = forwardRef(
       }
     }, [product, selectedColor, selectedSize, setSelectedColor, setSelectedSize]);
 
-    // ✅ Stock logic - NO fallback to DB stock
+    // ✅ Stock: live API when vendor supports it; otherwise DB variant.stock (e.g. Bdroppy)
     useEffect(() => {
       if (!product?.variants?.length) return;
 
@@ -350,21 +350,19 @@ const ProductInfoDetailsSection = forwardRef(
         return;
       }
 
-      // Only use live stock for vendors that support live stock checks
+      const dbStock = Number(variant.stock || 0);
+
       if (canLiveStock) {
-        const dbStock = Number(variant.stock || 0);
         if (liveStockData && !liveStockData.error) {
           const liveStock = getLiveStock(variant.variant_size);
-          setIsOutOfStock(liveStock <= 0);
+          setIsOutOfStock(liveStock == null ? dbStock <= 0 : liveStock <= 0);
         } else {
-          // Live data missing/failed - fall back to DB stock
           setIsOutOfStock(dbStock <= 0);
         }
       } else {
-        // Vendor doesn't support individual syncing - show out of stock
-        setIsOutOfStock(true);
+        setIsOutOfStock(dbStock <= 0);
       }
-    }, [product, selectedColor, selectedSize, liveStockData, stockLoading]);
+    }, [product, selectedColor, selectedSize, liveStockData, stockLoading, canLiveStock]);
 
     const getVariantForSize = (size) =>
       product?.variants?.find(
@@ -564,16 +562,18 @@ const ProductInfoDetailsSection = forwardRef(
                           const variant = getVariantForSize(s);
                           const price = variant?.price ?? displayPrice.price;
                           let outOfStock = false;
+                          const dbStock = Number(variant?.stock || 0);
                           if (canLiveStock) {
-                            const dbStock = Number(variant?.stock || 0);
                             if (liveStockData && !liveStockData.error) {
                               const liveStock = getLiveStock(s);
-                              outOfStock = !variant || liveStock <= 0;
+                              outOfStock =
+                                !variant ||
+                                (liveStock == null ? dbStock <= 0 : liveStock <= 0);
                             } else {
                               outOfStock = !variant || dbStock <= 0;
                             }
                           } else {
-                            outOfStock = true;
+                            outOfStock = !variant || dbStock <= 0;
                           }
 
                           return (
