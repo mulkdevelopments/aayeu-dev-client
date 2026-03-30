@@ -678,6 +678,7 @@ export default function ProductsListGrid({
       <SidebarFilters
         open={isSidebarOpen}
         initialFilters={selectedFilters}
+        categoryId={categoryId}
         categories={categoryId ? childCategories : []}
         totalCount={totalProducts}
         sortValue={sort}

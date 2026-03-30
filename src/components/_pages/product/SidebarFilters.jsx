@@ -20,6 +20,7 @@ export default function SidebarFilters({
   onReset,
   initialFilters = {}, // parent passes filters parsed from URL
   categories = [],
+  categoryId: categoryIdProp = null, // prefer parent UUID (same as ProductsListGrid / page)
   totalCount = null,
   sortValue = "is_our_picks",
   onSortChange,
@@ -28,7 +29,9 @@ export default function SidebarFilters({
   const { selectedCurrency, exchangeRates, format } = useCurrency();
   const router = useRouter();
   const params = useParams();
-  const categoryId = params?.category?.[params.category.length - 1];
+  const categoryIdFromRoute =
+    params?.category?.[params.category?.length - 1] ?? null;
+  const categoryId = categoryIdProp ?? categoryIdFromRoute;
   const searchParams = useSearchParams();
   const searchQuery =
     searchParams.get("query") || searchParams.get("q") || null;
@@ -588,27 +591,50 @@ export default function SidebarFilters({
     );
   }, [sizes]);
 
+  /** Used only to decide full-panel skeleton vs real layout (first load edge case) */
+  const filtersQueryActive = Boolean(
+    categoryId || searchQuery || searchCategorySlug
+  );
+
+  // Full skeleton only when we have no facet context (edge); otherwise always show facet rows (no length > 0 gate)
+  const showSkeleton = !hasFetchedFilters && !filtersQueryActive;
+
+  const showBrandRow = !showSkeleton;
+  const showGenderRow = !showSkeleton;
+  const showColorRow = !showSkeleton;
+  const showSizeRow = !showSkeleton;
+  const showPriceRow = !showSkeleton;
+
+  /** One get-filters-for-products round-trip: spinners on every facet row until it completes */
+  const filtersFacetFetchPending =
+    !hasFetchedFilters || isFiltersLoading;
+
+  const renderFacetTrailing = () =>
+    filtersFacetFetchPending ? (
+      <Loader2
+        className="h-4 w-4 shrink-0 animate-spin text-gray-500"
+        aria-label="Loading filters"
+      />
+    ) : (
+      <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+    );
+
   const availableSections = useMemo(() => {
     const list = [];
     if (categories.length > 0) list.push("category");
-    if (allBrands.length > 0 || brands.length > 0) list.push("brand");
-    if (allGenders.length > 0 || genders.length > 0) list.push("gender");
-    if (allColors.length > 0 || colors.length > 0) list.push("color");
-    if (allSizes.length > 0 || sizes.length > 0) list.push("size");
-    if (priceRange.min < priceRange.max) list.push("price");
+    if (showBrandRow) list.push("brand");
+    if (showGenderRow) list.push("gender");
+    if (showColorRow) list.push("color");
+    if (showSizeRow) list.push("size");
+    if (showPriceRow) list.push("price");
     return list;
   }, [
     categories.length,
-    brands.length,
-    allBrands.length,
-    genders.length,
-    allGenders.length,
-    colors.length,
-    allColors.length,
-    sizes.length,
-    allSizes.length,
-    priceRange.min,
-    priceRange.max,
+    showBrandRow,
+    showGenderRow,
+    showColorRow,
+    showSizeRow,
+    showPriceRow,
   ]);
 
   const hasInitializedSection = useRef(false);
@@ -620,31 +646,6 @@ export default function SidebarFilters({
     hasInitializedSection.current = true;
   }, [availableSections]);
 
-  // Only show full skeleton on initial load; when refetching after filter change keep current content so scroll position is preserved
-  const showSkeleton = !hasFetchedFilters;
-  const missingSections = useMemo(() => {
-    const list = [];
-    if (categories.length === 0) list.push("category");
-    if (allBrands.length === 0 && brands.length === 0) list.push("brand");
-    if (allGenders.length === 0 && genders.length === 0) list.push("gender");
-    if (allColors.length === 0 && colors.length === 0) list.push("color");
-    if (allSizes.length === 0 && sizes.length === 0) list.push("size");
-    if (!(priceRange.min < priceRange.max)) list.push("price");
-    return list;
-  }, [
-    categories.length,
-    allBrands.length,
-    brands.length,
-    allGenders.length,
-    genders.length,
-    allColors.length,
-    colors.length,
-    allSizes.length,
-    sizes.length,
-    priceRange.min,
-    priceRange.max,
-  ]);
-
   const sortOptions = [
     { value: "is_our_picks", label: "Our Picks" },
     { value: "is_newest", label: "Newest first" },
@@ -653,6 +654,12 @@ export default function SidebarFilters({
   ];
 
   const handleSectionToggle = (section) => {
+    if (
+      filtersFacetFetchPending &&
+      ["brand", "gender", "color", "size", "price"].includes(section)
+    ) {
+      return;
+    }
     if (isMobile) {
       setMobileSection(section);
       return;
@@ -1093,7 +1100,9 @@ export default function SidebarFilters({
               </div>
               <Separator className="my-1" />
 
-              {availableSections.length === 0 && (
+              {availableSections.length === 0 &&
+                !isFiltersLoading &&
+                hasFetchedFilters && (
                 <div className="flex flex-col items-start gap-3 py-6">
                   <p className="text-sm text-gray-700">
                     No filters available for this selection.
@@ -1149,80 +1158,85 @@ export default function SidebarFilters({
               )}
 
               {/* --- Brand Filter --- */}
-              {(allBrands.length > 0 || brands.length > 0) && (
+              {showBrandRow && (
                 <>
-              <button
-                type="button"
+                  <button
+                    type="button"
+                    disabled={filtersFacetFetchPending}
                     onClick={() => handleSectionToggle("brand")}
-                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
-              >
-                Brand
-                <ChevronRight className="h-4 w-4" />
-              </button>
+                    className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900 disabled:cursor-wait disabled:opacity-80"
+                  >
+                    Brand
+                    {renderFacetTrailing()}
+                  </button>
                   {!isMobile && openSection === "brand" && renderBrandContent()}
                   <Separator className="my-1" />
                 </>
               )}
 
               {/* --- Gender Filter --- */}
-              {(allGenders.length > 0 || genders.length > 0) && (
+              {showGenderRow && (
                 <>
-              <button
-                type="button"
+                  <button
+                    type="button"
+                    disabled={filtersFacetFetchPending}
                     onClick={() => handleSectionToggle("gender")}
-                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
-              >
-                Gender
-                <ChevronRight className="h-4 w-4" />
-              </button>
+                    className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900 disabled:cursor-wait disabled:opacity-80"
+                  >
+                    Gender
+                    {renderFacetTrailing()}
+                  </button>
                   {!isMobile && openSection === "gender" && renderGenderContent()}
                   <Separator className="my-1" />
                 </>
               )}
 
               {/* --- Color Filter --- */}
-              {(allColors.length > 0 || colors.length > 0) && (
+              {showColorRow && (
                 <>
-              <button
-                type="button"
+                  <button
+                    type="button"
+                    disabled={filtersFacetFetchPending}
                     onClick={() => handleSectionToggle("color")}
-                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
-              >
-                Colour
-                <ChevronRight className="h-4 w-4" />
-              </button>
+                    className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900 disabled:cursor-wait disabled:opacity-80"
+                  >
+                    Colour
+                    {renderFacetTrailing()}
+                  </button>
                   {!isMobile && openSection === "color" && renderColorContent()}
                   <Separator className="my-1" />
                 </>
               )}
 
               {/* --- Size Filter --- */}
-              {sizes.length > 0 && (
+              {showSizeRow && (
                 <>
-              <button
-                type="button"
+                  <button
+                    type="button"
+                    disabled={filtersFacetFetchPending}
                     onClick={() => handleSectionToggle("size")}
-                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
-              >
-                Size
-                <ChevronRight className="h-4 w-4" />
-              </button>
+                    className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900 disabled:cursor-wait disabled:opacity-80"
+                  >
+                    Size
+                    {renderFacetTrailing()}
+                  </button>
                   {!isMobile && openSection === "size" && renderSizeContent()}
                   <Separator className="my-1" />
                 </>
               )}
 
               {/* --- Price Filter --- */}
-              {priceRange.min < priceRange.max && (
+              {showPriceRow && (
                 <>
-              <button
-                type="button"
-                onClick={() => handleSectionToggle("price")}
-                className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900"
-              >
-                Price
-                <ChevronRight className="h-4 w-4" />
-              </button>
+                  <button
+                    type="button"
+                    disabled={filtersFacetFetchPending}
+                    onClick={() => handleSectionToggle("price")}
+                    className="w-full flex items-center justify-between py-4 text-xs tracking-[0.2em] uppercase text-gray-900 disabled:cursor-wait disabled:opacity-80"
+                  >
+                    Price
+                    {renderFacetTrailing()}
+                  </button>
                   {!isMobile && openSection === "price" && renderPriceContent()}
                 </>
               )}

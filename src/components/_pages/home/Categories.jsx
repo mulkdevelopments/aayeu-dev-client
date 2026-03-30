@@ -55,7 +55,7 @@ export default function HeroVideoSection() {
         <div className="max-w-[1600px] mx-auto">
           {/* Hero title skeleton */}
           <div className="px-4 md:px-12 lg:px-16 py-8 md:py-12 lg:py-16">
-            <Skeleton className="h-6 md:h-8 lg:h-9 w-3/4 max-w-4xl mb-8" />
+            <Skeleton className="h-8 md:h-10 lg:h-12 w-3/4 max-w-4xl mb-8" />
           </div>
 
           {/* Category cards skeleton — same layout as real cards */}
@@ -79,7 +79,7 @@ export default function HeroVideoSection() {
         {/* Hero Banner Section */}
         <div className="px-4 md:px-12 lg:px-16 py-8 md:py-12 lg:py-16">
           <h1
-            className="text-sm md:text-lg lg:text-xl xl:text-2xl font-light text-gray-900 leading-tight tracking-tight text-left"
+            className="text-lg md:text-2xl lg:text-3xl xl:text-4xl font-light text-gray-900 leading-tight tracking-tight text-left"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             {topBanner?.title || "Aayeu Sale: Up to 70% Off Selected Styles"}

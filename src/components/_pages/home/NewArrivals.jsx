@@ -2,111 +2,81 @@
 
 import ProductCard from "@/components/_cards/ProductCard";
 import useHomeConfig from "@/hooks/useHomeConfig";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const MAX_PRODUCTS = 12;
-const ITEMS_PER_PAGE = 4;
-
-function ChevronNavButton({ direction, onClick, disabled, label }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-800 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-    >
-      {direction === "prev" ? (
-        <ChevronLeft className="h-5 w-5" aria-hidden />
-      ) : (
-        <ChevronRight className="h-5 w-5" aria-hidden />
-      )}
-    </button>
-  );
-}
+const INITIAL_LIMIT = 4;
+const NEXT_PAGE_LIMIT = 4;
 
 export default function NewArrivals() {
   const { newArrivals, fetchNewArrivals } = useHomeConfig();
   const [isLoading, setIsLoading] = useState(true);
-  const [slideIndex, setSlideIndex] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreSentinelRef = useRef(null);
 
+  // Initial load: 4 items
   useEffect(() => {
-    let cancelled = false;
     setIsLoading(true);
-    setSlideIndex(0);
-    fetchNewArrivals({ limit: MAX_PRODUCTS, page: 1 }).finally(() => {
-      if (!cancelled) setIsLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // fetchNewArrivals is stable (useHomeConfig + useAxios); run once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid refetch loops from effect churn
+    setPage(1);
+    setHasMore(true);
+    fetchNewArrivals({ limit: INITIAL_LIMIT, page: 1 })
+      .then((res) => {
+        if (res?.data?.length !== undefined)
+          setHasMore(res.data.length >= INITIAL_LIMIT);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const items = useMemo(
-    () =>
-      (newArrivals || []).filter((item) => {
-        const p = item?.product ?? item;
-        return p && p.deleted_at == null && p.is_active !== false;
-      }),
-    [newArrivals]
-  );
-
-  const cappedItems = useMemo(
-    () => items.slice(0, MAX_PRODUCTS),
-    [items]
-  );
-
-  const pageCount = useMemo(() => {
-    const n = cappedItems.length;
-    if (n <= 0) return 1;
-    return Math.max(1, Math.ceil(n / ITEMS_PER_PAGE));
-  }, [cappedItems.length]);
+  // Load next page when sentinel is visible (user scrolled near end)
+  const loadNext = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    fetchNewArrivals({ limit: NEXT_PAGE_LIMIT, page: nextPage, append: true })
+      .then((res) => {
+        const count = res?.data?.length ?? 0;
+        setHasMore(count >= NEXT_PAGE_LIMIT);
+        setPage(nextPage);
+      })
+      .finally(() => setLoadingMore(false));
+  }, [page, hasMore, loadingMore, fetchNewArrivals]);
 
   useEffect(() => {
-    setSlideIndex((i) => Math.min(i, Math.max(0, pageCount - 1)));
-  }, [pageCount]);
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadNext();
+      },
+      { root: null, rootMargin: "200px", threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadNext]);
 
-  const visibleItems = useMemo(() => {
-    const start = slideIndex * ITEMS_PER_PAGE;
-    return cappedItems.slice(start, start + ITEMS_PER_PAGE);
-  }, [cappedItems, slideIndex]);
-
-  const goNext = () => {
-    setSlideIndex((prev) => (prev + 1) % pageCount);
-  };
-
-  const goPrev = () => {
-    setSlideIndex((prev) => (prev - 1 + pageCount) % pageCount);
-  };
-
-  const goToPage = (index) => {
-    if (index < 0 || index >= pageCount) return;
-    setSlideIndex(index);
-  };
-
-  const showCarouselNav = pageCount > 1;
-
+  // Loading skeleton
   if (isLoading) {
     return (
-      <section className="w-full bg-white py-12 md:py-16">
-        <div className="max-w-[1440px] mx-auto px-4 md:px-8">
-          <div className="mb-8 flex flex-row items-start justify-between gap-3 sm:gap-6 sm:items-end">
+      <section className="py-8 md:py-16 bg-neutral-50 relative overflow-hidden">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
+          {/* Header Skeleton — matches title + Show more row */}
+          <div className="mb-8 md:mb-12 flex flex-row items-start justify-between gap-3 sm:gap-6 sm:items-end">
             <Skeleton className="h-9 sm:h-10 flex-1 max-w-[min(100%,20rem)] mb-0" />
             <Skeleton className="h-10 w-[7.25rem] shrink-0" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+
+          {/* Single horizontal row skeleton — no negative margin so section stays within container width */}
+          <div className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
             {[...Array(4)].map((_, idx) => (
-              <div key={idx} className="flex flex-col">
-                <Skeleton className="aspect-[3/4] w-full mb-3 rounded-md" />
-                <Skeleton className="h-3 w-20 mb-1 rounded" />
-                <Skeleton className="h-4 w-32 mb-1 rounded" />
-                <Skeleton className="h-4 w-full mb-2 rounded" />
-                <Skeleton className="h-5 w-24 rounded" />
+              <div key={idx} className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72 flex flex-col">
+                <Skeleton className="aspect-[3/4] w-full mb-3" />
+                <Skeleton className="h-3 w-20 mb-1" />
+                <Skeleton className="h-4 w-32 mb-1" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-5 w-24" />
               </div>
             ))}
           </div>
@@ -115,14 +85,26 @@ export default function NewArrivals() {
     );
   }
 
-  if (!cappedItems.length) return null;
+  // Only show active, non-deleted products
+  const items = (newArrivals || []).filter((item) => {
+    const p = item?.product ?? item;
+    return p && p.deleted_at == null && p.is_active !== false;
+  });
+
+  if (!items.length) return null;
 
   return (
-    <section className="w-full bg-white py-12 md:py-16" aria-label="New arrivals">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-8">
-        <div className="mb-8 flex flex-row items-start justify-between gap-3 sm:gap-6 sm:items-end">
+ <section className="py-8 md:py-16 bg-neutral-50 relative overflow-hidden">
+
+      {/* Background Decorative Elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-emerald-100/30 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-amber-100/30 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
+        {/* Section header — same pattern as Best Sellers (title + Show more) */}
+        <div className="mb-8 md:mb-12 flex flex-row items-start justify-between gap-3 sm:gap-6 sm:items-end">
           <h2
-            className="min-w-0 flex-1 pr-1 text-xs sm:text-sm md:text-lg lg:text-xl xl:text-2xl font-light text-black text-left leading-[1.15] sm:leading-tight tracking-tight"
+            className="min-w-0 flex-1 pr-1 text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-light tracking-tight text-black text-left leading-[1.15] sm:leading-tight"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             New in: Latest Arrivals
@@ -135,86 +117,33 @@ export default function NewArrivals() {
           </Link>
         </div>
 
-        <div className="flex flex-col gap-6">
-          <div className="flex items-stretch gap-3 md:gap-4">
-            {showCarouselNav && (
-              <div className="hidden sm:flex items-center">
-                <ChevronNavButton
-                  direction="prev"
-                  onClick={goPrev}
-                  label="Previous products"
-                />
-              </div>
-            )}
-
-            <div className="min-w-0 flex-1 overflow-hidden">
-              <div
-                className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
-                role="list"
-              >
-                {visibleItems.map((item) => (
-                  <div
-                    key={item.new_arrival_id ?? item.id ?? item?.product?.id}
-                    className="min-w-0"
-                    role="listitem"
-                  >
-                    <ProductCard product={item?.product ?? item} />
-                  </div>
-                ))}
-              </div>
+        {/* Single horizontal row — scroll to see all; load more when sentinel visible */}
+        <div className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-2 scrollbar-thin">
+          {items.map((item) => (
+            <div key={item.id} className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72">
+              <ProductCard product={item?.product || item} />
             </div>
-
-            {showCarouselNav && (
-              <div className="hidden sm:flex items-center">
-                <ChevronNavButton
-                  direction="next"
-                  onClick={goNext}
-                  label="Next products"
-                />
-              </div>
-            )}
-          </div>
-
-          {showCarouselNav && (
-            <div className="flex sm:hidden items-center justify-between gap-3">
-              <ChevronNavButton
-                direction="prev"
-                onClick={goPrev}
-                label="Previous products"
-              />
-              <ChevronNavButton
-                direction="next"
-                onClick={goNext}
-                label="Next products"
-              />
-            </div>
+          ))}
+          {hasMore && (
+            <div
+              ref={loadMoreSentinelRef}
+              className="flex-shrink-0 w-1 min-w-[1px] h-1 self-center"
+              aria-hidden
+            />
           )}
-
-          {showCarouselNav && (
-            <div className="flex justify-center">
+          {loadingMore &&
+            [...Array(NEXT_PAGE_LIMIT)].map((_, idx) => (
               <div
-                className="flex gap-2"
-                role="tablist"
-                aria-label="New arrivals pages"
+                key={`skeleton-${idx}`}
+                className="flex-shrink-0 w-[45vw] sm:w-56 md:w-64 lg:w-72 flex flex-col"
               >
-                {Array.from({ length: pageCount }, (_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    role="tab"
-                    aria-selected={index === slideIndex}
-                    aria-label={`Page ${index + 1} of ${pageCount}`}
-                    onClick={() => goToPage(index)}
-                    className={`h-2 rounded-full transition-all ${
-                      index === slideIndex
-                        ? "w-8 bg-black"
-                        : "w-2 bg-gray-300 hover:bg-gray-400"
-                    }`}
-                  />
-                ))}
+                <Skeleton className="aspect-[3/4] w-full mb-3 rounded-md" />
+                <Skeleton className="h-3 w-20 mb-1 rounded" />
+                <Skeleton className="h-4 w-32 mb-1 rounded" />
+                <Skeleton className="h-4 w-full mb-2 rounded" />
+                <Skeleton className="h-5 w-24 rounded" />
               </div>
-            </div>
-          )}
+            ))}
         </div>
       </div>
     </section>
