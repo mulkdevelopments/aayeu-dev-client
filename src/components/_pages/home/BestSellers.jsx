@@ -122,7 +122,7 @@ export default function BestSellers() {
       <div className="max-w-[1440px] mx-auto px-4 md:px-8">
         <div className="mb-8 flex flex-row items-start justify-between gap-3 sm:gap-6 sm:items-end">
           <h2
-            className="min-w-0 flex-1 pr-1 text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-light text-black text-left leading-[1.15] sm:leading-tight tracking-tight"
+            className="min-w-0 flex-1 pr-1 text-xs sm:text-sm md:text-lg lg:text-xl xl:text-2xl font-light text-black text-left leading-[1.15] sm:leading-tight tracking-tight"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Trending: Most Loved Pieces

@@ -7,7 +7,6 @@ import {
   selectBottomTopBanner,
 } from "@/store/selectors/homeConfigSelectors";
 import { useSelector } from "react-redux";
-import BrandsHighlightSection from "@/components/_pages/home/BrandsHighlightSection";
 
 export default function AboutContactSection() {
   const bottomTopBanner = useSelector(selectBottomTopBanner);
@@ -95,8 +94,6 @@ export default function AboutContactSection() {
           ) : null}
         </div>
       </div>
-
-      <BrandsHighlightSection />
 
       {/* =======================================================
          🔹 HELP SECTION - 3 Cards
