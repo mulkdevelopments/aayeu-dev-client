@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaApple } from "react-icons/fa";
@@ -16,6 +16,7 @@ import useAxios from "@/hooks/useAxios";
 import { showToast } from "@/providers/ToastProvider";
 import { login } from "@/store/slices/authSlice";
 import { useDispatch } from "react-redux";
+import useCart from "@/hooks/useCart";
 
 /* ----- Social Button ----- */
 function SocialButton({ icon, label, onClick }) {
@@ -70,10 +71,16 @@ export default function AuthForm() {
   const dispatch = useDispatch();
 
   const { request, loading } = useAxios();
+  const { syncGuestCartToServer } = useCart();
+  const [otpPhase, setOtpPhase] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const [showRequestAccess, setShowRequestAccess] = useState(false);
   const [requestAccessLoading, setRequestAccessLoading] = useState(false);
   const [requestAccessName, setRequestAccessName] = useState("");
   const [requestAccessEmail, setRequestAccessEmail] = useState("");
+  const showOtpStep = otpPhase && (type === "signin" || type === "signup");
+
   const allowedDomains = ["mulkholdings.com", "aayeu.com"];
   const isAllowedEmail = (value) => {
     if (!value) return false;
@@ -112,7 +119,32 @@ export default function AuthForm() {
           : { email: "" },
   });
 
+  const resetOtpFlow = () => {
+    setOtpPhase(false);
+    setPendingEmail("");
+    setOtpCode("");
+  };
+
+  useEffect(() => {
+    setOtpPhase(false);
+    setPendingEmail("");
+    setOtpCode("");
+  }, [type]);
+
   const onSubmit = async (payload) => {
+    if (type === "forgot-password") {
+      const { data, error } = await request({
+        url: "/auth/forgot-password",
+        method: "POST",
+        payload: { ...payload, redirectUrl: process.env.NEXT_PUBLIC_APP_URL },
+      });
+      if (error) return showToast("error", error);
+      if (data.status === 201 || data.status === 200) {
+        showToast("success", data?.message || "Operation successful");
+      }
+      return;
+    }
+
     if (type === "signup" && !isAllowedEmail(payload.email)) {
       showToast(
         "error",
@@ -121,22 +153,82 @@ export default function AuthForm() {
       return;
     }
 
+    if (type === "signup") {
+      const { data, error } = await request({
+        url: "/users/register-user",
+        method: "POST",
+        payload: {
+          full_name: payload.name,
+          email: payload.email,
+          phone: payload.phone,
+          redirectUrl: process.env.NEXT_PUBLIC_APP_URL,
+        },
+      });
+      if (error) return showToast("error", error);
+      if (data.status === 201 || data.status === 200) {
+        setPendingEmail(String(payload.email).trim().toLowerCase());
+        setOtpPhase(true);
+        setOtpCode("");
+        showToast("success", data?.message || "Check your email for a code");
+      }
+      return;
+    }
+
+    if (type === "signin") {
+      const { data, error } = await request({
+        url: "/users/send-login-otp",
+        method: "POST",
+        payload: {
+          email: payload.email,
+          redirectUrl: process.env.NEXT_PUBLIC_APP_URL,
+        },
+      });
+      if (error) return showToast("error", error);
+      if (data.status === 201 || data.status === 200) {
+        setPendingEmail(String(payload.email).trim().toLowerCase());
+        setOtpPhase(true);
+        setOtpCode("");
+        showToast("success", data?.message || "Check your email for a code");
+      }
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!pendingEmail) return;
     const { data, error } = await request({
-      url:
-        type === "signup"
-          ? "/users/register-user"
-          : type === "signin"
-            ? "/users/send-magic-link"
-            : "/auth/forgot-password",
+      url: "/users/send-login-otp",
       method: "POST",
-      payload: { ...payload, redirectUrl: process.env.NEXT_PUBLIC_APP_URL },
+      payload: {
+        email: pendingEmail,
+        redirectUrl: process.env.NEXT_PUBLIC_APP_URL,
+      },
     });
-
     if (error) return showToast("error", error);
+    showToast("success", data?.message || "We sent a new code");
+  };
 
-    if (data.status === 201 || data.status === 200) {
+  const handleVerifyOtp = async (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    const normalized = String(otpCode).replace(/\s/g, "");
+    if (!/^\d{6}$/.test(normalized)) {
+      showToast("error", "Enter the 6-digit code from your email");
+      return;
+    }
+    const { data, error } = await request({
+      url: "/users/verify-login-otp",
+      method: "POST",
+      payload: { email: pendingEmail, otp: normalized },
+    });
+    if (error) return showToast("error", error);
+    if (data.status === 200) {
       dispatch(login(data.data));
-      showToast("success", data?.message || "Operation successful");
+      await syncGuestCartToServer({
+        isAuthenticated: true,
+        accessToken: data.data?.accessToken,
+      });
+      showToast("success", data?.message || "Signed in");
+      resetOtpFlow();
+      router.push("/");
     }
   };
 
@@ -161,7 +253,26 @@ export default function AuthForm() {
     setRequestAccessLoading(false);
     if (error) return showToast("error", error);
     if (data?.status === 201 || data?.status === 200) {
-      showToast("success", data?.message || "Request submitted. We'll be in touch.");
+      const meta = data?.data;
+      if (meta?.alreadyApproved) {
+        showToast(
+          "success",
+          data?.message ||
+            "You are already approved. Use Sign in and we will email you a one-time code."
+        );
+      } else if (meta?.alreadyPending) {
+        showToast(
+          "info",
+          data?.message ||
+            "We already have a request for this email. We will email you when it has been reviewed."
+        );
+      } else {
+        showToast(
+          "success",
+          data?.message ||
+            "Thanks — we received your request. We will email you when your access is approved."
+        );
+      }
       setRequestAccessName("");
       setRequestAccessEmail("");
       setShowRequestAccess(false);
@@ -178,24 +289,83 @@ export default function AuthForm() {
             <ShoppingBag className="w-8 h-8 text-white" />
           </div> */}
           <h1 className="text-3xl md:text-4xl text-gray-900 mb-2">
-            {type === "signup" && "Create Account"}
-            {type === "signin" && "Welcome Back"}
-            {type === "forgot-password" && "Reset Password"}
+            {showOtpStep
+              ? "Check your email"
+              : type === "signup"
+                ? "Create Account"
+                : type === "signin"
+                  ? "Welcome Back"
+                  : "Reset Password"}
           </h1>
           <p className="text-gray-600">
-            {type === "signup"
-              ? "Join us and start shopping today"
-              : type === "signin"
-                ? "Sign in to your account"
-                : "We'll send you a reset link"}
+            {showOtpStep
+              ? `We sent a 6-digit code to ${pendingEmail}`
+              : type === "signup"
+                ? "Join us and start shopping today"
+                : type === "signin"
+                  ? "Sign in with your work email — we’ll email you a code"
+                  : "We'll send you a reset link"}
           </p>
-          {(type === "signin" || type === "signup") && (
+          {(type === "signin" || type === "signup") && !showOtpStep && (
             <p className="text-xs text-gray-500 mt-2">
               Members only access
             </p>
           )}
         </div>
 
+        {showOtpStep ? (
+          <div className="space-y-5">
+            <InputField
+              label="6-digit code"
+              placeholder="000000"
+              icon={Lock}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={otpCode}
+              onChange={(e) =>
+                setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+            />
+            <div className="pt-2 space-y-3">
+              <button
+                type="button"
+                onClick={handleVerifyOtp}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 bg-black text-white py-4 px-6 rounded-md font-semibold text-base disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Verify & sign in</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+              <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center text-center sm:text-left">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={loading}
+                  className="text-sm font-semibold text-black underline disabled:opacity-50"
+                >
+                  Resend code
+                </button>
+                <button
+                  type="button"
+                  onClick={resetOtpFlow}
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Use a different email
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {type === "signup" && (
             <>
@@ -311,7 +481,7 @@ export default function AuthForm() {
                     {type === "signup"
                       ? "Creating Account..."
                       : type === "signin"
-                        ? "Signing In..."
+                        ? "Sending code..."
                         : "Sending Link..."}
                   </span>
                 </>
@@ -321,7 +491,7 @@ export default function AuthForm() {
                     {type === "signup"
                       ? "Create Account"
                       : type === "signin"
-                        ? "Sign In"
+                        ? "Send code"
                         : "Send Reset Link"}
                   </span>
                   <ArrowRight className="w-5 h-5" />
@@ -450,6 +620,7 @@ export default function AuthForm() {
             </>
           )}
         </form>
+        )}
       </div>
 
 
