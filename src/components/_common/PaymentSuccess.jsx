@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import useAxios from "@/hooks/useAxios";
 import { Spinner } from "../ui/spinner";
 import { pushGa4Purchase } from "@/lib/ga4Ecommerce";
+import { fireTapfiliateConversion } from "@/utils/tapfiliate";
 
 export default function PaymentSuccess() {
   const searchParams = useSearchParams();
@@ -42,6 +43,17 @@ export default function PaymentSuccess() {
         purchasePushedRef.current = true;
         pushGa4Purchase(payload.ga4_purchase);
       }
+
+      // Tapfiliate: conversion id + amount (deduped globally in fireTapfiliateConversion)
+      const ga = payload.ga4_purchase;
+      const conversionId =
+        ga?.transaction_id != null && String(ga.transaction_id).trim() !== ""
+          ? String(ga.transaction_id)
+          : payload.order_no != null
+            ? String(payload.order_no)
+            : String(orderId);
+      const amount = ga?.value != null ? Number(ga.value) : NaN;
+      fireTapfiliateConversion(conversionId, amount);
     };
 
     verifyStripePayment();

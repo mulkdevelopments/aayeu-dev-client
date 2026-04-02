@@ -5,6 +5,7 @@ import AppProviders from "@/providers/AppProviders";
 import { GTM_CONTAINER_ID } from "@/utils/constants";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import CookieConsentBanner from "@/components/_common/CookieConsentBanner";
+import TapfiliateSiteScript from "@/components/_analytics/TapfiliateSiteScript";
 import {
   getConsentDefaultScript,
   getConsentRestoreScript,
@@ -76,6 +77,7 @@ export default function RootLayout({ children }) {
         </noscript>
 
         <AppProviders>
+          <TapfiliateSiteScript />
           <ConditionalLayout>
             {children}
           </ConditionalLayout>
