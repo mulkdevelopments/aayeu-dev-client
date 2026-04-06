@@ -777,7 +777,7 @@ export default function SidebarFilters({
             className="pl-6 border-0 border-b border-gray-200 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
           />
         </div>
-        <div className="max-h-[320px] overflow-y-auto pr-1 space-y-4">
+        <div className="max-h-none sm:max-h-[320px] overflow-y-auto pr-1 space-y-4">
           {groupedBrands
             .filter((g) => g.items.some((item) => item.count > 0 || selBrands.includes(item.value)))
             .map((g) => (
@@ -872,7 +872,7 @@ export default function SidebarFilters({
             className="pl-6 border-0 border-b border-gray-200 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
           />
         </div>
-        <div className="max-h-[320px] overflow-y-auto pr-1 space-y-2.5">
+        <div className="max-h-none sm:max-h-[320px] overflow-y-auto pr-1 space-y-2.5">
           {filteredColors
             .filter((c) => {
               const k = String(c).trim().toLowerCase();
