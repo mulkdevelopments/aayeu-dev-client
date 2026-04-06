@@ -742,7 +742,6 @@ export default function ProductsListGrid({
                 : null)
             : null
         }
-        onRemoveAppliedFilter={handleRemoveAppliedFilter}
         totalCount={totalProducts}
         sortValue={sort}
         onSortChange={handleSortChange}

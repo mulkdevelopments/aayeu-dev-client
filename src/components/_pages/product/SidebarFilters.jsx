@@ -92,7 +92,6 @@ export default function SidebarFilters({
   categories = [],
   categoryId: categoryIdProp = null,
   activeCategoryName = null,
-  onRemoveAppliedFilter = null,
   totalCount = null,
   sortValue = "is_our_picks",
   onSortChange,
@@ -161,10 +160,12 @@ export default function SidebarFilters({
   useEffect(() => {
     if (open) {
       setRenderContent(true);
-      return;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
     }
+    document.body.style.overflow = "";
     const t = setTimeout(() => setRenderContent(false), 350);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t); document.body.style.overflow = ""; };
   }, [open]);
 
   useEffect(() => {
@@ -506,7 +507,7 @@ export default function SidebarFilters({
       });
     selBrands.forEach((b) => {
       const t = String(b).trim();
-      if (t) arr.push({ key: `b-${t}`, kind: "brand", label: t, value: t });
+      if (t) arr.push({ key: `b-${t}`, kind: "brand", label: _.startCase(_.toLower(t)), value: t });
     });
     selColors.forEach((c) => {
       const t = String(c).trim();
@@ -562,6 +563,10 @@ export default function SidebarFilters({
       setPriceMax(String(convert(facets.price.max)));
     }
     setPriceErr("");
+    setLiveFacets(null);
+    setLiveTotal(null);
+    setRefetchingCount(false);
+    if (countDebounce.current) clearTimeout(countDebounce.current);
     onReset?.();
   };
 
@@ -773,7 +778,9 @@ export default function SidebarFilters({
           />
         </div>
         <div className="max-h-[320px] overflow-y-auto pr-1 space-y-4">
-          {groupedBrands.map((g) => (
+          {groupedBrands
+            .filter((g) => g.items.some((item) => item.count > 0 || selBrands.includes(item.value)))
+            .map((g) => (
             <div key={g.letter}>
               <div className="text-[11px] font-semibold text-gray-400 uppercase mb-2">
                 {g.letter}
