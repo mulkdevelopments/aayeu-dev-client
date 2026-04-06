@@ -98,7 +98,7 @@ export default function SidebarFilters({
   onSortChange,
 }) {
   const { request } = useAxios();
-  const { format, convert, parseDisplayPrice } = useCurrency();
+  const { convert, parseDisplayPrice, currencyInfo } = useCurrency();
   const router = useRouter();
   const pathname = usePathname();
   const routeParams = useParams();
@@ -140,9 +140,15 @@ export default function SidebarFilters({
   const [catCache, setCatCache] = useState({});
   const [catMap, setCatMap] = useState(null);
 
+  /* ── Live facets (debounced re-fetch when selections change) ─ */
+  const [liveTotal, setLiveTotal] = useState(null);
+  const [liveFacets, setLiveFacets] = useState(null);
+  const [refetchingCount, setRefetchingCount] = useState(false);
+
   /* ── Refs ─────────────────────────────────────────────────── */
   const lastKey = useRef("");
   const sectionInit = useRef(false);
+  const countDebounce = useRef(null);
 
   /* ═══════════════════════════════════════════════════════════
      Effects
@@ -246,6 +252,8 @@ export default function SidebarFilters({
   useEffect(() => {
     lastKey.current = "";
     setFacets(null);
+    setLiveFacets(null);
+    setLiveTotal(null);
     setFetchState("idle");
     sectionInit.current = false;
   }, [categoryId, searchQuery]);
@@ -286,44 +294,130 @@ export default function SidebarFilters({
   }, [facets, categories]);
 
   /* ═══════════════════════════════════════════════════════════
-     Count maps
+     Live result count — debounced re-fetch when selections differ
      ═══════════════════════════════════════════════════════════ */
+
+  const hasChanges = useMemo(() => {
+    const eq = (a, b) => {
+      const sa = [...(a || [])].sort();
+      const sb = [...(b || [])].sort();
+      return sa.length === sb.length && sa.every((v, i) => v === sb[i]);
+    };
+    const initPrice = initialFilters.price || { min: 0, max: 100000 };
+    const curMin = Number(priceMin) || 0;
+    const curMax = Number(priceMax) || 0;
+    const initMin = convert(initPrice.min) || 0;
+    const initMax = convert(initPrice.max) || 0;
+    return (
+      !eq(initialFilters.brands, selBrands) ||
+      !eq(initialFilters.colors, selColors) ||
+      !eq(initialFilters.sizes, selSizes) ||
+      !eq(initialFilters.genders, selGenders) ||
+      curMin !== initMin ||
+      curMax !== initMax
+    );
+  }, [initialFilters, selBrands, selColors, selSizes, selGenders, priceMin, priceMax, convert]);
+
+  useEffect(() => {
+    if (!open || !hasChanges || !facets) {
+      setLiveTotal(null);
+      setLiveFacets(null);
+      return;
+    }
+    setLiveTotal(null);
+    setRefetchingCount(true);
+
+    if (countDebounce.current) clearTimeout(countDebounce.current);
+    countDebounce.current = setTimeout(async () => {
+      try {
+        const qp = new URLSearchParams();
+        if (searchQuery) {
+          qp.set("q", searchQuery);
+          if (searchCategorySlug) qp.set("category_slug", searchCategorySlug);
+        } else if (categoryId) {
+          qp.set("category_id", categoryId);
+        }
+        selBrands.forEach((b) => qp.append("brand", b));
+        selColors.forEach((c) => qp.append("color", c));
+        selSizes.forEach((s) => qp.append("size", s));
+        selGenders.forEach((g) => qp.append("gender", g));
+        const mn = Number(priceMin);
+        const mx = Number(priceMax);
+        if (Number.isFinite(mn) && mn > 0)
+          qp.set("min_price", String(parseDisplayPrice(mn)));
+        if (Number.isFinite(mx) && mx > 0 && mx !== convert(100000))
+          qp.set("max_price", String(parseDisplayPrice(mx)));
+
+        const { data } = await request({
+          method: "GET",
+          url: `/users/get-filters-for-products?${qp.toString()}`,
+        });
+        if (data?.status === 200 && data.data) {
+          const d = data.data;
+          if (typeof d.total === "number") setLiveTotal(d.total);
+          setLiveFacets({
+            brandCounts: Array.isArray(d.brand_counts) ? d.brand_counts : [],
+            colorCounts: Array.isArray(d.color_counts) ? d.color_counts : [],
+            sizeCounts: Array.isArray(d.size_counts) ? d.size_counts : [],
+            genderCounts: Array.isArray(d.gender_counts) ? d.gender_counts : [],
+            total: typeof d.total === "number" ? d.total : null,
+          });
+        }
+      } catch {
+        /* silent — button falls back to "Show results" */
+      } finally {
+        setRefetchingCount(false);
+      }
+    }, 300);
+
+    return () => {
+      if (countDebounce.current) clearTimeout(countDebounce.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hasChanges, facets, selBrands, selColors, selSizes, selGenders, priceMin, priceMax]);
+
+  /* ═══════════════════════════════════════════════════════════
+     Count maps — use liveFacets (from debounced re-fetch) when
+     the user has local changes, otherwise fall back to facets.
+     ═══════════════════════════════════════════════════════════ */
+
+  const countSource = hasChanges && liveFacets ? liveFacets : facets;
 
   const brandCM = useMemo(() => {
     const m = new Map();
-    facets?.brandCounts.forEach((b) => {
+    countSource?.brandCounts.forEach((b) => {
       const k = normalizeBrandKey(b.value ?? b.label);
       if (k) m.set(k, { label: b.label, count: Number(b.count) || 0 });
     });
     return m;
-  }, [facets]);
+  }, [countSource]);
 
   const colorCM = useMemo(() => {
     const m = new Map();
-    facets?.colorCounts.forEach((c) => {
+    countSource?.colorCounts.forEach((c) => {
       const k = String(c.value || "").trim().toLowerCase();
       if (k) m.set(k, Number(c.count) || 0);
     });
     return m;
-  }, [facets]);
+  }, [countSource]);
 
   const sizeCM = useMemo(() => {
     const m = new Map();
-    facets?.sizeCounts.forEach((s) => {
+    countSource?.sizeCounts.forEach((s) => {
       const k = normalizeSizeKey(String(s.value || ""));
       if (k) m.set(k, Number(s.count) || 0);
     });
     return m;
-  }, [facets]);
+  }, [countSource]);
 
   const genderCM = useMemo(() => {
     const m = new Map();
-    facets?.genderCounts.forEach((g) => {
+    countSource?.genderCounts.forEach((g) => {
       const k = String(g.value || "").trim().toLowerCase();
       if (k) m.set(k, Number(g.count) || 0);
     });
     return m;
-  }, [facets]);
+  }, [countSource]);
 
   /* ═══════════════════════════════════════════════════════════
      Computed facet lists
@@ -399,11 +493,10 @@ export default function SidebarFilters({
     : sizeGroups.slice(0, VISIBLE_SIZES);
 
   /* ═══════════════════════════════════════════════════════════
-     Applied chips (already in URL)
+     Applied chips (reflects LOCAL selections in real-time)
      ═══════════════════════════════════════════════════════════ */
 
   const chips = useMemo(() => {
-    const f = initialFilters || {};
     const arr = [];
     if (activeCategoryName?.trim() && categoryId)
       arr.push({
@@ -411,15 +504,15 @@ export default function SidebarFilters({
         kind: "category",
         label: activeCategoryName.trim(),
       });
-    (f.brands || []).forEach((b) => {
+    selBrands.forEach((b) => {
       const t = String(b).trim();
       if (t) arr.push({ key: `b-${t}`, kind: "brand", label: t, value: t });
     });
-    (f.colors || []).forEach((c) => {
+    selColors.forEach((c) => {
       const t = String(c).trim();
       if (t) arr.push({ key: `c-${t}`, kind: "color", label: t, value: t });
     });
-    (f.sizes || []).forEach((s) => {
+    selSizes.forEach((s) => {
       const r = String(s).trim();
       if (r)
         arr.push({
@@ -429,7 +522,7 @@ export default function SidebarFilters({
           value: r,
         });
     });
-    (f.genders || []).forEach((g) => {
+    selGenders.forEach((g) => {
       const t = String(g).trim();
       if (t)
         arr.push({
@@ -439,17 +532,18 @@ export default function SidebarFilters({
           value: t,
         });
     });
-    if (
-      f.price &&
-      (Number(f.price.min) !== 0 || Number(f.price.max) !== 100000)
-    )
+    const defaultMin = facets ? String(convert(facets.price.min)) : "";
+    const defaultMax = facets ? String(convert(facets.price.max)) : "";
+    if (priceMin && priceMax && (priceMin !== defaultMin || priceMax !== defaultMax)) {
+      const sym = currencyInfo?.symbol || "₹";
       arr.push({
         key: "price",
         kind: "price",
-        label: `${format(f.price.min || 0)} – ${format(f.price.max || 100000)}`,
+        label: `${sym}${Number(priceMin).toLocaleString()} – ${sym}${Number(priceMax).toLocaleString()}`,
       });
+    }
     return arr;
-  }, [initialFilters, activeCategoryName, categoryId, format]);
+  }, [activeCategoryName, categoryId, selBrands, selColors, selSizes, selGenders, priceMin, priceMax, facets, convert, currencyInfo]);
 
   /* ═══════════════════════════════════════════════════════════
      Handlers
@@ -588,8 +682,15 @@ export default function SidebarFilters({
 
   const removeChip = (ch) => {
     if (ch.kind === "category") handleRemoveCatChip();
-    else if (ch.kind === "price") onRemoveAppliedFilter?.("price");
-    else onRemoveAppliedFilter?.(ch.kind, ch.value);
+    else if (ch.kind === "brand") tog(setSelBrands, selBrands, ch.value);
+    else if (ch.kind === "color") tog(setSelColors, selColors, ch.value);
+    else if (ch.kind === "size")
+      setSelSizes((prev) => prev.filter((v) => v !== ch.value));
+    else if (ch.kind === "gender") tog(setSelGenders, selGenders, ch.value);
+    else if (ch.kind === "price" && facets) {
+      setPriceMin(String(convert(facets.price.min)));
+      setPriceMax(String(convert(facets.price.max)));
+    }
   };
 
   /* ═══════════════════════════════════════════════════════════
@@ -599,10 +700,15 @@ export default function SidebarFilters({
   const skeleton = fetchState === "loading" && !facets;
 
   const countText = useMemo(() => {
+    if (hasChanges) {
+      if (liveTotal != null)
+        return liveTotal > 10000 ? "10,000+" : liveTotal.toLocaleString();
+      return null;
+    }
     const c = facets?.total ?? totalCount;
     if (c == null) return null;
     return c > 10000 ? "10,000+" : c.toLocaleString();
-  }, [facets, totalCount]);
+  }, [hasChanges, liveTotal, facets, totalCount]);
 
   /* ═══════════════════════════════════════════════════════════
      Section header
@@ -673,15 +779,14 @@ export default function SidebarFilters({
                 {g.letter}
               </div>
               <div className="space-y-2.5">
-                {g.items.map((item) => {
+                {g.items
+                  .filter((item) => item.count > 0 || selBrands.includes(item.value))
+                  .map((item) => {
                   const sel = selBrands.includes(item.value);
-                  const dis = item.count === 0 && !sel;
                   return (
                     <label
                       key={item.value}
-                      className={`flex items-center justify-between gap-3 text-sm ${
-                        dis ? "text-gray-300" : "text-gray-700"
-                      } ${!dis ? "cursor-pointer" : "cursor-not-allowed"}`}
+                      className="flex items-center justify-between gap-3 text-sm text-gray-700 cursor-pointer"
                     >
                       <span className="flex items-center gap-2.5 min-w-0">
                         <Checkbox
@@ -689,7 +794,6 @@ export default function SidebarFilters({
                           onCheckedChange={() =>
                             tog(setSelBrands, selBrands, item.value)
                           }
-                          disabled={dis}
                         />
                         <span className="truncate">{item.label}</span>
                       </span>
@@ -716,17 +820,19 @@ export default function SidebarFilters({
     const list = facets?.genders || [];
     return (
       <div className="py-3 space-y-2.5">
-        {list.map((g) => {
+        {list
+          .filter((g) => {
+            const k = String(g).trim().toLowerCase();
+            return (genderCM.get(k) ?? 0) > 0 || selGenders.includes(g);
+          })
+          .map((g) => {
           const k = String(g).trim().toLowerCase();
           const count = genderCM.get(k) ?? 0;
           const sel = selGenders.includes(g);
-          const dis = count === 0 && !sel;
           return (
             <label
               key={g}
-              className={`flex items-center justify-between gap-3 text-sm ${
-                dis ? "text-gray-300" : "text-gray-700"
-              } ${!dis ? "cursor-pointer" : "cursor-not-allowed"}`}
+              className="flex items-center justify-between gap-3 text-sm text-gray-700 cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
                 <Checkbox
@@ -734,7 +840,6 @@ export default function SidebarFilters({
                   onCheckedChange={() =>
                     tog(setSelGenders, selGenders, g)
                   }
-                  disabled={dis}
                 />
                 <span>{_.startCase(_.toLower(g))}</span>
               </span>
@@ -761,17 +866,19 @@ export default function SidebarFilters({
           />
         </div>
         <div className="max-h-[320px] overflow-y-auto pr-1 space-y-2.5">
-          {filteredColors.map((c) => {
+          {filteredColors
+            .filter((c) => {
+              const k = String(c).trim().toLowerCase();
+              return (colorCM.get(k) ?? 0) > 0 || selColors.includes(c);
+            })
+            .map((c) => {
             const k = String(c).trim().toLowerCase();
             const count = colorCM.get(k) ?? 0;
             const sel = selColors.includes(c);
-            const dis = count === 0 && !sel;
             return (
               <label
                 key={c}
-                className={`flex items-center justify-between gap-3 text-sm ${
-                  dis ? "text-gray-300" : "text-gray-700"
-                } ${!dis ? "cursor-pointer" : "cursor-not-allowed"}`}
+                className="flex items-center justify-between gap-3 text-sm text-gray-700 cursor-pointer"
               >
                 <span className="flex items-center gap-2.5">
                   <Checkbox
@@ -779,7 +886,6 @@ export default function SidebarFilters({
                     onCheckedChange={() =>
                       tog(setSelColors, selColors, c)
                     }
-                    disabled={dis}
                   />
                   <span>{c}</span>
                 </span>
@@ -803,18 +909,25 @@ export default function SidebarFilters({
     return (
       <div className="py-3">
         <div className="grid grid-cols-4 gap-2">
-          {visSizes.map((g) => {
+          {visSizes
+            .filter((g) => {
+              const sel = g.values.some((v) => selSizes.includes(v));
+              const count = g.values.reduce(
+                (s, v) => s + (sizeCM.get(normalizeSizeKey(v)) || 0),
+                0,
+              );
+              return count > 0 || sel;
+            })
+            .map((g) => {
             const sel = g.values.some((v) => selSizes.includes(v));
             const count = g.values.reduce(
               (s, v) => s + (sizeCM.get(normalizeSizeKey(v)) || 0),
               0,
             );
-            const dis = count === 0 && !sel;
             return (
               <button
                 key={g.key}
                 type="button"
-                disabled={dis}
                 onClick={() => {
                   if (sel)
                     setSelSizes((p) =>
@@ -829,9 +942,7 @@ export default function SidebarFilters({
                 className={`min-h-10 px-1 py-2 text-[11px] leading-snug border transition-colors text-center ${
                   sel
                     ? "border-black bg-black text-white"
-                    : dis
-                      ? "border-gray-100 text-gray-300 cursor-not-allowed"
-                      : "border-gray-300 text-gray-700 hover:border-black"
+                    : "border-gray-300 text-gray-700 hover:border-black"
                 }`}
               >
                 <span className="block">{g.label}</span>
@@ -1087,7 +1198,7 @@ export default function SidebarFilters({
                 </>
               )}
 
-              {facets?.genders.length > 0 && (
+              {facets?.genders.length > 1 && (
                 <>
                   {sectionHead("gender", "Gender", true)}
                   {!isMobile && expanded === "gender" && renderGenders()}
@@ -1148,7 +1259,16 @@ export default function SidebarFilters({
             onClick={handleApply}
             className="flex-1 bg-black text-white font-medium hover:bg-gray-900"
           >
-            {countText ? `Show ${countText} results` : "Show results"}
+            {refetchingCount ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Updating…</span>
+              </span>
+            ) : countText ? (
+              `Show ${countText} results`
+            ) : (
+              "Show results"
+            )}
           </Button>
         </div>
       </aside>
