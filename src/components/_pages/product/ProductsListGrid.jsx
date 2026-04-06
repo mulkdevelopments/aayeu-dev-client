@@ -428,30 +428,11 @@ export default function ProductsListGrid({
     };
   }, [hasMore, loadingMore, loading, loadMore]);
 
-  // ✅ Handlers — use URL as source of truth for filters so changing sort keeps current brand/color/size etc.
-  const handleSortChange = (newSort, filtersFromSidebar) => {
+  const handleSortChange = (newSort) => {
     setSort(newSort);
     setPage(1);
     setProducts([]);
-    const fromUrl = parseFilters(new URLSearchParams(searchParams.toString()));
-    const hasSidebarFilters =
-      filtersFromSidebar &&
-      typeof filtersFromSidebar === "object" &&
-      ((Array.isArray(filtersFromSidebar.brands) && filtersFromSidebar.brands.length > 0) ||
-        (Array.isArray(filtersFromSidebar.colors) && filtersFromSidebar.colors.length > 0) ||
-        (Array.isArray(filtersFromSidebar.sizes) && filtersFromSidebar.sizes.length > 0) ||
-        (Array.isArray(filtersFromSidebar.genders) && filtersFromSidebar.genders.length > 0) ||
-        (filtersFromSidebar.price &&
-          (filtersFromSidebar.price.min !== 0 || filtersFromSidebar.price.max !== 100000)));
-    const filters = hasSidebarFilters
-      ? filtersFromSidebar
-      : {
-          brands: fromUrl.brands?.length ? fromUrl.brands : selectedFilters.brands ?? [],
-          colors: fromUrl.colors?.length ? fromUrl.colors : selectedFilters.colors ?? [],
-          sizes: fromUrl.sizes?.length ? fromUrl.sizes : selectedFilters.sizes ?? [],
-          genders: fromUrl.genders?.length ? fromUrl.genders : selectedFilters.genders ?? [],
-          price: fromUrl.price ?? selectedFilters.price,
-        };
+    const filters = parseFilters(new URLSearchParams(searchParams.toString()));
     const params = new URLSearchParams(buildQuery(filters, newSort));
     if (searchParams.get("filters") === "1") params.set("filters", "1");
     isSyncing.current = true;
