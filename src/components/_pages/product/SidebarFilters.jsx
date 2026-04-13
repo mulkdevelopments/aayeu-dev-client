@@ -28,6 +28,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import _ from "lodash";
+import {
+  shoeDisplaySize,
+  sortShoesByEU,
+  sortClothingSizes,
+  isAlphaSize,
+  isWaistSize,
+  isShoeEUSize,
+  SHOE_SYSTEMS,
+  SIZE_STORAGE_KEY,
+} from "@/utils/sizeConversion";
 
 /* ═══════════════════════════════════════════════════════════════
    Helpers
@@ -41,35 +51,6 @@ const normalizeBrandKey = (v) =>
     .trim()
     .toLowerCase();
 
-const normalizeSizeKey = (v) => {
-  const r = String(v || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "");
-  if (!r) return "";
-  if (/^x+l$/.test(r)) {
-    const n = r.replace(/[^x]/g, "").length;
-    return n <= 1 ? "xl" : `${n}xl`;
-  }
-  if (/^\d+xl$/.test(r)) {
-    const n = parseInt(r, 10);
-    return !isNaN(n) && n >= 2 ? `${n}xl` : "xl";
-  }
-  return r;
-};
-
-const fmtSize = (k) => {
-  if (!k) return "";
-  if (k === "xl") return "XL";
-  if (/^\d+xl$/.test(k)) return `${k.replace("xl", "")}XL`;
-  return k.toUpperCase();
-};
-
-const SIZE_ORDER = [
-  "xxxs", "xxs", "xs", "s", "m", "l", "xl",
-  "2xl", "3xl", "4xl", "5xl", "6xl", "nosize",
-];
-
 const SORT_OPTIONS = [
   { value: "is_our_picks", label: "Our Picks" },
   { value: "is_newest", label: "Newest first" },
@@ -77,7 +58,22 @@ const SORT_OPTIONS = [
   { value: "price_low_to_high", label: "Price: low to high" },
 ];
 
-const VISIBLE_SIZES = 24;
+const VISIBLE_CLOTHING_SIZES = 24;
+const VISIBLE_SHOE_SIZES = 24;
+
+const STANDARD_ALPHA_SIZES = [
+  { value: "XXS", label: "XXS" },
+  { value: "XS",  label: "XS" },
+  { value: "S",   label: "S" },
+  { value: "M",   label: "M" },
+  { value: "L",   label: "L" },
+  { value: "XL",  label: "XL" },
+  { value: "2XL", label: "XXL" },
+  { value: "3XL", label: "3XL" },
+  { value: "4XL", label: "4XL" },
+  { value: "5XL", label: "5XL" },
+  { value: "6XL", label: "6XL" },
+];
 
 /* ═══════════════════════════════════════════════════════════════
    SidebarFilters
@@ -128,7 +124,14 @@ export default function SidebarFilters({
   const [expanded, setExpanded] = useState(null);
   const [brandQ, setBrandQ] = useState("");
   const [colorQ, setColorQ] = useState("");
-  const [showAllSizes, setShowAllSizes] = useState(false);
+  const [showAllClothingSizes, setShowAllClothingSizes] = useState(false);
+  const [showAllShoeSizes, setShowAllShoeSizes] = useState(false);
+  const [shoeSystem, setShoeSystem] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(SIZE_STORAGE_KEY) || "eu";
+    }
+    return "eu";
+  });
   const [isMobile, setIsMobile] = useState(false);
   const [mobSection, setMobSection] = useState(null);
   const [localSort, setLocalSort] = useState(sortValue);
@@ -235,6 +238,7 @@ export default function SidebarFilters({
               ? d.color_counts
               : [],
             sizeCounts: Array.isArray(d.size_counts) ? d.size_counts : [],
+            sizeGroups: d.sizeGroups || null,
             genderCounts: Array.isArray(d.gender_counts)
               ? d.gender_counts
               : [],
@@ -285,11 +289,14 @@ export default function SidebarFilters({
 
   useEffect(() => {
     if (sectionInit.current || !facets) return;
+    const anySizes =
+      (facets.sizeGroups && (Object.values(facets.sizeGroups).some((g) => g.length > 0))) ||
+      (facets.sizes && facets.sizes.length > 0);
     if (categories.length > 0) setExpanded("category");
     else if (facets.brands.length) setExpanded("brand");
     else if (facets.genders.length) setExpanded("gender");
     else if (facets.colors.length) setExpanded("color");
-    else if (facets.sizes.length) setExpanded("size");
+    else if (anySizes) setExpanded("standardSize");
     else setExpanded("price");
     sectionInit.current = true;
   }, [facets, categories]);
@@ -360,6 +367,7 @@ export default function SidebarFilters({
             brandCounts: Array.isArray(d.brand_counts) ? d.brand_counts : [],
             colorCounts: Array.isArray(d.color_counts) ? d.color_counts : [],
             sizeCounts: Array.isArray(d.size_counts) ? d.size_counts : [],
+            sizeGroups: d.sizeGroups || null,
             genderCounts: Array.isArray(d.gender_counts) ? d.gender_counts : [],
             total: typeof d.total === "number" ? d.total : null,
           });
@@ -405,8 +413,8 @@ export default function SidebarFilters({
   const sizeCM = useMemo(() => {
     const m = new Map();
     countSource?.sizeCounts.forEach((s) => {
-      const k = normalizeSizeKey(String(s.value || ""));
-      if (k) m.set(k, Number(s.count) || 0);
+      const k = String(s.value || "").trim();
+      if (k) m.set(k, (m.get(k) || 0) + (Number(s.count) || 0));
     });
     return m;
   }, [countSource]);
@@ -465,33 +473,65 @@ export default function SidebarFilters({
       : facets.colors;
   }, [facets, colorQ]);
 
-  const sizeGroups = useMemo(() => {
-    if (!facets) return [];
-    const map = new Map();
-    facets.sizes.forEach((s) => {
-      const raw = String(s || "").trim();
-      if (!raw) return;
-      const nk = normalizeSizeKey(raw);
-      if (!map.has(nk))
-        map.set(nk, { key: nk, label: fmtSize(nk), values: [raw] });
-      else map.get(nk).values.push(raw);
-    });
-    const idx = new Map(SIZE_ORDER.map((v, i) => [v, i]));
-    return Array.from(map.values()).sort((a, b) => {
-      const ai = idx.get(a.key.replace(/[^a-z0-9]/g, ""));
-      const bi = idx.get(b.key.replace(/[^a-z0-9]/g, ""));
-      if (ai != null || bi != null) return (ai ?? 999) - (bi ?? 999);
-      const an = parseFloat(a.key);
-      const bn = parseFloat(b.key);
-      if (!isNaN(an) || !isNaN(bn))
-        return (isNaN(an) ? 999 : an) - (isNaN(bn) ? 999 : bn);
-      return a.label.localeCompare(b.label);
-    });
-  }, [facets]);
+  const { clothingSizes, shoeSizes, oneSizeEntry, accessorySizes, hasOnlyOneGroup } = useMemo(() => {
+    const empty = { clothingSizes: [], shoeSizes: [], oneSizeEntry: null, accessorySizes: [], hasOnlyOneGroup: true };
+    if (!facets) return empty;
 
-  const visSizes = showAllSizes
-    ? sizeGroups
-    : sizeGroups.slice(0, VISIBLE_SIZES);
+    const grps = facets.sizeGroups;
+    if (grps) {
+      const toItems = (arr) => (arr || []).map((s) => ({
+        value: String(s.value),
+        count: Number(s.count) || 0,
+      }));
+
+      // Clothing: only keep alpha + waist sizes (safety filter)
+      const rawClothing = toItems(grps["Clothing"]);
+      const cleanClothing = rawClothing.filter(
+        (s) => isAlphaSize(s.value) || isWaistSize(s.value),
+      );
+
+      // Footwear: only keep valid numeric shoe sizes
+      const rawFootwear = toItems(grps["Footwear"]);
+      const cleanShoes = rawFootwear.filter((s) => isShoeEUSize(s.value));
+
+      // One Size: separate
+      const oneSizeArr = toItems(grps["One Size"]);
+      const oneSize = oneSizeArr.length > 0 ? oneSizeArr[0] : null;
+
+      // Accessory: belt sizes etc.
+      const accessory = sortShoesByEU(toItems(grps["Accessory"]));
+
+      const sortedClothing = sortClothingSizes(cleanClothing);
+      const sortedShoes = sortShoesByEU(cleanShoes);
+      const groups = [sortedClothing, sortedShoes, accessory].filter((g) => g.length > 0);
+      return {
+        clothingSizes: sortedClothing,
+        shoeSizes: sortedShoes,
+        oneSizeEntry: oneSize,
+        accessorySizes: accessory,
+        hasOnlyOneGroup: groups.length <= 1,
+      };
+    }
+
+    // Fallback for old API format (pre-backfill)
+    const all = facets.sizes.map((s) => ({
+      value: String(s || "").trim(),
+      count: sizeCM.get(String(s || "").trim()) || 0,
+    })).filter((s) => s.value);
+    return { ...empty, clothingSizes: sortClothingSizes(all) };
+  }, [facets, sizeCM]);
+
+  const hasSizes = clothingSizes.length > 0 || shoeSizes.length > 0 || !!oneSizeEntry || accessorySizes.length > 0;
+
+  const standardAlphaSizes = useMemo(() => {
+    if (!facets) return [];
+    return STANDARD_ALPHA_SIZES.map((s) => ({
+      ...s,
+      count: sizeCM.get(s.value) ?? 0,
+    }));
+  }, [facets, sizeCM]);
+
+  const hasStandardAlpha = standardAlphaSizes.some((s) => s.count > 0);
 
   /* ═══════════════════════════════════════════════════════════
      Applied chips (reflects LOCAL selections in real-time)
@@ -519,7 +559,7 @@ export default function SidebarFilters({
         arr.push({
           key: `s-${r}`,
           kind: "size",
-          label: fmtSize(normalizeSizeKey(r)),
+          label: r,
           value: r,
         });
     });
@@ -566,6 +606,8 @@ export default function SidebarFilters({
     setLiveFacets(null);
     setLiveTotal(null);
     setRefetchingCount(false);
+    setShowAllClothingSizes(false);
+    setShowAllShoeSizes(false);
     if (countDebounce.current) clearTimeout(countDebounce.current);
     onReset?.();
   };
@@ -912,39 +954,39 @@ export default function SidebarFilters({
     );
   }
 
-  function renderSizes() {
+  function renderSizeGrid(items, visLimit, showAll, setShowAll) {
+    const liveCounts = new Map();
+    const src = hasChanges && liveFacets ? liveFacets.sizeCounts : null;
+    if (src) {
+      src.forEach((s) => {
+        const k = String(s.value || "").trim();
+        if (k) liveCounts.set(k, (liveCounts.get(k) || 0) + (Number(s.count) || 0));
+      });
+    }
+
+    const getCount = (val) => {
+      if (liveCounts.size > 0) return liveCounts.get(val) ?? 0;
+      return sizeCM.get(val) ?? 0;
+    };
+
+    const visible = items.filter(
+      (g) => getCount(g.value) > 0 || selSizes.includes(g.value),
+    );
+    const shown = showAll ? visible : visible.slice(0, visLimit);
+
     return (
-      <div className="py-3">
+      <>
         <div className="grid grid-cols-4 gap-2">
-          {visSizes
-            .filter((g) => {
-              const sel = g.values.some((v) => selSizes.includes(v));
-              const count = g.values.reduce(
-                (s, v) => s + (sizeCM.get(normalizeSizeKey(v)) || 0),
-                0,
-              );
-              return count > 0 || sel;
-            })
-            .map((g) => {
-            const sel = g.values.some((v) => selSizes.includes(v));
-            const count = g.values.reduce(
-              (s, v) => s + (sizeCM.get(normalizeSizeKey(v)) || 0),
-              0,
-            );
+          {shown.map((g) => {
+            const sel = selSizes.includes(g.value);
+            const count = getCount(g.value);
             return (
               <button
-                key={g.key}
+                key={g.value}
                 type="button"
                 onClick={() => {
-                  if (sel)
-                    setSelSizes((p) =>
-                      p.filter((v) => !g.values.includes(v)),
-                    );
-                  else
-                    setSelSizes((p) => [
-                      ...p,
-                      ...g.values.filter((v) => !p.includes(v)),
-                    ]);
+                  if (sel) setSelSizes((p) => p.filter((v) => v !== g.value));
+                  else setSelSizes((p) => [...p, g.value]);
                 }}
                 className={`min-h-10 px-1 py-2 text-[11px] leading-snug border transition-colors text-center ${
                   sel
@@ -952,7 +994,7 @@ export default function SidebarFilters({
                     : "border-gray-300 text-gray-700 hover:border-black"
                 }`}
               >
-                <span className="block">{g.label}</span>
+                <span className="block">{g.displayLabel || g.value}</span>
                 {count > 0 && (
                   <span className="block text-[10px] mt-0.5 opacity-60">
                     {count}
@@ -962,14 +1004,182 @@ export default function SidebarFilters({
             );
           })}
         </div>
-        {sizeGroups.length > VISIBLE_SIZES && (
+        {visible.length > visLimit && (
           <button
             type="button"
-            onClick={() => setShowAllSizes((p) => !p)}
+            onClick={() => setShowAll((p) => !p)}
             className="mt-3 w-full h-9 border border-gray-200 text-xs font-medium tracking-[0.15em] uppercase hover:border-black transition-colors"
           >
-            {showAllSizes ? "Show Less" : `Show All (${sizeGroups.length})`}
+            {showAll ? "Show Less" : `Show All (${visible.length})`}
           </button>
+        )}
+      </>
+    );
+  }
+
+  function renderStandardAlpha() {
+    const liveCounts = new Map();
+    const src = hasChanges && liveFacets ? liveFacets.sizeCounts : null;
+    if (src) {
+      src.forEach((s) => {
+        const k = String(s.value || "").trim();
+        if (k) liveCounts.set(k, (liveCounts.get(k) || 0) + (Number(s.count) || 0));
+      });
+    }
+    const getCount = (val) => {
+      if (liveCounts.size > 0) return liveCounts.get(val) ?? 0;
+      return sizeCM.get(val) ?? 0;
+    };
+
+    return (
+      <div className="py-3">
+        <div className="grid grid-cols-4 gap-2">
+          {STANDARD_ALPHA_SIZES.map((s) => {
+            const sel = selSizes.includes(s.value);
+            const count = getCount(s.value);
+            if (count === 0 && !sel) return null;
+            return (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => {
+                  if (sel) setSelSizes((p) => p.filter((v) => v !== s.value));
+                  else setSelSizes((p) => [...p, s.value]);
+                }}
+                className={`min-h-10 px-1 py-2 text-[11px] leading-snug border transition-colors text-center ${
+                  sel
+                    ? "border-black bg-black text-white"
+                    : "border-gray-300 text-gray-700 hover:border-black"
+                }`}
+              >
+                <span className="block">{s.label}</span>
+                {count > 0 && (
+                  <span className="block text-[10px] mt-0.5 opacity-60">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function renderSizes() {
+    const shoeItems = shoeSizes.map((s) => ({
+      ...s,
+      displayLabel: shoeDisplaySize(s.value, shoeSystem),
+    }));
+
+    return (
+      <div className="py-3 space-y-4">
+        {/* One Size toggle */}
+        {oneSizeEntry && (
+          <div>
+            {!hasOnlyOneGroup && (
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Universal
+              </p>
+            )}
+            {(() => {
+              const sel = selSizes.includes("One Size");
+              const liveCounts = new Map();
+              const src = hasChanges && liveFacets ? liveFacets.sizeCounts : null;
+              if (src) src.forEach((s) => { const k = String(s.value || "").trim(); if (k) liveCounts.set(k, (liveCounts.get(k) || 0) + (Number(s.count) || 0)); });
+              const count = liveCounts.size > 0 ? (liveCounts.get("One Size") ?? 0) : (oneSizeEntry.count || 0);
+              if (count === 0 && !sel) return null;
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (sel) setSelSizes((p) => p.filter((v) => v !== "One Size"));
+                    else setSelSizes((p) => [...p, "One Size"]);
+                  }}
+                  className={`w-full h-10 px-3 text-xs font-medium border transition-colors ${
+                    sel
+                      ? "border-black bg-black text-white"
+                      : "border-gray-300 text-gray-700 hover:border-black"
+                  }`}
+                >
+                  One Size{count > 0 ? ` (${count})` : ""}
+                </button>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Clothing sizes */}
+        {clothingSizes.length > 0 && (
+          <div>
+            {!hasOnlyOneGroup && (
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Clothing
+              </p>
+            )}
+            {renderSizeGrid(
+              clothingSizes,
+              VISIBLE_CLOTHING_SIZES,
+              showAllClothingSizes,
+              setShowAllClothingSizes,
+            )}
+          </div>
+        )}
+
+        {/* Shoe sizes */}
+        {shoeSizes.length > 0 && (
+          <div>
+            {!hasOnlyOneGroup && (
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Shoes
+              </p>
+            )}
+            <div className="flex gap-1 mb-3">
+              {SHOE_SYSTEMS.map((sys) => (
+                <button
+                  key={sys.key}
+                  type="button"
+                  onClick={() => {
+                    setShoeSystem(sys.key);
+                    if (typeof window !== "undefined")
+                      localStorage.setItem(SIZE_STORAGE_KEY, sys.key);
+                  }}
+                  className={`px-3 py-1 text-[11px] font-medium border transition-colors ${
+                    shoeSystem === sys.key
+                      ? "border-black bg-black text-white"
+                      : "border-gray-300 text-gray-600 hover:border-black"
+                  }`}
+                >
+                  {sys.label}
+                </button>
+              ))}
+            </div>
+            {renderSizeGrid(
+              shoeItems,
+              VISIBLE_SHOE_SIZES,
+              showAllShoeSizes,
+              setShowAllShoeSizes,
+            )}
+          </div>
+        )}
+
+        {/* Accessory sizes (belts etc.) */}
+        {accessorySizes.length > 0 && (
+          <div>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Belt / Accessory
+            </p>
+            {renderSizeGrid(
+              accessorySizes,
+              12,
+              showAllClothingSizes,
+              setShowAllClothingSizes,
+            )}
+          </div>
+        )}
+
+        {!hasSizes && (
+          <p className="text-sm text-gray-400 py-2">No sizes available</p>
         )}
       </div>
     );
@@ -1176,7 +1386,7 @@ export default function SidebarFilters({
                     {mobSection === "brand" && renderBrands()}
                     {mobSection === "gender" && renderGenders()}
                     {mobSection === "color" && renderColors()}
-                    {mobSection === "size" && renderSizes()}
+                    {mobSection === "standardSize" && renderStandardAlpha()}
                     {mobSection === "price" && renderPrice()}
                   </div>
                   <div className="border-t border-gray-200 bg-white px-6 py-4">
@@ -1219,12 +1429,13 @@ export default function SidebarFilters({
                 </>
               )}
 
-              {facets?.sizes.length > 0 && (
+              {hasStandardAlpha && (
                 <>
-                  {sectionHead("size", "Size", true)}
-                  {!isMobile && expanded === "size" && renderSizes()}
+                  {sectionHead("standardSize", "Size", true)}
+                  {!isMobile && expanded === "standardSize" && renderStandardAlpha()}
                 </>
               )}
+
 
               {facets && (
                 <>
@@ -1238,7 +1449,7 @@ export default function SidebarFilters({
                 !categories.length &&
                 !facets.brands.length &&
                 !facets.colors.length &&
-                !facets.sizes.length &&
+                !hasStandardAlpha &&
                 !facets.genders.length && (
                   <div className="py-8 text-center">
                     <p className="text-sm text-gray-600">

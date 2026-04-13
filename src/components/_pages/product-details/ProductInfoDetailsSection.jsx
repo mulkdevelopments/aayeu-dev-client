@@ -371,6 +371,17 @@ const ProductInfoDetailsSection = forwardRef(
           (!selectedColor || v.variant_color === selectedColor)
       );
 
+    const ALPHA_SET = new Set(["XXS","XS","S","M","L","XL","XXL","2XL","3XL","4XL","5XL","6XL"]);
+    const ALPHA_DISPLAY = { "2XL": "XXL" };
+
+    const sizeLabel = (variantSize) => {
+      const variant = product?.variants?.find((v) => v.variant_size === variantSize);
+      const nsf = variant?.normalized_size_final;
+      if (!nsf || ALPHA_SET.has(variantSize?.toUpperCase())) return variantSize;
+      const display = ALPHA_DISPLAY[nsf] || nsf;
+      return `${variantSize} - ${display}`;
+    };
+
     // ✅ Price
     const displayPrice = useMemo(() => {
       if (!product) return { price: null, mrp: null, discountPct: null };
@@ -546,7 +557,7 @@ const ProductInfoDetailsSection = forwardRef(
                     className="w-full h-12 border border-gray-400 px-4 text-sm flex items-center justify-between bg-white"
                   >
                     <span className={selectedSize ? "text-black" : "text-gray-500"}>
-                      {selectedSize || "Select size"}
+                      {selectedSize ? sizeLabel(selectedSize) : "Select size"}
                     </span>
                     <ChevronDown
                       className={`w-4 h-4 transition-transform ${
@@ -591,7 +602,7 @@ const ProductInfoDetailsSection = forwardRef(
                                   : "text-gray-900 hover:bg-gray-50"
                               }`}
                             >
-                              <span className="font-medium">{s}</span>
+                              <span className="font-medium">{sizeLabel(s)}</span>
                               <span className="text-gray-700">
                                 {price !== null && price !== undefined ? format(price) : ""}
                               </span>
@@ -629,7 +640,7 @@ const ProductInfoDetailsSection = forwardRef(
                           isOutOfStock ? "text-gray-500" : "text-black"
                         }`}
                       >
-                        {isOutOfStock ? "Out of Stock" : "In Stock"}
+                        {isOutOfStock ? "Sold Out" : "In Stock"}
                       </span>
                     </>
                   )}
@@ -665,7 +676,7 @@ const ProductInfoDetailsSection = forwardRef(
                       Added
                     </span>
                   ) : isOutOfStock ? (
-                    "OUT OF STOCK"
+                    "SOLD OUT"
                   ) : (
                     "ADD TO CART"
                   )}

@@ -18,6 +18,55 @@ import {
 import { startCase, toLower } from "lodash";
 import { useSelector } from "react-redux";
 
+function getUrlParams() {
+  if (typeof window !== "undefined") {
+    return new URLSearchParams(window.location.search);
+  }
+  return new URLSearchParams();
+}
+
+function parseFiltersFromParams(urlParams) {
+  const filters = {
+    brands: urlParams.getAll("brand"),
+    colors: urlParams.getAll("color"),
+    sizes: urlParams.getAll("size"),
+    genders: urlParams.getAll("gender"),
+  };
+  const min_price = urlParams.get("min_price");
+  const max_price = urlParams.get("max_price");
+  if (min_price || max_price)
+    filters.price = {
+      min: Number(min_price) || 0,
+      max: Number(max_price) || 100000,
+    };
+  return filters;
+}
+
+/* ── Listing-page cache ──────────────────────────────────────────────
+   Persists products across client-side navigations so the browser back
+   button restores the list instantly without a re-fetch.
+   ──────────────────────────────────────────────────────────────────── */
+const listingCache = new Map();
+const MAX_CACHE = 8;
+
+function buildCacheKey() {
+  if (typeof window === "undefined") return "";
+  const p = new URLSearchParams(window.location.search);
+  p.delete("filters");
+  return window.location.pathname + "?" + p.toString();
+}
+
+function readCache() {
+  return listingCache.get(buildCacheKey()) || null;
+}
+
+function writeCache(key, entry) {
+  if (listingCache.size >= MAX_CACHE && !listingCache.has(key)) {
+    listingCache.delete(listingCache.keys().next().value);
+  }
+  listingCache.set(key, entry);
+}
+
 export default function ProductsListGrid({
   categoryId = null,
   categorySlug = "Shop",
@@ -35,24 +84,38 @@ export default function ProductsListGrid({
 
   const { isAuthenticated } = useSelector((state) => state.auth);
 
+  const cachedListing = useRef(readCache());
+
   const [categoryData, setCategoryData] = useState(null);
   const [childCategories, setChildCategories] = useState([]);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [selectedFilters, setSelectedFilters] = useState({});
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [products, setProducts] = useState(
+    () => cachedListing.current?.products || [],
+  );
+  const [totalProducts, setTotalProducts] = useState(
+    () => cachedListing.current?.totalProducts || 0,
+  );
+  const [selectedFilters, setSelectedFilters] = useState(
+    () => parseFiltersFromParams(getUrlParams()),
+  );
+  const [page, setPage] = useState(
+    () => cachedListing.current?.page || 1,
+  );
+  const [hasMore, setHasMore] = useState(
+    () => cachedListing.current?.hasMore ?? true,
+  );
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [sort, setSort] = useState("is_our_picks");
+  const [sort, setSort] = useState(
+    () => getUrlParams().get("sort_by") || "is_our_picks",
+  );
 
   const isSyncing = useRef(false);
-  const hasMounted = useRef(false);
   const observerTarget = useRef(null);
   const categoryScrollRef = useRef(null);
   const isClosingFilters = useRef(false);
   const lastFilterQueryRef = useRef("");
+  const fetchIdRef = useRef(0);
   /** Detect category → category navigation so stale ?brand=&color= from parent PLP do not carry over */
   const prevCategoryIdRef = useRef(null);
 
@@ -71,6 +134,10 @@ export default function ProductsListGrid({
   const handleCloseFilters = () => {
     isClosingFilters.current = true;
     setSidebarOpen(false);
+    // When called right after onApply, isSyncing is true — onApply already
+    // set the correct URL (without filters=1), so skip the replace to avoid
+    // overwriting the new filter params with stale searchParams.
+    if (isSyncing.current) return;
     const params = new URLSearchParams(searchParams.toString());
     params.delete("filters");
     const query = params.toString();
@@ -133,6 +200,7 @@ export default function ProductsListGrid({
     sortValue = sort,
     append = false
   ) => {
+    const currentFetchId = ++fetchIdRef.current;
     try {
       if (append) {
         setLoadingMore(true);
@@ -181,6 +249,7 @@ export default function ProductsListGrid({
         url,
         authRequired: isAuthenticated,
       });
+      if (currentFetchId !== fetchIdRef.current) return;
       if (data?.status === 200 && Array.isArray(data.data?.products)) {
         let prods = data.data.products;
 
@@ -243,31 +312,18 @@ export default function ProductsListGrid({
         setHasMore(pageNumber < totalPages);
       }
     } catch (err) {
-      console.error("Error fetching products:", err);
+      if (currentFetchId === fetchIdRef.current) {
+        console.error("Error fetching products:", err);
+      }
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (currentFetchId === fetchIdRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   };
 
-  // ✅ Parse filters from URL
-  const parseFilters = (urlParams) => {
-    const filters = {
-      brands: urlParams.getAll("brand"),
-      colors: urlParams.getAll("color"),
-      sizes: urlParams.getAll("size"),
-      genders: urlParams.getAll("gender"),
-    };
-
-    const min_price = urlParams.get("min_price");
-    const max_price = urlParams.get("max_price");
-    if (min_price || max_price)
-      filters.price = {
-        min: Number(min_price) || 0,
-        max: Number(max_price) || 100000,
-      };
-    return filters;
-  };
+  const parseFilters = parseFiltersFromParams;
 
   // ✅ Initial load + reset facet query when drilling into another category (fixes mobile: old brand in URL, 0 products, wrong counts)
   useEffect(() => {
@@ -278,8 +334,16 @@ export default function ProductsListGrid({
       prevCat !== categoryId &&
       !curatedSlug;
 
+    // Read directly from the browser URL — useSearchParams() may lag behind
+    // on back/forward navigation due to the Next.js Router Cache.
+    const urlParams = getUrlParams();
+    const hookParams = new URLSearchParams(searchParams.toString());
+    const params = urlParams.toString().length >= hookParams.toString().length
+      ? urlParams
+      : hookParams;
+
     if (navigatedToNewCategory) {
-      const next = new URLSearchParams(searchParams.toString());
+      const next = new URLSearchParams(params.toString());
       let stripped = false;
       ["brand", "color", "size", "gender"].forEach((key) => {
         if (next.has(key)) {
@@ -293,8 +357,8 @@ export default function ProductsListGrid({
         stripped = true;
       }
       if (stripped) {
-        if (searchParams.get("filters") === "1") next.set("filters", "1");
-        const sortParam = searchParams.get("sort_by");
+        if (params.get("filters") === "1") next.set("filters", "1");
+        const sortParam = params.get("sort_by");
         if (sortParam) next.set("sort_by", sortParam);
         else if (!next.has("sort_by")) next.set("sort_by", "is_our_picks");
         const filtersClean = parseFilters(next);
@@ -311,9 +375,7 @@ export default function ProductsListGrid({
 
     prevCategoryIdRef.current = categoryId;
 
-    const params = new URLSearchParams(searchParams.toString());
     const filters = parseFilters(params);
-
     const sortValue = params.get("sort_by") || "is_our_picks";
 
     const withoutFilters = new URLSearchParams(params);
@@ -321,17 +383,31 @@ export default function ProductsListGrid({
     lastFilterQueryRef.current = withoutFilters.toString();
 
     setSelectedFilters(filters);
-    setPage(1);
     setSort(sortValue);
 
+    // If we restored products from the in-memory cache (back navigation),
+    // skip the network fetch — the data is already on screen.
+    if (cachedListing.current?.products?.length) {
+      const cached = cachedListing.current;
+      setPage(cached.page);
+      setHasMore(cached.hasMore);
+      cachedListing.current = null;
+
+      // Restore scroll position after the cached products render
+      if (typeof cached.scrollY === "number") {
+        requestAnimationFrame(() => window.scrollTo(0, cached.scrollY));
+      }
+      return;
+    }
+    cachedListing.current = null;
+    setPage(1);
+
     fetchAllProducts(1, filters, sortValue, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams/pathname/router only read when categoryId/curatedSlug change; listing sync stays in the searchParams effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId, curatedSlug]);
 
   // ✅ Sync URL change — skip when only "filters" (sidebar open/close) changed so reopening the panel doesn't reset list or selections
   useEffect(() => {
-    if (!hasMounted.current) return;
-
     const params = new URLSearchParams(searchParams.toString());
     const paramsWithoutFilters = new URLSearchParams(params);
     paramsWithoutFilters.delete("filters");
@@ -356,10 +432,6 @@ export default function ProductsListGrid({
     setSort(sortValue);
     fetchAllProducts(1, filters, sortValue, false);
   }, [searchParams]);
-
-  useEffect(() => {
-    hasMounted.current = true;
-  }, []);
 
   // ✅ Fetch category info
   useEffect(() => {
@@ -397,6 +469,31 @@ export default function ProductsListGrid({
     };
     fetchCategoryData();
   }, [categoryId]);
+
+  // ✅ Persist listing state for instant back-navigation restoration
+  useEffect(() => {
+    if (products.length === 0) return;
+    const p = new URLSearchParams(searchParams.toString());
+    p.delete("filters");
+    writeCache(`${pathname}?${p.toString()}`, {
+      products,
+      totalProducts,
+      page,
+      hasMore,
+    });
+  }, [products, totalProducts, page, hasMore, pathname, searchParams]);
+
+  useEffect(() => {
+    const saveScroll = () => {
+      const p = new URLSearchParams(window.location.search);
+      p.delete("filters");
+      const key = `${window.location.pathname}?${p.toString()}`;
+      const entry = listingCache.get(key);
+      if (entry) entry.scrollY = window.scrollY;
+    };
+    window.addEventListener("scroll", saveScroll, { passive: true });
+    return () => window.removeEventListener("scroll", saveScroll);
+  }, []);
 
   // ✅ Load more products
   const loadMore = useCallback(() => {
@@ -748,7 +845,6 @@ export default function ProductsListGrid({
         onClose={handleCloseFilters}
         onApply={(filters) => {
           const params = new URLSearchParams(buildQuery(filters, sort));
-          if (searchParams.get("filters") === "1") params.set("filters", "1");
           isSyncing.current = true;
           router.replace(`${pathname}?${params.toString()}`);
           setSelectedFilters(filters);
