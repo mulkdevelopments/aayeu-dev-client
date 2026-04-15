@@ -18,6 +18,7 @@ export default function CategoryShopPage() {
 
   return (
     <ProductsListGrid
+      key={categoryId || slug}
       categoryId={categoryId}
       categorySlug={slug}
       showCategoryFilters

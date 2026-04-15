@@ -11,6 +11,7 @@ export default function CuratedCollectionPage() {
 
   return (
     <ProductsListGrid
+      key={slug}
       categoryId={null}
       categorySlug="Shop"
       showCategoryFilters={true}

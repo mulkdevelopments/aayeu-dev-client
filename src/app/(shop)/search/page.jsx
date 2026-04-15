@@ -14,7 +14,8 @@ export default function SearchPage() {
 
   return (
     <ProductsListGrid
-      searchQuery={q} // <-- NEW PROP to make backend search
+      key={q}
+      searchQuery={q}
       showCategoryFilters={false}
       categoryId={null}
       categorySlug={null}

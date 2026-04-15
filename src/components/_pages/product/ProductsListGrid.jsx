@@ -116,8 +116,6 @@ export default function ProductsListGrid({
   const isClosingFilters = useRef(false);
   const lastFilterQueryRef = useRef("");
   const fetchIdRef = useRef(0);
-  /** Detect category → category navigation so stale ?brand=&color= from parent PLP do not carry over */
-  const prevCategoryIdRef = useRef(null);
 
   const { request: getAllProducts } = useAxios();
   const { request: getCategory } = useAxios();
@@ -325,66 +323,12 @@ export default function ProductsListGrid({
 
   const parseFilters = parseFiltersFromParams;
 
-  // ✅ Initial load + reset facet query when drilling into another category (fixes mobile: old brand in URL, 0 products, wrong counts)
+  // ✅ Initial load — the component remounts (via key=) when categoryId changes,
+  //    so this only runs once per mount. On back-navigation the listing cache
+  //    provides instant products; otherwise we fetch fresh.
   useEffect(() => {
-    const prevCat = prevCategoryIdRef.current;
-    const navigatedToNewCategory =
-      prevCat != null &&
-      categoryId != null &&
-      prevCat !== categoryId &&
-      !curatedSlug;
-
-    // Use searchParams from the hook as the primary source — it's always in
-    // sync with Next.js router state. Fall back to window.location only when
-    // the hook returns empty (can happen on back-navigation before hydration).
     const hookParams = new URLSearchParams(searchParams.toString());
-    const params = hookParams.toString()
-      ? hookParams
-      : getUrlParams();
-
-    if (navigatedToNewCategory) {
-      // Clear old products immediately so the user sees a loading state
-      setProducts([]);
-      setHasMore(true);
-
-      const next = new URLSearchParams(params.toString());
-      let stripped = false;
-      ["brand", "color", "size", "gender"].forEach((key) => {
-        if (next.has(key)) {
-          next.delete(key);
-          stripped = true;
-        }
-      });
-      if (next.has("min_price") || next.has("max_price")) {
-        next.delete("min_price");
-        next.delete("max_price");
-        stripped = true;
-      }
-      if (stripped) {
-        if (params.get("filters") === "1") next.set("filters", "1");
-        const sortParam = params.get("sort_by");
-        if (sortParam) next.set("sort_by", sortParam);
-        else if (!next.has("sort_by")) next.set("sort_by", "is_our_picks");
-        const filtersClean = parseFilters(next);
-        const sortValue = next.get("sort_by") || "is_our_picks";
-        setSelectedFilters(filtersClean);
-        setPage(1);
-        setSort(sortValue);
-        const q = next.toString();
-        prevCategoryIdRef.current = categoryId;
-
-        const withoutFilters = new URLSearchParams(next);
-        withoutFilters.delete("filters");
-        lastFilterQueryRef.current = withoutFilters.toString();
-        isSyncing.current = true;
-
-        router.replace(q ? `${pathname}?${q}` : pathname);
-        fetchAllProducts(1, filtersClean, sortValue, false);
-        return;
-      }
-    }
-
-    prevCategoryIdRef.current = categoryId;
+    const params = hookParams.toString() ? hookParams : getUrlParams();
 
     const filters = parseFilters(params);
     const sortValue = params.get("sort_by") || "is_our_picks";
@@ -396,28 +340,21 @@ export default function ProductsListGrid({
     setSelectedFilters(filters);
     setSort(sortValue);
 
-    // If we restored products from the in-memory cache (back navigation),
-    // skip the network fetch — the data is already on screen.
     if (cachedListing.current?.products?.length) {
       const cached = cachedListing.current;
       setPage(cached.page);
       setHasMore(cached.hasMore);
       cachedListing.current = null;
-
-      // Restore scroll position after the cached products render
       if (typeof cached.scrollY === "number") {
         requestAnimationFrame(() => window.scrollTo(0, cached.scrollY));
       }
       return;
     }
     cachedListing.current = null;
-    setPage(1);
-    // Clear old products for fresh category loads
-    if (navigatedToNewCategory) setProducts([]);
 
     fetchAllProducts(1, filters, sortValue, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryId, curatedSlug]);
+  }, []);
 
   // ✅ Sync URL change — skip when only "filters" (sidebar open/close) changed so reopening the panel doesn't reset list or selections
   useEffect(() => {
@@ -484,16 +421,8 @@ export default function ProductsListGrid({
   }, [categoryId]);
 
   // ✅ Persist listing state for instant back-navigation restoration
-  const lastCachedPathRef = useRef(pathname);
   useEffect(() => {
-    // Don't cache when products are empty or when the pathname just changed
-    // (products still belong to the previous category).
     if (products.length === 0) return;
-    if (pathname !== lastCachedPathRef.current) {
-      lastCachedPathRef.current = pathname;
-      return;
-    }
-    lastCachedPathRef.current = pathname;
     const p = new URLSearchParams(searchParams.toString());
     p.delete("filters");
     writeCache(`${pathname}?${p.toString()}`, {
