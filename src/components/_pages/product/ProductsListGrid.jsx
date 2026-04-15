@@ -334,15 +334,19 @@ export default function ProductsListGrid({
       prevCat !== categoryId &&
       !curatedSlug;
 
-    // Read directly from the browser URL — useSearchParams() may lag behind
-    // on back/forward navigation due to the Next.js Router Cache.
-    const urlParams = getUrlParams();
+    // Use searchParams from the hook as the primary source — it's always in
+    // sync with Next.js router state. Fall back to window.location only when
+    // the hook returns empty (can happen on back-navigation before hydration).
     const hookParams = new URLSearchParams(searchParams.toString());
-    const params = urlParams.toString().length >= hookParams.toString().length
-      ? urlParams
-      : hookParams;
+    const params = hookParams.toString()
+      ? hookParams
+      : getUrlParams();
 
     if (navigatedToNewCategory) {
+      // Clear old products immediately so the user sees a loading state
+      setProducts([]);
+      setHasMore(true);
+
       const next = new URLSearchParams(params.toString());
       let stripped = false;
       ["brand", "color", "size", "gender"].forEach((key) => {
@@ -368,7 +372,14 @@ export default function ProductsListGrid({
         setSort(sortValue);
         const q = next.toString();
         prevCategoryIdRef.current = categoryId;
+
+        const withoutFilters = new URLSearchParams(next);
+        withoutFilters.delete("filters");
+        lastFilterQueryRef.current = withoutFilters.toString();
+        isSyncing.current = true;
+
         router.replace(q ? `${pathname}?${q}` : pathname);
+        fetchAllProducts(1, filtersClean, sortValue, false);
         return;
       }
     }
@@ -401,6 +412,8 @@ export default function ProductsListGrid({
     }
     cachedListing.current = null;
     setPage(1);
+    // Clear old products for fresh category loads
+    if (navigatedToNewCategory) setProducts([]);
 
     fetchAllProducts(1, filters, sortValue, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -471,8 +484,16 @@ export default function ProductsListGrid({
   }, [categoryId]);
 
   // ✅ Persist listing state for instant back-navigation restoration
+  const lastCachedPathRef = useRef(pathname);
   useEffect(() => {
+    // Don't cache when products are empty or when the pathname just changed
+    // (products still belong to the previous category).
     if (products.length === 0) return;
+    if (pathname !== lastCachedPathRef.current) {
+      lastCachedPathRef.current = pathname;
+      return;
+    }
+    lastCachedPathRef.current = pathname;
     const p = new URLSearchParams(searchParams.toString());
     p.delete("filters");
     writeCache(`${pathname}?${p.toString()}`, {

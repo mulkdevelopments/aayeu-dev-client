@@ -379,6 +379,7 @@ const ProductInfoDetailsSection = forwardRef(
       const nsf = variant?.normalized_size_final;
       if (!nsf || ALPHA_SET.has(variantSize?.toUpperCase())) return variantSize;
       const display = ALPHA_DISPLAY[nsf] || nsf;
+      if (display === variantSize) return variantSize;
       return `${variantSize} - ${display}`;
     };
 

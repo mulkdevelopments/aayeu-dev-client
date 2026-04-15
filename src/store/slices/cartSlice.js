@@ -24,7 +24,19 @@ const cartSlice = createSlice({
 
     // Local mutations used by the hook for optimistic updates
     addItemLocal(state, action) {
-      state.items.push(action.payload);
+      const incoming = action.payload;
+      const variantId = incoming.variant_id?.id || incoming.variant_id;
+      const existing = state.items.find((it) => {
+        const id = it.variant_id?.id || it.variant_id;
+        return id && id === variantId;
+      });
+      if (existing) {
+        existing.qty = (Number(existing.qty) || 0) + (Number(incoming.qty) || 1);
+        existing.line_total =
+          existing.qty * (existing.sale_price || existing.variant_price || 0);
+      } else {
+        state.items.push(incoming);
+      }
     },
     updateItemLocal(state, action) {
       const { cart_item_id, changes } = action.payload;

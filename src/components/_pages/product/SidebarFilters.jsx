@@ -61,6 +61,35 @@ const SORT_OPTIONS = [
 const VISIBLE_CLOTHING_SIZES = 24;
 const VISIBLE_SHOE_SIZES = 24;
 
+/**
+ * Determines which size-filter variant to render based on the URL path.
+ *   "alpha"          – standard XXS–6XL grid
+ *   "alpha+numeric"  – alpha grid + numeric (waist, etc.)
+ *   "shoe"           – EU shoe-size grid with EU/US/UK toggle
+ *   "numeric"        – plain numeric (glasses, sunglasses)
+ *   "us"             – US ring sizes
+ *   "none"           – no size filter (bags)
+ */
+function getSizeFilterType(path) {
+  const p = (path || "").toLowerCase();
+  const segments = p.split("/").filter(Boolean);
+
+  const has = (keyword) => segments.some((s) => s.includes(keyword));
+
+  if (has("footwear"))   return "shoe";
+  if (has("bags"))       return "none";
+  if (has("glasses") || has("sunglasses")) return "numeric";
+  if (has("ring"))       return "us";
+  if (has("watch"))      return "numeric";
+  if (has("bottomwear") || has("bottom") || has("jeans") || has("trousers") ||
+      has("shorts") || has("skirt") || has("belt") || has("suit"))
+    return "alpha+numeric";
+  if (has("underwear") || has("lingerie") || has("nightwear"))
+    return "alpha+numeric";
+
+  return "alpha";
+}
+
 const STANDARD_ALPHA_SIZES = [
   { value: "XXS", label: "XXS" },
   { value: "XS",  label: "XS" },
@@ -73,6 +102,31 @@ const STANDARD_ALPHA_SIZES = [
   { value: "4XL", label: "4XL" },
   { value: "5XL", label: "5XL" },
   { value: "6XL", label: "6XL" },
+];
+
+const WOMEN_SHOE_EU_SIZES = [
+  { value: "36", label: "36" },
+  { value: "37", label: "37" },
+  { value: "38", label: "38" },
+  { value: "39", label: "39" },
+  { value: "40", label: "40" },
+  { value: "41", label: "41" },
+  { value: "42", label: "42" },
+];
+
+const MEN_SHOE_EU_SIZES = [
+  { value: "39", label: "39" },
+  { value: "40", label: "40" },
+  { value: "41", label: "41" },
+  { value: "42", label: "42" },
+  { value: "43", label: "43" },
+  { value: "44", label: "44" },
+  { value: "45", label: "45" },
+  { value: "46", label: "46" },
+  { value: "47", label: "47" },
+  { value: "48", label: "48" },
+  { value: "49", label: "49" },
+  { value: "50", label: "50" },
 ];
 
 /* ═══════════════════════════════════════════════════════════════
@@ -289,15 +343,7 @@ export default function SidebarFilters({
 
   useEffect(() => {
     if (sectionInit.current || !facets) return;
-    const anySizes =
-      (facets.sizeGroups && (Object.values(facets.sizeGroups).some((g) => g.length > 0))) ||
-      (facets.sizes && facets.sizes.length > 0);
-    if (categories.length > 0) setExpanded("category");
-    else if (facets.brands.length) setExpanded("brand");
-    else if (facets.genders.length) setExpanded("gender");
-    else if (facets.colors.length) setExpanded("color");
-    else if (anySizes) setExpanded("standardSize");
-    else setExpanded("price");
+    setExpanded(null);
     sectionInit.current = true;
   }, [facets, categories]);
 
@@ -523,6 +569,8 @@ export default function SidebarFilters({
 
   const hasSizes = clothingSizes.length > 0 || shoeSizes.length > 0 || !!oneSizeEntry || accessorySizes.length > 0;
 
+  const sizeFilterType = useMemo(() => getSizeFilterType(pathname), [pathname]);
+
   const standardAlphaSizes = useMemo(() => {
     if (!facets) return [];
     return STANDARD_ALPHA_SIZES.map((s) => ({
@@ -532,6 +580,30 @@ export default function SidebarFilters({
   }, [facets, sizeCM]);
 
   const hasStandardAlpha = standardAlphaSizes.some((s) => s.count > 0);
+
+  const shoeEuList = useMemo(() => {
+    const p = (pathname || "").toLowerCase();
+    if (p.includes("menswear")) return MEN_SHOE_EU_SIZES;
+    return WOMEN_SHOE_EU_SIZES;
+  }, [pathname]);
+
+  const standardShoeSizes = useMemo(() => {
+    if (!facets) return [];
+    return shoeEuList.map((s) => ({
+      ...s,
+      count: sizeCM.get(s.value) ?? 0,
+    }));
+  }, [facets, sizeCM, shoeEuList]);
+
+  const hasStandardShoe = standardShoeSizes.some((s) => s.count > 0);
+
+  const hasAnySizeFilter = sizeFilterType === "none"
+    ? false
+    : sizeFilterType === "shoe"
+      ? hasStandardShoe
+      : sizeFilterType === "numeric" || sizeFilterType === "us"
+        ? clothingSizes.length > 0 || accessorySizes.length > 0
+        : hasStandardAlpha || hasSizes;
 
   /* ═══════════════════════════════════════════════════════════
      Applied chips (reflects LOCAL selections in real-time)
@@ -1066,6 +1138,110 @@ export default function SidebarFilters({
     );
   }
 
+  function renderSizeFilter() {
+    if (sizeFilterType === "none") return null;
+
+    if (sizeFilterType === "shoe") {
+      if (!hasStandardShoe) return null;
+
+      const liveCounts = new Map();
+      const src = hasChanges && liveFacets ? liveFacets.sizeCounts : null;
+      if (src) src.forEach((s) => { const k = String(s.value || "").trim(); if (k) liveCounts.set(k, (liveCounts.get(k) || 0) + (Number(s.count) || 0)); });
+      const getCount = (val) => liveCounts.size > 0 ? (liveCounts.get(val) ?? 0) : (sizeCM.get(val) ?? 0);
+
+      return (
+        <div className="py-3">
+          <div className="grid grid-cols-4 gap-2">
+            {shoeEuList.map((s) => {
+              const sel = selSizes.includes(s.value);
+              const count = getCount(s.value);
+              if (count === 0 && !sel) return null;
+              return (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => {
+                    if (sel) setSelSizes((p) => p.filter((v) => v !== s.value));
+                    else setSelSizes((p) => [...p, s.value]);
+                  }}
+                  className={`min-h-10 px-1 py-2 text-[11px] leading-snug border transition-colors text-center ${
+                    sel
+                      ? "border-black bg-black text-white"
+                      : "border-gray-300 text-gray-700 hover:border-black"
+                  }`}
+                >
+                  <span className="block">{s.label}</span>
+                  {count > 0 && (
+                    <span className="block text-[10px] mt-0.5 opacity-60">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (sizeFilterType === "numeric" || sizeFilterType === "us") {
+      const items = [...clothingSizes, ...accessorySizes].filter((s) => s.value);
+      if (items.length === 0) return null;
+      return (
+        <div className="py-3">
+          {renderSizeGrid(items, 24, showAllClothingSizes, setShowAllClothingSizes)}
+        </div>
+      );
+    }
+
+    if (sizeFilterType === "alpha+numeric") {
+      return (
+        <div className="py-3 space-y-4">
+          {hasStandardAlpha && renderStandardAlpha()}
+          {clothingSizes.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Numeric
+              </p>
+              {renderSizeGrid(
+                clothingSizes.filter((s) => !STANDARD_ALPHA_SIZES.some((a) => a.value === s.value)),
+                VISIBLE_CLOTHING_SIZES,
+                showAllClothingSizes,
+                setShowAllClothingSizes,
+              )}
+            </div>
+          )}
+          {oneSizeEntry && (() => {
+            const sel = selSizes.includes("One Size");
+            const liveCounts = new Map();
+            const src = hasChanges && liveFacets ? liveFacets.sizeCounts : null;
+            if (src) src.forEach((s) => { const k = String(s.value || "").trim(); if (k) liveCounts.set(k, (liveCounts.get(k) || 0) + (Number(s.count) || 0)); });
+            const count = liveCounts.size > 0 ? (liveCounts.get("One Size") ?? 0) : (oneSizeEntry.count || 0);
+            if (count === 0 && !sel) return null;
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  if (sel) setSelSizes((p) => p.filter((v) => v !== "One Size"));
+                  else setSelSizes((p) => [...p, "One Size"]);
+                }}
+                className={`w-full h-10 px-3 text-xs font-medium border transition-colors ${
+                  sel
+                    ? "border-black bg-black text-white"
+                    : "border-gray-300 text-gray-700 hover:border-black"
+                }`}
+              >
+                One Size{count > 0 ? ` (${count})` : ""}
+              </button>
+            );
+          })()}
+        </div>
+      );
+    }
+
+    return renderStandardAlpha();
+  }
+
   function renderSizes() {
     const shoeItems = shoeSizes.map((s) => ({
       ...s,
@@ -1377,7 +1553,9 @@ export default function SidebarFilters({
                       <span>Back</span>
                     </button>
                     <span className="text-sm font-medium tracking-[0.15em] uppercase text-gray-700">
-                      {mobSection}
+                      {mobSection === "standardSize"
+                        ? (sizeFilterType === "shoe" ? "Shoe Size" : "Size")
+                        : mobSection}
                     </span>
                     <div className="w-14" />
                   </div>
@@ -1386,7 +1564,7 @@ export default function SidebarFilters({
                     {mobSection === "brand" && renderBrands()}
                     {mobSection === "gender" && renderGenders()}
                     {mobSection === "color" && renderColors()}
-                    {mobSection === "standardSize" && renderStandardAlpha()}
+                    {mobSection === "standardSize" && renderSizeFilter()}
                     {mobSection === "price" && renderPrice()}
                   </div>
                   <div className="border-t border-gray-200 bg-white px-6 py-4">
@@ -1429,10 +1607,10 @@ export default function SidebarFilters({
                 </>
               )}
 
-              {hasStandardAlpha && (
+              {hasAnySizeFilter && (
                 <>
-                  {sectionHead("standardSize", "Size", true)}
-                  {!isMobile && expanded === "standardSize" && renderStandardAlpha()}
+                  {sectionHead("standardSize", sizeFilterType === "shoe" ? "Shoe Size" : "Size", true)}
+                  {!isMobile && expanded === "standardSize" && renderSizeFilter()}
                 </>
               )}
 
@@ -1449,7 +1627,7 @@ export default function SidebarFilters({
                 !categories.length &&
                 !facets.brands.length &&
                 !facets.colors.length &&
-                !hasStandardAlpha &&
+                !hasAnySizeFilter &&
                 !facets.genders.length && (
                   <div className="py-8 text-center">
                     <p className="text-sm text-gray-600">

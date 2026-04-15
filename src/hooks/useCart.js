@@ -160,7 +160,27 @@ export default function useCart() {
 
       /** Guest user → Optimistic only */
       if (!isAuthenticated) {
-        const next = [...items, cart_item_shape];
+        const variantId = variant.id || variant.variant_id;
+        const existingIdx = items.findIndex((it) => {
+          const id = it.variant_id?.id || it.variant_id;
+          return id && id === variantId;
+        });
+
+        let next;
+        if (existingIdx !== -1) {
+          next = items.map((it, i) => {
+            if (i !== existingIdx) return it;
+            const newQty = (Number(it.qty) || 0) + qty;
+            return {
+              ...it,
+              qty: newQty,
+              line_total: newQty * (it.sale_price || it.variant_price || 0),
+            };
+          });
+        } else {
+          next = [...items, cart_item_shape];
+        }
+
         dispatch(addItemLocal(cart_item_shape));
         updateGuestCartStorage(next);
         dispatch(setCartTotals(recalcTotalsFromItems(next)));

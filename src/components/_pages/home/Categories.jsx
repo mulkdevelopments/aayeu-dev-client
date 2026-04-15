@@ -21,12 +21,12 @@ export default function HeroVideoSection() {
   const defaultCategories = [
     {
       title: "WOMENSWEAR",
-      image: "/assets/images/womenswear.jpg",
+      image: "https://via.placeholder.com/800x450?text=Womenswear",
       url: "/shop/women"
     },
     {
       title: "MENSWEAR",
-      image: "/assets/images/menswear.jpg",
+      image: "https://via.placeholder.com/800x450?text=Menswear",
       url: "/shop/men"
     }
   ]
