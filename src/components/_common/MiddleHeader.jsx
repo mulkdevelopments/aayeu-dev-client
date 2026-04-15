@@ -86,11 +86,7 @@ export default function MiddleHeader() {
 
   useEffect(() => {
     setMenuLoading(true);
-    fetchMenu()
-      .then((res) => {
-        if (res?.data?.length) setActiveCategory(res.data[0]);
-      })
-      .finally(() => setMenuLoading(false));
+    fetchMenu().finally(() => setMenuLoading(false));
   }, []);
 
   const syncRecentViewed = useCallback(() => {
@@ -135,6 +131,7 @@ export default function MiddleHeader() {
         return;
       }
     }
+    setActiveCategory((prev) => prev ?? menu[0]);
     setMobileRootTab((prev) => prev ?? menu[0]);
   }, [menu, pathCategorySlug]);
 
