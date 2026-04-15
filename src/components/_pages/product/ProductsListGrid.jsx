@@ -323,10 +323,12 @@ export default function ProductsListGrid({
 
   const parseFilters = parseFiltersFromParams;
 
-  // ✅ Initial load — the component remounts (via key=) when categoryId changes,
-  //    so this only runs once per mount. On back-navigation the listing cache
-  //    provides instant products; otherwise we fetch fresh.
+  // ✅ Initial load + category change.
+  //    The parent passes key={categoryId} so React normally remounts us, but
+  //    as a safety-net we also react to prop changes in case the key doesn't
+  //    trigger a full remount (Next.js 16 soft-navigation edge cases).
   useEffect(() => {
+    const cached = readCache();
     const hookParams = new URLSearchParams(searchParams.toString());
     const params = hookParams.toString() ? hookParams : getUrlParams();
 
@@ -340,8 +342,12 @@ export default function ProductsListGrid({
     setSelectedFilters(filters);
     setSort(sortValue);
 
-    if (cachedListing.current?.products?.length) {
-      const cached = cachedListing.current;
+    // Prevent the searchParams-sync effect from double-fetching
+    isSyncing.current = true;
+
+    if (cached?.products?.length) {
+      setProducts(cached.products);
+      setTotalProducts(cached.totalProducts || 0);
       setPage(cached.page);
       setHasMore(cached.hasMore);
       cachedListing.current = null;
@@ -352,9 +358,12 @@ export default function ProductsListGrid({
     }
     cachedListing.current = null;
 
+    setProducts([]);
+    setPage(1);
+    setHasMore(true);
     fetchAllProducts(1, filters, sortValue, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [categoryId, curatedSlug]);
 
   // ✅ Sync URL change — skip when only "filters" (sidebar open/close) changed so reopening the panel doesn't reset list or selections
   useEffect(() => {
