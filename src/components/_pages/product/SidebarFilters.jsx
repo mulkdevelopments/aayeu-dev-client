@@ -80,7 +80,7 @@ function getSizeFilterType(path) {
   if (has("bags"))       return "none";
   if (has("glasses") || has("sunglasses")) return "numeric";
   if (has("ring"))       return "us";
-  if (has("watch"))      return "numeric";
+  if (has("watch"))      return "watch";
   if (has("bottomwear") || has("bottom") || has("jeans") || has("trousers") ||
       has("shorts") || has("skirt") || has("belt") || has("suit"))
     return "alpha+numeric";
@@ -127,6 +127,25 @@ const MEN_SHOE_EU_SIZES = [
   { value: "48", label: "48" },
   { value: "49", label: "49" },
   { value: "50", label: "50" },
+];
+
+const US_RING_SIZES = [
+  { value: "5", label: "US 5" },
+  { value: "6", label: "US 6" },
+  { value: "7", label: "US 7" },
+  { value: "8", label: "US 8" },
+  { value: "9", label: "US 9" },
+  { value: "10", label: "US 10" },
+  { value: "11", label: "US 11" },
+  { value: "12", label: "US 12" },
+  { value: "13", label: "US 13" },
+];
+
+const WATCH_SIZES = [
+  { value: "Small", label: "Small" },
+  { value: "Medium", label: "Medium" },
+  { value: "Large", label: "Large" },
+  { value: "Oversized", label: "Oversized" },
 ];
 
 /* ═══════════════════════════════════════════════════════════════
@@ -597,13 +616,20 @@ export default function SidebarFilters({
 
   const hasStandardShoe = standardShoeSizes.some((s) => s.count > 0);
 
+  const hasRingSizes = useMemo(() => US_RING_SIZES.some((s) => (sizeCM.get(s.value) ?? 0) > 0), [sizeCM]);
+  const hasWatchSizes = useMemo(() => WATCH_SIZES.some((s) => (sizeCM.get(s.value) ?? 0) > 0) || (sizeCM.get("UNI") ?? 0) > 0, [sizeCM]);
+
   const hasAnySizeFilter = sizeFilterType === "none"
     ? false
     : sizeFilterType === "shoe"
       ? hasStandardShoe
-      : sizeFilterType === "numeric" || sizeFilterType === "us"
-        ? clothingSizes.length > 0 || accessorySizes.length > 0
-        : hasStandardAlpha || hasSizes;
+      : sizeFilterType === "us"
+        ? hasRingSizes
+        : sizeFilterType === "watch"
+          ? hasWatchSizes
+          : sizeFilterType === "numeric"
+            ? clothingSizes.length > 0 || accessorySizes.length > 0
+            : hasStandardAlpha || hasSizes;
 
   /* ═══════════════════════════════════════════════════════════
      Applied chips (reflects LOCAL selections in real-time)
@@ -1184,7 +1210,117 @@ export default function SidebarFilters({
       );
     }
 
-    if (sizeFilterType === "numeric" || sizeFilterType === "us") {
+    if (sizeFilterType === "watch") {
+      const liveCounts = new Map();
+      const src = hasChanges && liveFacets ? liveFacets.sizeCounts : null;
+      if (src) src.forEach((s) => { const k = String(s.value || "").trim(); if (k) liveCounts.set(k, (liveCounts.get(k) || 0) + (Number(s.count) || 0)); });
+      const getCount = (val) => liveCounts.size > 0 ? (liveCounts.get(val) ?? 0) : (sizeCM.get(val) ?? 0);
+      const uniCount = getCount("UNI");
+      const allItems = [...WATCH_SIZES, { value: "UNI", label: "UNI" }];
+
+      return (
+        <div className="py-3">
+          <div className="grid grid-cols-4 gap-2">
+            {allItems.map((s) => {
+              const sel = selSizes.includes(s.value);
+              const count = getCount(s.value);
+              if (count === 0 && !sel) return null;
+              return (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => {
+                    if (sel) setSelSizes((p) => p.filter((v) => v !== s.value));
+                    else setSelSizes((p) => [...p, s.value]);
+                  }}
+                  className={`min-h-10 px-1 py-2 text-[11px] leading-snug border transition-colors text-center ${
+                    sel
+                      ? "border-black bg-black text-white"
+                      : "border-gray-300 text-gray-700 hover:border-black"
+                  }`}
+                >
+                  <span className="block">{s.label}</span>
+                  {count > 0 && (
+                    <span className="block text-[10px] mt-0.5 opacity-60">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (sizeFilterType === "us") {
+      const liveCounts = new Map();
+      const src = hasChanges && liveFacets ? liveFacets.sizeCounts : null;
+      if (src) src.forEach((s) => { const k = String(s.value || "").trim(); if (k) liveCounts.set(k, (liveCounts.get(k) || 0) + (Number(s.count) || 0)); });
+      const getCount = (val) => liveCounts.size > 0 ? (liveCounts.get(val) ?? 0) : (sizeCM.get(val) ?? 0);
+      const uniCount = getCount("UNI");
+
+      return (
+        <div className="py-3">
+          <div className="grid grid-cols-4 gap-2">
+            {US_RING_SIZES.map((s) => {
+              const sel = selSizes.includes(s.value);
+              const count = getCount(s.value);
+              if (count === 0 && !sel) return null;
+              return (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => {
+                    if (sel) setSelSizes((p) => p.filter((v) => v !== s.value));
+                    else setSelSizes((p) => [...p, s.value]);
+                  }}
+                  className={`min-h-10 px-1 py-2 text-[11px] leading-snug border transition-colors text-center ${
+                    sel
+                      ? "border-black bg-black text-white"
+                      : "border-gray-300 text-gray-700 hover:border-black"
+                  }`}
+                >
+                  <span className="block">{s.label}</span>
+                  {count > 0 && (
+                    <span className="block text-[10px] mt-0.5 opacity-60">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            {(() => {
+              const sel = selSizes.includes("UNI");
+              if (uniCount === 0 && !sel) return null;
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (sel) setSelSizes((p) => p.filter((v) => v !== "UNI"));
+                    else setSelSizes((p) => [...p, "UNI"]);
+                  }}
+                  className={`min-h-10 px-1 py-2 text-[11px] leading-snug border transition-colors text-center ${
+                    sel
+                      ? "border-black bg-black text-white"
+                      : "border-gray-300 text-gray-700 hover:border-black"
+                  }`}
+                >
+                  <span className="block">UNI</span>
+                  {uniCount > 0 && (
+                    <span className="block text-[10px] mt-0.5 opacity-60">
+                      {uniCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })()}
+          </div>
+        </div>
+      );
+    }
+
+    if (sizeFilterType === "numeric") {
       const items = [...clothingSizes, ...accessorySizes].filter((s) => s.value);
       if (items.length === 0) return null;
       return (

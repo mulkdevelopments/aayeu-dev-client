@@ -126,20 +126,17 @@ export default function ProductsListGrid({
     setSidebarOpen(true);
     const params = new URLSearchParams(searchParams.toString());
     params.set("filters", "1");
-    router.replace(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleCloseFilters = () => {
     isClosingFilters.current = true;
     setSidebarOpen(false);
-    // When called right after onApply, isSyncing is true — onApply already
-    // set the correct URL (without filters=1), so skip the replace to avoid
-    // overwriting the new filter params with stale searchParams.
     if (isSyncing.current) return;
     const params = new URLSearchParams(searchParams.toString());
     params.delete("filters");
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
   useEffect(() => {
